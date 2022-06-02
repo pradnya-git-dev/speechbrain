@@ -1,1502 +1,1502 @@
 {
-  "4_george_48": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_george_48.wav",
-    "length": 0.470875,
-    "digit_id": "4"
-  },
-  "5_lucas_3": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_lucas_3.wav",
-    "length": 0.528625,
-    "digit_id": "5"
-  },
-  "0_nicolas_31": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_nicolas_31.wav",
-    "length": 0.37475,
-    "digit_id": "0"
-  },
-  "4_george_7": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_george_7.wav",
-    "length": 0.505125,
-    "digit_id": "4"
-  },
-  "9_yweweler_36": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_yweweler_36.wav",
-    "length": 0.455,
-    "digit_id": "9"
-  },
-  "7_theo_40": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_theo_40.wav",
-    "length": 0.476625,
-    "digit_id": "7"
-  },
-  "2_jackson_36": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_jackson_36.wav",
-    "length": 0.489125,
-    "digit_id": "2"
-  },
-  "9_theo_14": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_theo_14.wav",
-    "length": 0.431,
-    "digit_id": "9"
-  },
-  "3_yweweler_15": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_yweweler_15.wav",
-    "length": 0.2365,
-    "digit_id": "3"
-  },
-  "6_george_0": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_george_0.wav",
-    "length": 0.519375,
-    "digit_id": "6"
-  },
-  "2_yweweler_35": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_yweweler_35.wav",
-    "length": 0.27775,
-    "digit_id": "2"
-  },
-  "7_nicolas_7": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_nicolas_7.wav",
-    "length": 0.372375,
-    "digit_id": "7"
-  },
-  "0_nicolas_41": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_nicolas_41.wav",
-    "length": 0.464625,
-    "digit_id": "0"
-  },
-  "1_theo_9": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_theo_9.wav",
-    "length": 0.23625,
-    "digit_id": "1"
-  },
-  "9_george_4": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_george_4.wav",
-    "length": 0.494,
-    "digit_id": "9"
-  },
-  "6_jackson_24": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_jackson_24.wav",
-    "length": 0.72475,
-    "digit_id": "6"
-  },
-  "5_yweweler_47": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_yweweler_47.wav",
-    "length": 0.476625,
-    "digit_id": "5"
-  },
-  "3_lucas_36": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_lucas_36.wav",
-    "length": 0.9245,
-    "digit_id": "3"
-  },
-  "7_theo_6": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_theo_6.wav",
-    "length": 0.280625,
-    "digit_id": "7"
-  },
-  "4_jackson_29": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_jackson_29.wav",
-    "length": 0.436375,
-    "digit_id": "4"
-  },
-  "5_jackson_0": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_jackson_0.wav",
-    "length": 0.42425,
-    "digit_id": "5"
-  },
-  "6_nicolas_20": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_nicolas_20.wav",
-    "length": 0.2985,
-    "digit_id": "6"
-  },
-  "8_yweweler_44": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_yweweler_44.wav",
-    "length": 0.249375,
-    "digit_id": "8"
-  },
-  "5_lucas_6": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_lucas_6.wav",
-    "length": 0.59575,
-    "digit_id": "5"
-  },
-  "3_lucas_14": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_lucas_14.wav",
-    "length": 0.642125,
-    "digit_id": "3"
-  },
-  "0_jackson_19": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_jackson_19.wav",
-    "length": 0.637875,
-    "digit_id": "0"
-  },
-  "4_nicolas_45": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_nicolas_45.wav",
-    "length": 0.331,
-    "digit_id": "4"
-  },
-  "7_theo_14": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_theo_14.wav",
-    "length": 0.4845,
-    "digit_id": "7"
-  },
-  "3_lucas_12": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_lucas_12.wav",
-    "length": 0.64475,
-    "digit_id": "3"
-  },
-  "1_nicolas_15": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_nicolas_15.wav",
-    "length": 0.293625,
-    "digit_id": "1"
-  },
-  "3_george_31": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_george_31.wav",
-    "length": 0.2765,
-    "digit_id": "3"
-  },
-  "2_george_0": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_george_0.wav",
-    "length": 0.330375,
-    "digit_id": "2"
-  },
-  "3_lucas_27": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_lucas_27.wav",
-    "length": 0.492375,
-    "digit_id": "3"
-  },
-  "8_theo_32": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_theo_32.wav",
-    "length": 0.439125,
-    "digit_id": "8"
-  },
-  "9_nicolas_48": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_nicolas_48.wav",
-    "length": 0.388,
-    "digit_id": "9"
-  },
-  "3_theo_0": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_theo_0.wav",
-    "length": 0.241375,
-    "digit_id": "3"
-  },
-  "5_george_16": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_george_16.wav",
-    "length": 0.503625,
-    "digit_id": "5"
-  },
-  "5_nicolas_30": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_nicolas_30.wav",
-    "length": 0.35375,
-    "digit_id": "5"
-  },
-  "1_yweweler_0": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_yweweler_0.wav",
-    "length": 0.419375,
-    "digit_id": "1"
-  },
-  "2_nicolas_35": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_nicolas_35.wav",
-    "length": 0.34125,
-    "digit_id": "2"
-  },
-  "6_yweweler_35": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_yweweler_35.wav",
-    "length": 0.252,
-    "digit_id": "6"
-  },
-  "1_lucas_18": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_lucas_18.wav",
-    "length": 0.773,
-    "digit_id": "1"
-  },
-  "4_yweweler_14": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_yweweler_14.wav",
-    "length": 0.2655,
-    "digit_id": "4"
-  },
-  "6_theo_37": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_theo_37.wav",
-    "length": 0.32775,
-    "digit_id": "6"
-  },
-  "9_jackson_19": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_jackson_19.wav",
-    "length": 0.542875,
-    "digit_id": "9"
-  },
-  "4_theo_28": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_theo_28.wav",
-    "length": 0.683375,
-    "digit_id": "4"
-  },
-  "8_george_31": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_george_31.wav",
-    "length": 0.31875,
-    "digit_id": "8"
-  },
-  "9_yweweler_8": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_yweweler_8.wav",
-    "length": 0.3955,
-    "digit_id": "9"
-  },
-  "5_theo_23": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_theo_23.wav",
-    "length": 0.534625,
-    "digit_id": "5"
-  },
-  "7_lucas_44": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_lucas_44.wav",
-    "length": 0.475625,
-    "digit_id": "7"
-  },
-  "2_nicolas_10": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_nicolas_10.wav",
-    "length": 0.318125,
-    "digit_id": "2"
-  },
-  "3_theo_5": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_theo_5.wav",
-    "length": 0.225375,
-    "digit_id": "3"
-  },
-  "0_theo_7": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_theo_7.wav",
-    "length": 0.400375,
-    "digit_id": "0"
-  },
-  "5_jackson_19": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_jackson_19.wav",
-    "length": 0.369375,
-    "digit_id": "5"
-  },
-  "6_lucas_5": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_lucas_5.wav",
-    "length": 0.595125,
-    "digit_id": "6"
-  },
-  "7_nicolas_6": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_nicolas_6.wav",
-    "length": 0.368875,
-    "digit_id": "7"
-  },
-  "8_jackson_42": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_jackson_42.wav",
-    "length": 0.422375,
-    "digit_id": "8"
-  },
-  "3_yweweler_27": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_yweweler_27.wav",
-    "length": 0.29125,
-    "digit_id": "3"
-  },
-  "4_yweweler_11": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_yweweler_11.wav",
-    "length": 0.341625,
-    "digit_id": "4"
-  },
-  "0_nicolas_42": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_nicolas_42.wav",
-    "length": 0.4645,
-    "digit_id": "0"
-  },
-  "1_jackson_44": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_jackson_44.wav",
-    "length": 0.5815,
-    "digit_id": "1"
-  },
-  "2_yweweler_16": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_yweweler_16.wav",
-    "length": 0.32075,
-    "digit_id": "2"
-  },
-  "0_theo_0": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_theo_0.wav",
-    "length": 0.39275,
-    "digit_id": "0"
-  },
-  "3_jackson_22": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_jackson_22.wav",
-    "length": 0.42875,
-    "digit_id": "3"
-  },
-  "3_lucas_21": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_lucas_21.wav",
-    "length": 0.4465,
-    "digit_id": "3"
-  },
-  "2_theo_16": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_theo_16.wav",
-    "length": 0.48125,
-    "digit_id": "2"
-  },
-  "4_theo_48": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_theo_48.wav",
-    "length": 0.350875,
-    "digit_id": "4"
-  },
-  "3_nicolas_30": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_nicolas_30.wav",
-    "length": 0.32875,
-    "digit_id": "3"
-  },
-  "9_lucas_26": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_lucas_26.wav",
-    "length": 0.37125,
-    "digit_id": "9"
-  },
-  "4_lucas_3": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_lucas_3.wav",
-    "length": 0.441125,
-    "digit_id": "4"
-  },
-  "0_george_17": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_george_17.wav",
-    "length": 0.58425,
-    "digit_id": "0"
-  },
-  "3_george_38": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_george_38.wav",
-    "length": 0.297125,
-    "digit_id": "3"
-  },
-  "2_yweweler_31": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_yweweler_31.wav",
-    "length": 0.279875,
-    "digit_id": "2"
-  },
-  "7_jackson_32": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_jackson_32.wav",
-    "length": 0.537625,
-    "digit_id": "7"
-  },
-  "6_jackson_36": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_jackson_36.wav",
-    "length": 0.58125,
-    "digit_id": "6"
-  },
-  "9_george_39": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_george_39.wav",
-    "length": 0.47375,
-    "digit_id": "9"
-  },
-  "7_lucas_32": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_lucas_32.wav",
-    "length": 0.53025,
-    "digit_id": "7"
-  },
-  "6_jackson_23": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_jackson_23.wav",
-    "length": 0.81825,
-    "digit_id": "6"
-  },
-  "4_nicolas_2": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_nicolas_2.wav",
-    "length": 0.311625,
-    "digit_id": "4"
-  },
-  "0_yweweler_0": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_yweweler_0.wav",
-    "length": 0.387875,
-    "digit_id": "0"
-  },
-  "8_george_23": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_george_23.wav",
-    "length": 0.523375,
-    "digit_id": "8"
-  },
-  "0_yweweler_25": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_yweweler_25.wav",
-    "length": 0.38575,
-    "digit_id": "0"
-  },
-  "7_nicolas_40": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_nicolas_40.wav",
-    "length": 0.3535,
-    "digit_id": "7"
-  },
   "6_theo_33": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_theo_33.wav",
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_theo_33.wav",
     "length": 0.36525,
     "digit_id": "6"
   },
-  "1_yweweler_21": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_yweweler_21.wav",
-    "length": 0.327875,
-    "digit_id": "1"
-  },
-  "7_lucas_39": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_lucas_39.wav",
-    "length": 0.375625,
+  "7_nicolas_28": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_nicolas_28.wav",
+    "length": 0.380125,
     "digit_id": "7"
   },
-  "0_jackson_42": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_jackson_42.wav",
-    "length": 0.661,
+  "6_george_45": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_george_45.wav",
+    "length": 0.48175,
+    "digit_id": "6"
+  },
+  "4_yweweler_41": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_yweweler_41.wav",
+    "length": 0.34525,
+    "digit_id": "4"
+  },
+  "7_george_45": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_george_45.wav",
+    "length": 0.412625,
+    "digit_id": "7"
+  },
+  "0_jackson_29": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_jackson_29.wav",
+    "length": 0.577625,
     "digit_id": "0"
   },
-  "9_yweweler_31": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_yweweler_31.wav",
-    "length": 0.51875,
+  "6_lucas_6": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_lucas_6.wav",
+    "length": 0.5235,
+    "digit_id": "6"
+  },
+  "3_theo_41": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_theo_41.wav",
+    "length": 0.27975,
+    "digit_id": "3"
+  },
+  "3_yweweler_33": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_yweweler_33.wav",
+    "length": 0.336875,
+    "digit_id": "3"
+  },
+  "0_theo_30": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_theo_30.wav",
+    "length": 0.534375,
+    "digit_id": "0"
+  },
+  "1_yweweler_18": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_yweweler_18.wav",
+    "length": 0.347125,
+    "digit_id": "1"
+  },
+  "9_george_15": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_george_15.wav",
+    "length": 0.54325,
     "digit_id": "9"
-  },
-  "2_nicolas_27": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_nicolas_27.wav",
-    "length": 0.23325,
-    "digit_id": "2"
-  },
-  "2_george_26": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_george_26.wav",
-    "length": 0.3,
-    "digit_id": "2"
-  },
-  "8_jackson_13": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_jackson_13.wav",
-    "length": 0.379875,
-    "digit_id": "8"
-  },
-  "1_yweweler_38": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_yweweler_38.wav",
-    "length": 0.367625,
-    "digit_id": "1"
-  },
-  "0_lucas_13": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_lucas_13.wav",
-    "length": 0.592,
-    "digit_id": "0"
-  },
-  "7_lucas_7": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_lucas_7.wav",
-    "length": 1.038625,
-    "digit_id": "7"
-  },
-  "7_yweweler_41": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_yweweler_41.wav",
-    "length": 0.539,
-    "digit_id": "7"
-  },
-  "0_george_23": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_george_23.wav",
-    "length": 0.498,
-    "digit_id": "0"
-  },
-  "2_yweweler_10": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_yweweler_10.wav",
-    "length": 0.265375,
-    "digit_id": "2"
-  },
-  "6_theo_31": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_theo_31.wav",
-    "length": 0.511125,
-    "digit_id": "6"
-  },
-  "6_george_38": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_george_38.wav",
-    "length": 0.372875,
-    "digit_id": "6"
-  },
-  "3_nicolas_1": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_nicolas_1.wav",
-    "length": 0.326875,
-    "digit_id": "3"
-  },
-  "6_nicolas_28": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_nicolas_28.wav",
-    "length": 0.30275,
-    "digit_id": "6"
-  },
-  "5_george_47": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_george_47.wav",
-    "length": 0.407,
-    "digit_id": "5"
-  },
-  "4_jackson_41": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_jackson_41.wav",
-    "length": 0.44825,
-    "digit_id": "4"
-  },
-  "8_george_34": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_george_34.wav",
-    "length": 0.393625,
-    "digit_id": "8"
-  },
-  "0_lucas_9": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_lucas_9.wav",
-    "length": 1.167625,
-    "digit_id": "0"
-  },
-  "1_theo_11": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_theo_11.wav",
-    "length": 0.219125,
-    "digit_id": "1"
-  },
-  "4_theo_19": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_theo_19.wav",
-    "length": 0.39025,
-    "digit_id": "4"
-  },
-  "3_jackson_30": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_jackson_30.wav",
-    "length": 0.484625,
-    "digit_id": "3"
-  },
-  "5_yweweler_12": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_yweweler_12.wav",
-    "length": 0.442125,
-    "digit_id": "5"
-  },
-  "7_theo_30": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_theo_30.wav",
-    "length": 0.376,
-    "digit_id": "7"
-  },
-  "8_theo_36": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_theo_36.wav",
-    "length": 0.3715,
-    "digit_id": "8"
-  },
-  "6_jackson_35": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_jackson_35.wav",
-    "length": 0.6385,
-    "digit_id": "6"
-  },
-  "4_lucas_19": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_lucas_19.wav",
-    "length": 0.77325,
-    "digit_id": "4"
-  },
-  "4_theo_29": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_theo_29.wav",
-    "length": 0.291125,
-    "digit_id": "4"
-  },
-  "4_theo_20": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_theo_20.wav",
-    "length": 0.352875,
-    "digit_id": "4"
-  },
-  "8_jackson_6": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_jackson_6.wav",
-    "length": 0.422375,
-    "digit_id": "8"
-  },
-  "0_george_44": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_george_44.wav",
-    "length": 0.456125,
-    "digit_id": "0"
-  },
-  "1_george_9": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_george_9.wav",
-    "length": 0.477875,
-    "digit_id": "1"
-  },
-  "6_nicolas_44": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_nicolas_44.wav",
-    "length": 0.367,
-    "digit_id": "6"
-  },
-  "0_yweweler_3": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_yweweler_3.wav",
-    "length": 0.35825,
-    "digit_id": "0"
-  },
-  "0_nicolas_21": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_nicolas_21.wav",
-    "length": 0.5095,
-    "digit_id": "0"
-  },
-  "1_lucas_31": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_lucas_31.wav",
-    "length": 0.4715,
-    "digit_id": "1"
-  },
-  "1_george_14": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_george_14.wav",
-    "length": 0.398,
-    "digit_id": "1"
-  },
-  "9_george_8": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_george_8.wav",
-    "length": 0.5385,
-    "digit_id": "9"
-  },
-  "2_george_21": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_george_21.wav",
-    "length": 0.271125,
-    "digit_id": "2"
-  },
-  "3_nicolas_29": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_nicolas_29.wav",
-    "length": 0.319,
-    "digit_id": "3"
-  },
-  "4_george_25": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_george_25.wav",
-    "length": 0.42375,
-    "digit_id": "4"
-  },
-  "4_theo_14": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_theo_14.wav",
-    "length": 0.45025,
-    "digit_id": "4"
-  },
-  "3_yweweler_16": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_yweweler_16.wav",
-    "length": 0.3485,
-    "digit_id": "3"
-  },
-  "3_nicolas_40": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_nicolas_40.wav",
-    "length": 0.299625,
-    "digit_id": "3"
-  },
-  "8_george_18": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_george_18.wav",
-    "length": 0.468375,
-    "digit_id": "8"
-  },
-  "8_nicolas_35": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_nicolas_35.wav",
-    "length": 0.378125,
-    "digit_id": "8"
-  },
-  "8_nicolas_14": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_nicolas_14.wav",
-    "length": 0.399625,
-    "digit_id": "8"
-  },
-  "3_theo_34": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_theo_34.wav",
-    "length": 0.195,
-    "digit_id": "3"
-  },
-  "5_yweweler_44": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_yweweler_44.wav",
-    "length": 0.45525,
-    "digit_id": "5"
-  },
-  "4_george_10": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_george_10.wav",
-    "length": 0.386,
-    "digit_id": "4"
-  },
-  "0_george_21": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_george_21.wav",
-    "length": 0.5325,
-    "digit_id": "0"
-  },
-  "9_jackson_37": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_jackson_37.wav",
-    "length": 0.624,
-    "digit_id": "9"
-  },
-  "3_jackson_20": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_jackson_20.wav",
-    "length": 0.47225,
-    "digit_id": "3"
-  },
-  "7_yweweler_18": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_yweweler_18.wav",
-    "length": 0.354375,
-    "digit_id": "7"
-  },
-  "7_lucas_38": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_lucas_38.wav",
-    "length": 0.53275,
-    "digit_id": "7"
-  },
-  "8_jackson_14": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_jackson_14.wav",
-    "length": 0.363125,
-    "digit_id": "8"
-  },
-  "8_theo_5": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_theo_5.wav",
-    "length": 0.313375,
-    "digit_id": "8"
-  },
-  "2_jackson_32": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_jackson_32.wav",
-    "length": 0.50925,
-    "digit_id": "2"
-  },
-  "2_jackson_41": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_jackson_41.wav",
-    "length": 0.584625,
-    "digit_id": "2"
-  },
-  "2_yweweler_5": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_yweweler_5.wav",
-    "length": 0.32425,
-    "digit_id": "2"
-  },
-  "8_nicolas_29": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_nicolas_29.wav",
-    "length": 0.357875,
-    "digit_id": "8"
   },
   "5_lucas_4": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_lucas_4.wav",
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_lucas_4.wav",
     "length": 0.508375,
     "digit_id": "5"
   },
-  "9_jackson_31": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_jackson_31.wav",
-    "length": 0.64975,
+  "9_george_31": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_george_31.wav",
+    "length": 0.281,
     "digit_id": "9"
   },
-  "7_lucas_24": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_lucas_24.wav",
-    "length": 1.2115,
-    "digit_id": "7"
-  },
-  "1_jackson_36": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_jackson_36.wav",
-    "length": 0.4435,
-    "digit_id": "1"
-  },
-  "0_lucas_39": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_lucas_39.wav",
-    "length": 0.923625,
-    "digit_id": "0"
-  },
-  "9_george_7": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_george_7.wav",
-    "length": 0.630375,
-    "digit_id": "9"
-  },
-  "5_lucas_32": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_lucas_32.wav",
-    "length": 0.61375,
-    "digit_id": "5"
-  },
-  "6_theo_25": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_theo_25.wav",
-    "length": 0.585125,
+  "6_nicolas_27": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_nicolas_27.wav",
+    "length": 0.238875,
     "digit_id": "6"
   },
-  "6_theo_10": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_theo_10.wav",
-    "length": 0.444125,
-    "digit_id": "6"
-  },
-  "0_george_16": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_george_16.wav",
-    "length": 0.63175,
-    "digit_id": "0"
-  },
-  "1_lucas_26": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_lucas_26.wav",
-    "length": 0.420625,
-    "digit_id": "1"
-  },
-  "3_jackson_1": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_jackson_1.wav",
-    "length": 0.4695,
-    "digit_id": "3"
-  },
-  "7_nicolas_32": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_nicolas_32.wav",
-    "length": 0.353625,
-    "digit_id": "7"
-  },
-  "5_nicolas_18": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_nicolas_18.wav",
-    "length": 0.384875,
-    "digit_id": "5"
-  },
-  "5_theo_13": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_theo_13.wav",
-    "length": 0.331625,
-    "digit_id": "5"
-  },
-  "7_theo_21": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_theo_21.wav",
-    "length": 0.391,
-    "digit_id": "7"
-  },
-  "3_nicolas_6": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_nicolas_6.wav",
-    "length": 0.33425,
-    "digit_id": "3"
-  },
-  "7_jackson_24": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_jackson_24.wav",
-    "length": 0.439875,
-    "digit_id": "7"
-  },
-  "6_george_25": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_george_25.wav",
-    "length": 0.475125,
-    "digit_id": "6"
-  },
-  "5_george_22": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_george_22.wav",
-    "length": 0.443,
-    "digit_id": "5"
-  },
-  "6_nicolas_42": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_nicolas_42.wav",
-    "length": 0.199125,
-    "digit_id": "6"
-  },
-  "3_george_21": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_george_21.wav",
-    "length": 0.33875,
-    "digit_id": "3"
-  },
-  "4_george_47": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_george_47.wav",
-    "length": 0.341625,
-    "digit_id": "4"
-  },
-  "3_lucas_11": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_lucas_11.wav",
-    "length": 0.571375,
-    "digit_id": "3"
-  },
-  "5_yweweler_36": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_yweweler_36.wav",
-    "length": 0.471,
-    "digit_id": "5"
-  },
-  "6_nicolas_25": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_nicolas_25.wav",
-    "length": 0.319875,
-    "digit_id": "6"
-  },
-  "5_nicolas_44": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_nicolas_44.wav",
-    "length": 0.366625,
-    "digit_id": "5"
-  },
-  "2_jackson_35": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_jackson_35.wav",
-    "length": 0.47125,
-    "digit_id": "2"
-  },
-  "2_theo_46": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_theo_46.wav",
-    "length": 0.25975,
-    "digit_id": "2"
-  },
-  "4_nicolas_26": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_nicolas_26.wav",
-    "length": 0.3595,
-    "digit_id": "4"
-  },
-  "2_george_28": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_george_28.wav",
-    "length": 0.349125,
-    "digit_id": "2"
-  },
-  "9_theo_3": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_theo_3.wav",
-    "length": 0.449125,
-    "digit_id": "9"
-  },
-  "9_jackson_35": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_jackson_35.wav",
-    "length": 0.658625,
-    "digit_id": "9"
-  },
-  "6_jackson_27": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_jackson_27.wav",
-    "length": 0.80675,
-    "digit_id": "6"
-  },
-  "2_george_41": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_george_41.wav",
-    "length": 0.296,
-    "digit_id": "2"
-  },
-  "8_yweweler_30": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_yweweler_30.wav",
-    "length": 0.355625,
-    "digit_id": "8"
-  },
-  "3_jackson_44": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_jackson_44.wav",
-    "length": 0.55325,
-    "digit_id": "3"
-  },
-  "8_theo_4": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_theo_4.wav",
-    "length": 0.35225,
-    "digit_id": "8"
-  },
-  "4_jackson_19": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_jackson_19.wav",
-    "length": 0.361875,
-    "digit_id": "4"
-  },
-  "0_yweweler_47": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_yweweler_47.wav",
-    "length": 0.345,
-    "digit_id": "0"
-  },
-  "0_theo_10": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_theo_10.wav",
-    "length": 0.3805,
-    "digit_id": "0"
-  },
-  "0_yweweler_24": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_yweweler_24.wav",
-    "length": 0.381625,
-    "digit_id": "0"
-  },
-  "6_theo_49": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_theo_49.wav",
-    "length": 0.34775,
-    "digit_id": "6"
-  },
-  "2_theo_10": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_theo_10.wav",
-    "length": 0.208,
-    "digit_id": "2"
-  },
-  "6_theo_14": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_theo_14.wav",
-    "length": 0.409625,
-    "digit_id": "6"
-  },
-  "7_jackson_34": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_jackson_34.wav",
-    "length": 0.507875,
-    "digit_id": "7"
-  },
-  "6_theo_32": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_theo_32.wav",
-    "length": 0.42625,
-    "digit_id": "6"
-  },
-  "0_nicolas_40": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_nicolas_40.wav",
-    "length": 0.476375,
-    "digit_id": "0"
-  },
-  "1_lucas_20": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_lucas_20.wav",
-    "length": 0.37375,
-    "digit_id": "1"
-  },
-  "4_yweweler_26": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_yweweler_26.wav",
-    "length": 0.3285,
-    "digit_id": "4"
-  },
-  "0_theo_37": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_theo_37.wav",
-    "length": 0.406875,
-    "digit_id": "0"
-  },
-  "5_jackson_30": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_jackson_30.wav",
-    "length": 0.428875,
-    "digit_id": "5"
-  },
-  "9_theo_39": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_theo_39.wav",
-    "length": 0.351875,
-    "digit_id": "9"
-  },
-  "6_yweweler_22": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_yweweler_22.wav",
-    "length": 0.21425,
-    "digit_id": "6"
-  },
-  "6_george_42": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_george_42.wav",
-    "length": 0.402875,
-    "digit_id": "6"
-  },
-  "6_lucas_7": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_lucas_7.wav",
-    "length": 0.52275,
-    "digit_id": "6"
-  },
-  "4_lucas_16": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_lucas_16.wav",
+  "1_jackson_18": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_jackson_18.wav",
     "length": 0.45275,
-    "digit_id": "4"
+    "digit_id": "1"
   },
-  "8_nicolas_28": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_nicolas_28.wav",
-    "length": 0.38275,
+  "8_theo_31": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_theo_31.wav",
+    "length": 0.313625,
     "digit_id": "8"
   },
-  "6_george_46": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_george_46.wav",
-    "length": 0.42475,
-    "digit_id": "6"
-  },
-  "7_lucas_2": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_lucas_2.wav",
-    "length": 0.477625,
+  "7_yweweler_29": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_yweweler_29.wav",
+    "length": 0.33125,
     "digit_id": "7"
   },
-  "9_george_48": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_george_48.wav",
-    "length": 0.43025,
-    "digit_id": "9"
+  "1_yweweler_26": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_yweweler_26.wav",
+    "length": 0.3815,
+    "digit_id": "1"
   },
-  "0_george_40": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_george_40.wav",
-    "length": 0.5155,
-    "digit_id": "0"
-  },
-  "9_jackson_46": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_jackson_46.wav",
-    "length": 0.647125,
-    "digit_id": "9"
-  },
-  "0_lucas_19": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_lucas_19.wav",
-    "length": 0.627625,
-    "digit_id": "0"
-  },
-  "7_george_37": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_george_37.wav",
-    "length": 0.334125,
-    "digit_id": "7"
-  },
-  "4_theo_32": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_theo_32.wav",
-    "length": 0.326,
-    "digit_id": "4"
-  },
-  "4_george_39": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_george_39.wav",
-    "length": 0.3225,
-    "digit_id": "4"
-  },
-  "6_yweweler_3": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_yweweler_3.wav",
-    "length": 0.1435,
-    "digit_id": "6"
-  },
-  "9_yweweler_27": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_yweweler_27.wav",
-    "length": 0.407875,
-    "digit_id": "9"
-  },
-  "5_nicolas_20": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_nicolas_20.wav",
-    "length": 0.38275,
-    "digit_id": "5"
-  },
-  "9_jackson_13": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_jackson_13.wav",
-    "length": 0.593875,
-    "digit_id": "9"
-  },
-  "6_lucas_48": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_lucas_48.wav",
-    "length": 0.441,
-    "digit_id": "6"
-  },
-  "2_jackson_38": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_jackson_38.wav",
-    "length": 0.47075,
-    "digit_id": "2"
-  },
-  "9_george_10": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_george_10.wav",
-    "length": 0.482,
-    "digit_id": "9"
-  },
-  "6_nicolas_49": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_nicolas_49.wav",
-    "length": 0.273375,
-    "digit_id": "6"
-  },
-  "3_jackson_4": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_jackson_4.wav",
-    "length": 0.446375,
+  "3_lucas_8": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_lucas_8.wav",
+    "length": 0.593,
     "digit_id": "3"
   },
-  "7_george_18": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_george_18.wav",
-    "length": 0.586875,
-    "digit_id": "7"
+  "2_lucas_46": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_lucas_46.wav",
+    "length": 0.975875,
+    "digit_id": "2"
   },
-  "0_yweweler_7": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_yweweler_7.wav",
-    "length": 0.391875,
-    "digit_id": "0"
-  },
-  "9_lucas_30": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_lucas_30.wav",
-    "length": 0.54525,
-    "digit_id": "9"
-  },
-  "8_george_37": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_george_37.wav",
-    "length": 0.41775,
+  "8_nicolas_4": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_nicolas_4.wav",
+    "length": 0.258375,
     "digit_id": "8"
   },
-  "8_theo_10": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_theo_10.wav",
-    "length": 0.32375,
-    "digit_id": "8"
-  },
-  "6_nicolas_0": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_nicolas_0.wav",
-    "length": 0.21525,
-    "digit_id": "6"
-  },
-  "1_jackson_21": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_jackson_21.wav",
-    "length": 0.487,
+  "1_jackson_48": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_jackson_48.wav",
+    "length": 0.586125,
     "digit_id": "1"
   },
-  "6_nicolas_3": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_nicolas_3.wav",
-    "length": 0.390625,
-    "digit_id": "6"
+  "2_lucas_31": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_lucas_31.wav",
+    "length": 0.611875,
+    "digit_id": "2"
   },
-  "1_nicolas_26": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_nicolas_26.wav",
-    "length": 0.323,
-    "digit_id": "1"
+  "4_yweweler_24": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_yweweler_24.wav",
+    "length": 0.3445,
+    "digit_id": "4"
   },
-  "5_yweweler_11": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_yweweler_11.wav",
-    "length": 0.509,
+  "5_george_3": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_george_3.wav",
+    "length": 0.500375,
     "digit_id": "5"
   },
-  "9_theo_21": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_theo_21.wav",
-    "length": 0.36725,
+  "6_theo_39": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_theo_39.wav",
+    "length": 0.427625,
+    "digit_id": "6"
+  },
+  "9_theo_23": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_theo_23.wav",
+    "length": 0.5135,
     "digit_id": "9"
+  },
+  "3_george_42": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_george_42.wav",
+    "length": 0.293875,
+    "digit_id": "3"
+  },
+  "8_nicolas_49": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_nicolas_49.wav",
+    "length": 0.402125,
+    "digit_id": "8"
+  },
+  "6_nicolas_23": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_nicolas_23.wav",
+    "length": 0.162,
+    "digit_id": "6"
+  },
+  "6_george_40": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_george_40.wav",
+    "length": 0.413375,
+    "digit_id": "6"
+  },
+  "8_jackson_15": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_jackson_15.wav",
+    "length": 0.3935,
+    "digit_id": "8"
+  },
+  "6_jackson_15": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_jackson_15.wav",
+    "length": 0.87975,
+    "digit_id": "6"
+  },
+  "6_lucas_18": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_lucas_18.wav",
+    "length": 0.6015,
+    "digit_id": "6"
+  },
+  "7_george_38": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_george_38.wav",
+    "length": 0.51075,
+    "digit_id": "7"
+  },
+  "9_theo_12": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_theo_12.wav",
+    "length": 0.429625,
+    "digit_id": "9"
+  },
+  "4_lucas_41": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_lucas_41.wav",
+    "length": 0.57525,
+    "digit_id": "4"
+  },
+  "3_yweweler_1": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_yweweler_1.wav",
+    "length": 0.313875,
+    "digit_id": "3"
+  },
+  "1_theo_19": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_theo_19.wav",
+    "length": 0.348,
+    "digit_id": "1"
+  },
+  "4_yweweler_16": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_yweweler_16.wav",
+    "length": 0.268375,
+    "digit_id": "4"
+  },
+  "7_lucas_18": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_lucas_18.wav",
+    "length": 0.670375,
+    "digit_id": "7"
+  },
+  "3_lucas_5": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_lucas_5.wav",
+    "length": 0.531375,
+    "digit_id": "3"
+  },
+  "9_theo_10": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_theo_10.wav",
+    "length": 0.360625,
+    "digit_id": "9"
+  },
+  "8_jackson_45": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_jackson_45.wav",
+    "length": 0.43825,
+    "digit_id": "8"
+  },
+  "3_theo_35": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_theo_35.wav",
+    "length": 0.32625,
+    "digit_id": "3"
+  },
+  "5_jackson_36": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_jackson_36.wav",
+    "length": 0.37075,
+    "digit_id": "5"
+  },
+  "1_yweweler_24": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_yweweler_24.wav",
+    "length": 0.305125,
+    "digit_id": "1"
+  },
+  "4_lucas_17": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_lucas_17.wav",
+    "length": 0.5805,
+    "digit_id": "4"
+  },
+  "1_theo_5": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_theo_5.wav",
+    "length": 0.217125,
+    "digit_id": "1"
+  },
+  "4_jackson_39": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_jackson_39.wav",
+    "length": 0.484875,
+    "digit_id": "4"
+  },
+  "7_george_22": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_george_22.wav",
+    "length": 0.433875,
+    "digit_id": "7"
+  },
+  "6_jackson_44": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_jackson_44.wav",
+    "length": 0.492,
+    "digit_id": "6"
   },
   "2_theo_37": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_theo_37.wav",
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_theo_37.wav",
     "length": 0.267375,
     "digit_id": "2"
   },
-  "5_lucas_1": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_lucas_1.wav",
-    "length": 1.14725,
+  "4_theo_30": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_theo_30.wav",
+    "length": 0.255625,
+    "digit_id": "4"
+  },
+  "3_jackson_10": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_jackson_10.wav",
+    "length": 0.461375,
+    "digit_id": "3"
+  },
+  "5_yweweler_41": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_yweweler_41.wav",
+    "length": 0.4975,
     "digit_id": "5"
   },
-  "1_george_19": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_george_19.wav",
-    "length": 0.490125,
-    "digit_id": "1"
+  "6_yweweler_24": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_yweweler_24.wav",
+    "length": 0.2335,
+    "digit_id": "6"
   },
-  "7_george_48": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_george_48.wav",
-    "length": 0.548,
+  "8_yweweler_10": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_yweweler_10.wav",
+    "length": 0.315875,
+    "digit_id": "8"
+  },
+  "3_lucas_30": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_lucas_30.wav",
+    "length": 0.602625,
+    "digit_id": "3"
+  },
+  "9_yweweler_47": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_yweweler_47.wav",
+    "length": 0.431375,
+    "digit_id": "9"
+  },
+  "7_george_21": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_george_21.wav",
+    "length": 0.44725,
     "digit_id": "7"
   },
-  "4_jackson_9": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_jackson_9.wav",
+  "9_george_26": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_george_26.wav",
+    "length": 0.4405,
+    "digit_id": "9"
+  },
+  "7_george_4": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_george_4.wav",
+    "length": 0.616375,
+    "digit_id": "7"
+  },
+  "4_jackson_35": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_jackson_35.wav",
+    "length": 0.43275,
+    "digit_id": "4"
+  },
+  "9_george_35": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_george_35.wav",
+    "length": 0.357875,
+    "digit_id": "9"
+  },
+  "8_george_49": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_george_49.wav",
+    "length": 0.405375,
+    "digit_id": "8"
+  },
+  "3_jackson_37": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_jackson_37.wav",
+    "length": 0.51075,
+    "digit_id": "3"
+  },
+  "7_nicolas_26": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_nicolas_26.wav",
+    "length": 0.32475,
+    "digit_id": "7"
+  },
+  "1_yweweler_25": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_yweweler_25.wav",
+    "length": 0.264875,
+    "digit_id": "1"
+  },
+  "8_yweweler_14": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_yweweler_14.wav",
+    "length": 0.332125,
+    "digit_id": "8"
+  },
+  "5_jackson_2": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_jackson_2.wav",
+    "length": 0.454375,
+    "digit_id": "5"
+  },
+  "6_nicolas_22": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_nicolas_22.wav",
+    "length": 0.260125,
+    "digit_id": "6"
+  },
+  "1_theo_21": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_theo_21.wav",
+    "length": 0.497625,
+    "digit_id": "1"
+  },
+  "9_lucas_28": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_lucas_28.wav",
+    "length": 0.48975,
+    "digit_id": "9"
+  },
+  "0_jackson_25": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_jackson_25.wav",
+    "length": 0.61775,
+    "digit_id": "0"
+  },
+  "1_lucas_37": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_lucas_37.wav",
     "length": 0.42175,
+    "digit_id": "1"
+  },
+  "4_nicolas_13": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_nicolas_13.wav",
+    "length": 0.336125,
     "digit_id": "4"
   },
-  "0_jackson_21": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_jackson_21.wav",
-    "length": 0.599625,
+  "8_lucas_12": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_lucas_12.wav",
+    "length": 0.485375,
+    "digit_id": "8"
+  },
+  "0_yweweler_19": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_yweweler_19.wav",
+    "length": 0.4685,
     "digit_id": "0"
   },
-  "2_jackson_7": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_jackson_7.wav",
-    "length": 0.484,
+  "2_jackson_14": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_jackson_14.wav",
+    "length": 0.512625,
     "digit_id": "2"
   },
-  "8_theo_22": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_theo_22.wav",
-    "length": 0.566875,
+  "8_jackson_36": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_jackson_36.wav",
+    "length": 0.417375,
     "digit_id": "8"
   },
-  "0_nicolas_17": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_nicolas_17.wav",
-    "length": 0.47775,
-    "digit_id": "0"
-  },
-  "0_lucas_6": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_lucas_6.wav",
-    "length": 0.536,
-    "digit_id": "0"
-  },
-  "1_jackson_16": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_jackson_16.wav",
-    "length": 0.491125,
-    "digit_id": "1"
-  },
-  "6_george_20": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_george_20.wav",
-    "length": 0.441125,
-    "digit_id": "6"
-  },
-  "9_theo_49": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_theo_49.wav",
-    "length": 0.4005,
-    "digit_id": "9"
-  },
-  "7_theo_29": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_theo_29.wav",
-    "length": 0.26,
-    "digit_id": "7"
-  },
-  "3_theo_23": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_theo_23.wav",
-    "length": 0.50825,
+  "3_jackson_30": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_jackson_30.wav",
+    "length": 0.484625,
     "digit_id": "3"
   },
-  "5_george_25": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_george_25.wav",
-    "length": 0.408,
+  "5_yweweler_43": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_yweweler_43.wav",
+    "length": 0.470375,
     "digit_id": "5"
   },
-  "4_jackson_24": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_jackson_24.wav",
-    "length": 0.396125,
+  "3_george_30": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_george_30.wav",
+    "length": 0.27625,
+    "digit_id": "3"
+  },
+  "9_george_34": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_george_34.wav",
+    "length": 0.379,
+    "digit_id": "9"
+  },
+  "4_theo_8": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_theo_8.wav",
+    "length": 0.273625,
     "digit_id": "4"
   },
-  "0_nicolas_18": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_nicolas_18.wav",
-    "length": 0.565875,
-    "digit_id": "0"
+  "6_nicolas_6": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_nicolas_6.wav",
+    "length": 0.239125,
+    "digit_id": "6"
   },
-  "5_george_35": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_george_35.wav",
-    "length": 0.4765,
-    "digit_id": "5"
+  "7_george_25": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_george_25.wav",
+    "length": 0.568,
+    "digit_id": "7"
   },
-  "8_yweweler_28": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_yweweler_28.wav",
-    "length": 0.537,
-    "digit_id": "8"
-  },
-  "0_yweweler_39": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_yweweler_39.wav",
-    "length": 0.4425,
-    "digit_id": "0"
-  },
-  "2_lucas_8": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_lucas_8.wav",
-    "length": 0.4265,
+  "2_jackson_48": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_jackson_48.wav",
+    "length": 0.50175,
     "digit_id": "2"
   },
-  "9_george_5": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_george_5.wav",
-    "length": 0.535625,
-    "digit_id": "9"
+  "2_yweweler_10": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_yweweler_10.wav",
+    "length": 0.265375,
+    "digit_id": "2"
   },
-  "3_lucas_13": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_lucas_13.wav",
-    "length": 0.5015,
-    "digit_id": "3"
-  },
-  "9_theo_34": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_theo_34.wav",
-    "length": 0.316375,
-    "digit_id": "9"
-  },
-  "5_nicolas_22": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_nicolas_22.wav",
-    "length": 0.395625,
-    "digit_id": "5"
-  },
-  "1_yweweler_7": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_yweweler_7.wav",
-    "length": 0.26975,
-    "digit_id": "1"
-  },
-  "4_theo_23": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_theo_23.wav",
-    "length": 0.492375,
-    "digit_id": "4"
-  },
-  "7_nicolas_4": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_nicolas_4.wav",
-    "length": 0.446125,
+  "7_nicolas_24": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_nicolas_24.wav",
+    "length": 0.27675,
     "digit_id": "7"
   },
-  "1_yweweler_36": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_yweweler_36.wav",
-    "length": 0.349625,
-    "digit_id": "1"
+  "0_yweweler_3": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_yweweler_3.wav",
+    "length": 0.35825,
+    "digit_id": "0"
   },
-  "5_lucas_28": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_lucas_28.wav",
-    "length": 0.544375,
-    "digit_id": "5"
+  "0_yweweler_40": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_yweweler_40.wav",
+    "length": 0.4505,
+    "digit_id": "0"
   },
-  "8_lucas_36": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_lucas_36.wav",
-    "length": 0.52575,
+  "8_theo_27": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_theo_27.wav",
+    "length": 0.62825,
     "digit_id": "8"
   },
-  "7_lucas_29": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_lucas_29.wav",
-    "length": 1.299875,
-    "digit_id": "7"
-  },
-  "7_yweweler_15": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_yweweler_15.wav",
-    "length": 0.31475,
-    "digit_id": "7"
-  },
-  "3_nicolas_37": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_nicolas_37.wav",
-    "length": 0.26375,
-    "digit_id": "3"
-  },
-  "6_jackson_12": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/6_jackson_12.wav",
-    "length": 0.8605,
-    "digit_id": "6"
-  },
-  "7_theo_11": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_theo_11.wav",
-    "length": 0.4385,
-    "digit_id": "7"
-  },
-  "1_lucas_10": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_lucas_10.wav",
-    "length": 0.381375,
+  "1_nicolas_16": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_nicolas_16.wav",
+    "length": 0.298,
     "digit_id": "1"
   },
-  "4_jackson_16": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_jackson_16.wav",
+  "1_george_25": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_george_25.wav",
+    "length": 0.382875,
+    "digit_id": "1"
+  },
+  "0_lucas_38": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_lucas_38.wav",
+    "length": 0.6045,
+    "digit_id": "0"
+  },
+  "4_george_48": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_george_48.wav",
+    "length": 0.470875,
+    "digit_id": "4"
+  },
+  "3_lucas_28": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_lucas_28.wav",
+    "length": 0.583375,
+    "digit_id": "3"
+  },
+  "2_nicolas_47": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_nicolas_47.wav",
+    "length": 0.4215,
+    "digit_id": "2"
+  },
+  "5_george_38": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_george_38.wav",
+    "length": 0.3425,
+    "digit_id": "5"
+  },
+  "8_jackson_6": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_jackson_6.wav",
+    "length": 0.422375,
+    "digit_id": "8"
+  },
+  "8_nicolas_28": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_nicolas_28.wav",
+    "length": 0.38275,
+    "digit_id": "8"
+  },
+  "5_lucas_7": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_lucas_7.wav",
+    "length": 0.6065,
+    "digit_id": "5"
+  },
+  "4_nicolas_17": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_nicolas_17.wav",
+    "length": 0.39275,
+    "digit_id": "4"
+  },
+  "9_nicolas_43": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_nicolas_43.wav",
+    "length": 0.473375,
+    "digit_id": "9"
+  },
+  "6_yweweler_4": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_yweweler_4.wav",
+    "length": 0.18125,
+    "digit_id": "6"
+  },
+  "1_nicolas_20": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_nicolas_20.wav",
+    "length": 0.306,
+    "digit_id": "1"
+  },
+  "4_george_23": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_george_23.wav",
+    "length": 0.313875,
+    "digit_id": "4"
+  },
+  "8_george_43": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_george_43.wav",
+    "length": 0.424125,
+    "digit_id": "8"
+  },
+  "7_lucas_7": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_lucas_7.wav",
+    "length": 1.038625,
+    "digit_id": "7"
+  },
+  "7_george_33": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_george_33.wav",
+    "length": 0.54225,
+    "digit_id": "7"
+  },
+  "7_lucas_45": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_lucas_45.wav",
+    "length": 0.491,
+    "digit_id": "7"
+  },
+  "7_theo_16": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_theo_16.wav",
+    "length": 0.391875,
+    "digit_id": "7"
+  },
+  "6_theo_44": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_theo_44.wav",
+    "length": 0.46,
+    "digit_id": "6"
+  },
+  "9_theo_5": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_theo_5.wav",
+    "length": 0.45975,
+    "digit_id": "9"
+  },
+  "3_jackson_26": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_jackson_26.wav",
+    "length": 0.444625,
+    "digit_id": "3"
+  },
+  "4_yweweler_48": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_yweweler_48.wav",
+    "length": 0.274,
+    "digit_id": "4"
+  },
+  "5_jackson_42": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_jackson_42.wav",
+    "length": 0.467375,
+    "digit_id": "5"
+  },
+  "4_lucas_13": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_lucas_13.wav",
+    "length": 0.516125,
+    "digit_id": "4"
+  },
+  "0_lucas_41": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_lucas_41.wav",
+    "length": 0.55425,
+    "digit_id": "0"
+  },
+  "9_nicolas_0": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_nicolas_0.wav",
+    "length": 0.416875,
+    "digit_id": "9"
+  },
+  "5_george_19": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_george_19.wav",
+    "length": 0.5255,
+    "digit_id": "5"
+  },
+  "1_theo_9": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_theo_9.wav",
+    "length": 0.23625,
+    "digit_id": "1"
+  },
+  "4_theo_15": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_theo_15.wav",
     "length": 0.432625,
     "digit_id": "4"
   },
-  "2_nicolas_34": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_nicolas_34.wav",
-    "length": 0.31225,
-    "digit_id": "2"
-  },
-  "0_theo_47": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_theo_47.wav",
-    "length": 0.402125,
-    "digit_id": "0"
-  },
-  "3_yweweler_5": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_yweweler_5.wav",
-    "length": 0.30975,
-    "digit_id": "3"
-  },
-  "7_lucas_17": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_lucas_17.wav",
-    "length": 0.5135,
-    "digit_id": "7"
-  },
-  "2_yweweler_14": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_yweweler_14.wav",
-    "length": 0.310625,
-    "digit_id": "2"
-  },
-  "7_jackson_14": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_jackson_14.wav",
-    "length": 0.477625,
-    "digit_id": "7"
-  },
-  "0_nicolas_33": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_nicolas_33.wav",
-    "length": 0.367,
-    "digit_id": "0"
-  },
-  "0_theo_13": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_theo_13.wav",
-    "length": 0.42275,
-    "digit_id": "0"
-  },
-  "5_jackson_35": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_jackson_35.wav",
-    "length": 0.432375,
-    "digit_id": "5"
-  },
-  "1_george_17": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/1_george_17.wav",
-    "length": 0.561,
+  "1_lucas_45": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_lucas_45.wav",
+    "length": 0.410625,
     "digit_id": "1"
   },
-  "0_theo_40": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_theo_40.wav",
-    "length": 0.416375,
+  "1_george_33": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_george_33.wav",
+    "length": 0.427875,
+    "digit_id": "1"
+  },
+  "0_george_26": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_george_26.wav",
+    "length": 0.617625,
     "digit_id": "0"
   },
-  "9_jackson_15": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_jackson_15.wav",
-    "length": 0.5895,
+  "9_jackson_5": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_jackson_5.wav",
+    "length": 0.575625,
     "digit_id": "9"
   },
-  "9_theo_23": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_theo_23.wav",
-    "length": 0.5135,
-    "digit_id": "9"
-  },
-  "8_jackson_37": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_jackson_37.wav",
-    "length": 0.406125,
-    "digit_id": "8"
-  },
-  "0_jackson_40": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_jackson_40.wav",
-    "length": 0.713875,
-    "digit_id": "0"
-  },
-  "9_jackson_43": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_jackson_43.wav",
-    "length": 0.62025,
-    "digit_id": "9"
-  },
-  "2_theo_31": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/2_theo_31.wav",
-    "length": 0.334125,
-    "digit_id": "2"
-  },
-  "7_yweweler_14": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/7_yweweler_14.wav",
-    "length": 0.32375,
+  "7_yweweler_33": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_yweweler_33.wav",
+    "length": 0.476,
     "digit_id": "7"
   },
-  "3_yweweler_13": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/3_yweweler_13.wav",
-    "length": 0.384,
-    "digit_id": "3"
+  "6_jackson_37": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_jackson_37.wav",
+    "length": 0.704875,
+    "digit_id": "6"
   },
-  "9_theo_42": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_theo_42.wav",
-    "length": 0.46225,
-    "digit_id": "9"
+  "8_george_32": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_george_32.wav",
+    "length": 0.41425,
+    "digit_id": "8"
   },
-  "5_lucas_8": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_lucas_8.wav",
-    "length": 0.661875,
+  "7_theo_41": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_theo_41.wav",
+    "length": 0.424125,
+    "digit_id": "7"
+  },
+  "2_nicolas_1": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_nicolas_1.wav",
+    "length": 0.298125,
+    "digit_id": "2"
+  },
+  "6_george_17": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_george_17.wav",
+    "length": 0.4175,
+    "digit_id": "6"
+  },
+  "8_yweweler_36": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_yweweler_36.wav",
+    "length": 0.294125,
+    "digit_id": "8"
+  },
+  "5_theo_45": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_theo_45.wav",
+    "length": 0.423625,
     "digit_id": "5"
   },
+  "1_lucas_0": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_lucas_0.wav",
+    "length": 0.37775,
+    "digit_id": "1"
+  },
+  "8_george_7": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_george_7.wav",
+    "length": 0.49225,
+    "digit_id": "8"
+  },
+  "8_yweweler_28": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_yweweler_28.wav",
+    "length": 0.537,
+    "digit_id": "8"
+  },
+  "5_jackson_1": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_jackson_1.wav",
+    "length": 0.414875,
+    "digit_id": "5"
+  },
+  "7_nicolas_2": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_nicolas_2.wav",
+    "length": 0.446125,
+    "digit_id": "7"
+  },
   "5_nicolas_48": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_nicolas_48.wav",
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_nicolas_48.wav",
     "length": 0.415375,
     "digit_id": "5"
   },
-  "8_yweweler_25": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/8_yweweler_25.wav",
-    "length": 0.279375,
-    "digit_id": "8"
-  },
-  "4_jackson_25": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/4_jackson_25.wav",
-    "length": 0.41075,
+  "4_yweweler_28": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_yweweler_28.wav",
+    "length": 0.2725,
     "digit_id": "4"
   },
-  "9_lucas_0": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/9_lucas_0.wav",
-    "length": 0.510875,
-    "digit_id": "9"
-  },
-  "0_lucas_45": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/0_lucas_45.wav",
-    "length": 0.47025,
+  "0_lucas_3": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_lucas_3.wav",
+    "length": 0.556875,
     "digit_id": "0"
   },
-  "5_george_1": {
-    "wav": "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings/5_george_1.wav",
-    "length": 0.576375,
+  "8_lucas_4": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_lucas_4.wav",
+    "length": 0.678875,
+    "digit_id": "8"
+  },
+  "8_jackson_2": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_jackson_2.wav",
+    "length": 0.382625,
+    "digit_id": "8"
+  },
+  "5_lucas_15": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_lucas_15.wav",
+    "length": 0.552875,
     "digit_id": "5"
+  },
+  "4_yweweler_10": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_yweweler_10.wav",
+    "length": 0.36225,
+    "digit_id": "4"
+  },
+  "9_jackson_30": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_jackson_30.wav",
+    "length": 0.636625,
+    "digit_id": "9"
+  },
+  "0_yweweler_28": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_yweweler_28.wav",
+    "length": 0.420125,
+    "digit_id": "0"
+  },
+  "3_yweweler_24": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_yweweler_24.wav",
+    "length": 0.275375,
+    "digit_id": "3"
+  },
+  "5_george_9": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_george_9.wav",
+    "length": 0.461875,
+    "digit_id": "5"
+  },
+  "0_lucas_16": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_lucas_16.wav",
+    "length": 0.597875,
+    "digit_id": "0"
+  },
+  "8_theo_40": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_theo_40.wav",
+    "length": 0.356875,
+    "digit_id": "8"
+  },
+  "5_jackson_48": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_jackson_48.wav",
+    "length": 0.5065,
+    "digit_id": "5"
+  },
+  "5_lucas_26": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_lucas_26.wav",
+    "length": 0.59925,
+    "digit_id": "5"
+  },
+  "9_george_9": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_george_9.wav",
+    "length": 0.515625,
+    "digit_id": "9"
+  },
+  "4_nicolas_18": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_nicolas_18.wav",
+    "length": 0.37675,
+    "digit_id": "4"
+  },
+  "4_nicolas_47": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_nicolas_47.wav",
+    "length": 0.359625,
+    "digit_id": "4"
+  },
+  "2_theo_49": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_theo_49.wav",
+    "length": 0.25525,
+    "digit_id": "2"
+  },
+  "9_nicolas_48": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_nicolas_48.wav",
+    "length": 0.388,
+    "digit_id": "9"
+  },
+  "8_jackson_14": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_jackson_14.wav",
+    "length": 0.363125,
+    "digit_id": "8"
+  },
+  "6_theo_7": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_theo_7.wav",
+    "length": 0.44775,
+    "digit_id": "6"
+  },
+  "1_george_40": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_george_40.wav",
+    "length": 0.356125,
+    "digit_id": "1"
+  },
+  "7_jackson_7": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_jackson_7.wav",
+    "length": 0.420375,
+    "digit_id": "7"
+  },
+  "4_george_9": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_george_9.wav",
+    "length": 0.542625,
+    "digit_id": "4"
+  },
+  "8_theo_41": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_theo_41.wav",
+    "length": 0.359,
+    "digit_id": "8"
+  },
+  "8_george_18": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_george_18.wav",
+    "length": 0.468375,
+    "digit_id": "8"
+  },
+  "9_yweweler_25": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_yweweler_25.wav",
+    "length": 0.44475,
+    "digit_id": "9"
+  },
+  "3_yweweler_16": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_yweweler_16.wav",
+    "length": 0.3485,
+    "digit_id": "3"
+  },
+  "0_george_41": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_george_41.wav",
+    "length": 0.37825,
+    "digit_id": "0"
+  },
+  "8_theo_16": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_theo_16.wav",
+    "length": 0.4045,
+    "digit_id": "8"
+  },
+  "2_lucas_49": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_lucas_49.wav",
+    "length": 1.213375,
+    "digit_id": "2"
+  },
+  "0_nicolas_16": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_nicolas_16.wav",
+    "length": 0.494625,
+    "digit_id": "0"
+  },
+  "3_george_38": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_george_38.wav",
+    "length": 0.297125,
+    "digit_id": "3"
+  },
+  "7_theo_43": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_theo_43.wav",
+    "length": 0.52475,
+    "digit_id": "7"
+  },
+  "5_jackson_11": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_jackson_11.wav",
+    "length": 0.444375,
+    "digit_id": "5"
+  },
+  "8_jackson_42": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_jackson_42.wav",
+    "length": 0.422375,
+    "digit_id": "8"
+  },
+  "9_yweweler_28": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_yweweler_28.wav",
+    "length": 0.372875,
+    "digit_id": "9"
+  },
+  "4_nicolas_9": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_nicolas_9.wav",
+    "length": 0.328625,
+    "digit_id": "4"
+  },
+  "7_yweweler_48": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_yweweler_48.wav",
+    "length": 0.297625,
+    "digit_id": "7"
+  },
+  "1_lucas_14": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_lucas_14.wav",
+    "length": 0.44875,
+    "digit_id": "1"
+  },
+  "2_nicolas_36": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_nicolas_36.wav",
+    "length": 0.326875,
+    "digit_id": "2"
+  },
+  "2_lucas_36": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_lucas_36.wav",
+    "length": 0.536125,
+    "digit_id": "2"
+  },
+  "1_lucas_4": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_lucas_4.wav",
+    "length": 0.384875,
+    "digit_id": "1"
+  },
+  "3_lucas_21": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_lucas_21.wav",
+    "length": 0.4465,
+    "digit_id": "3"
+  },
+  "8_lucas_27": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_lucas_27.wav",
+    "length": 0.53575,
+    "digit_id": "8"
+  },
+  "7_lucas_1": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_lucas_1.wav",
+    "length": 0.451,
+    "digit_id": "7"
+  },
+  "0_jackson_14": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_jackson_14.wav",
+    "length": 0.62275,
+    "digit_id": "0"
+  },
+  "2_jackson_22": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_jackson_22.wav",
+    "length": 0.47975,
+    "digit_id": "2"
+  },
+  "7_jackson_29": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_jackson_29.wav",
+    "length": 0.447,
+    "digit_id": "7"
+  },
+  "4_lucas_20": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_lucas_20.wav",
+    "length": 0.265625,
+    "digit_id": "4"
+  },
+  "9_nicolas_46": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_nicolas_46.wav",
+    "length": 0.442375,
+    "digit_id": "9"
+  },
+  "6_jackson_12": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_jackson_12.wav",
+    "length": 0.8605,
+    "digit_id": "6"
+  },
+  "2_nicolas_39": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_nicolas_39.wav",
+    "length": 0.225125,
+    "digit_id": "2"
+  },
+  "3_lucas_10": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_lucas_10.wav",
+    "length": 0.5425,
+    "digit_id": "3"
+  },
+  "2_theo_31": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_theo_31.wav",
+    "length": 0.334125,
+    "digit_id": "2"
+  },
+  "0_jackson_21": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_jackson_21.wav",
+    "length": 0.599625,
+    "digit_id": "0"
+  },
+  "8_george_29": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_george_29.wav",
+    "length": 0.32625,
+    "digit_id": "8"
+  },
+  "2_nicolas_46": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_nicolas_46.wav",
+    "length": 0.2785,
+    "digit_id": "2"
+  },
+  "0_yweweler_13": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_yweweler_13.wav",
+    "length": 0.430375,
+    "digit_id": "0"
+  },
+  "7_theo_31": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_theo_31.wav",
+    "length": 0.412625,
+    "digit_id": "7"
+  },
+  "7_yweweler_34": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_yweweler_34.wav",
+    "length": 0.453125,
+    "digit_id": "7"
+  },
+  "5_theo_47": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_theo_47.wav",
+    "length": 0.395625,
+    "digit_id": "5"
+  },
+  "6_jackson_26": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_jackson_26.wav",
+    "length": 0.71725,
+    "digit_id": "6"
+  },
+  "0_george_46": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_george_46.wav",
+    "length": 0.466625,
+    "digit_id": "0"
+  },
+  "4_theo_0": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_theo_0.wav",
+    "length": 0.27375,
+    "digit_id": "4"
+  },
+  "1_theo_45": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_theo_45.wav",
+    "length": 0.195625,
+    "digit_id": "1"
+  },
+  "5_jackson_9": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_jackson_9.wav",
+    "length": 0.576,
+    "digit_id": "5"
+  },
+  "6_lucas_22": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_lucas_22.wav",
+    "length": 0.97425,
+    "digit_id": "6"
+  },
+  "1_nicolas_48": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_nicolas_48.wav",
+    "length": 0.372625,
+    "digit_id": "1"
+  },
+  "9_george_49": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_george_49.wav",
+    "length": 0.4485,
+    "digit_id": "9"
+  },
+  "3_nicolas_26": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_nicolas_26.wav",
+    "length": 0.334625,
+    "digit_id": "3"
+  },
+  "5_jackson_12": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_jackson_12.wav",
+    "length": 0.36775,
+    "digit_id": "5"
+  },
+  "5_nicolas_2": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_nicolas_2.wav",
+    "length": 0.312375,
+    "digit_id": "5"
+  },
+  "5_yweweler_48": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_yweweler_48.wav",
+    "length": 0.49825,
+    "digit_id": "5"
+  },
+  "0_lucas_24": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_lucas_24.wav",
+    "length": 0.991125,
+    "digit_id": "0"
+  },
+  "4_lucas_39": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_lucas_39.wav",
+    "length": 0.74875,
+    "digit_id": "4"
+  },
+  "4_nicolas_6": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_nicolas_6.wav",
+    "length": 0.34575,
+    "digit_id": "4"
+  },
+  "9_george_6": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_george_6.wav",
+    "length": 0.573375,
+    "digit_id": "9"
+  },
+  "0_theo_13": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_theo_13.wav",
+    "length": 0.42275,
+    "digit_id": "0"
+  },
+  "6_lucas_34": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_lucas_34.wav",
+    "length": 0.49825,
+    "digit_id": "6"
+  },
+  "5_george_4": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_george_4.wav",
+    "length": 0.475375,
+    "digit_id": "5"
+  },
+  "8_george_38": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_george_38.wav",
+    "length": 0.32125,
+    "digit_id": "8"
+  },
+  "4_lucas_40": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_lucas_40.wav",
+    "length": 0.5625,
+    "digit_id": "4"
+  },
+  "3_jackson_35": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_jackson_35.wav",
+    "length": 0.521875,
+    "digit_id": "3"
+  },
+  "6_theo_35": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_theo_35.wav",
+    "length": 0.448875,
+    "digit_id": "6"
+  },
+  "8_george_10": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_george_10.wav",
+    "length": 0.45875,
+    "digit_id": "8"
+  },
+  "1_george_27": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_george_27.wav",
+    "length": 0.56125,
+    "digit_id": "1"
+  },
+  "3_yweweler_37": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_yweweler_37.wav",
+    "length": 0.409625,
+    "digit_id": "3"
+  },
+  "8_george_26": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_george_26.wav",
+    "length": 0.44625,
+    "digit_id": "8"
+  },
+  "3_jackson_25": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_jackson_25.wav",
+    "length": 0.479,
+    "digit_id": "3"
+  },
+  "1_jackson_8": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_jackson_8.wav",
+    "length": 0.5065,
+    "digit_id": "1"
+  },
+  "4_theo_13": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_theo_13.wav",
+    "length": 0.318,
+    "digit_id": "4"
+  },
+  "3_nicolas_12": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_nicolas_12.wav",
+    "length": 0.205,
+    "digit_id": "3"
+  },
+  "8_yweweler_46": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_yweweler_46.wav",
+    "length": 0.328625,
+    "digit_id": "8"
+  },
+  "7_theo_4": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_theo_4.wav",
+    "length": 0.428,
+    "digit_id": "7"
+  },
+  "4_lucas_33": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_lucas_33.wav",
+    "length": 0.500875,
+    "digit_id": "4"
+  },
+  "3_jackson_16": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_jackson_16.wav",
+    "length": 0.479875,
+    "digit_id": "3"
+  },
+  "1_yweweler_16": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_yweweler_16.wav",
+    "length": 0.345,
+    "digit_id": "1"
+  },
+  "6_jackson_47": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_jackson_47.wav",
+    "length": 0.695375,
+    "digit_id": "6"
+  },
+  "6_lucas_38": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_lucas_38.wav",
+    "length": 0.49375,
+    "digit_id": "6"
+  },
+  "9_george_29": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_george_29.wav",
+    "length": 0.459125,
+    "digit_id": "9"
+  },
+  "0_lucas_4": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_lucas_4.wav",
+    "length": 0.509,
+    "digit_id": "0"
+  },
+  "1_theo_48": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_theo_48.wav",
+    "length": 0.375875,
+    "digit_id": "1"
+  },
+  "5_george_17": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_george_17.wav",
+    "length": 0.48425,
+    "digit_id": "5"
+  },
+  "6_lucas_10": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_lucas_10.wav",
+    "length": 0.606,
+    "digit_id": "6"
+  },
+  "8_jackson_46": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_jackson_46.wav",
+    "length": 0.4195,
+    "digit_id": "8"
+  },
+  "5_george_30": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_george_30.wav",
+    "length": 0.385875,
+    "digit_id": "5"
+  },
+  "5_jackson_35": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_jackson_35.wav",
+    "length": 0.432375,
+    "digit_id": "5"
+  },
+  "7_jackson_17": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_jackson_17.wav",
+    "length": 0.465875,
+    "digit_id": "7"
+  },
+  "5_theo_25": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_theo_25.wav",
+    "length": 0.39125,
+    "digit_id": "5"
+  },
+  "5_theo_49": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_theo_49.wav",
+    "length": 0.451375,
+    "digit_id": "5"
+  },
+  "0_yweweler_34": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_yweweler_34.wav",
+    "length": 0.36775,
+    "digit_id": "0"
+  },
+  "1_jackson_20": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_jackson_20.wav",
+    "length": 0.458,
+    "digit_id": "1"
+  },
+  "8_lucas_26": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_lucas_26.wav",
+    "length": 0.4765,
+    "digit_id": "8"
+  },
+  "9_yweweler_44": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_yweweler_44.wav",
+    "length": 0.327125,
+    "digit_id": "9"
+  },
+  "1_yweweler_38": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_yweweler_38.wav",
+    "length": 0.367625,
+    "digit_id": "1"
+  },
+  "1_yweweler_5": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_yweweler_5.wav",
+    "length": 0.327875,
+    "digit_id": "1"
+  },
+  "6_jackson_4": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_jackson_4.wav",
+    "length": 0.629375,
+    "digit_id": "6"
+  },
+  "7_yweweler_28": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_yweweler_28.wav",
+    "length": 0.419625,
+    "digit_id": "7"
+  },
+  "6_theo_36": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_theo_36.wav",
+    "length": 0.543375,
+    "digit_id": "6"
+  },
+  "7_nicolas_17": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_nicolas_17.wav",
+    "length": 0.378625,
+    "digit_id": "7"
+  },
+  "7_george_11": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_george_11.wav",
+    "length": 0.5305,
+    "digit_id": "7"
+  },
+  "3_george_35": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_george_35.wav",
+    "length": 0.359,
+    "digit_id": "3"
+  },
+  "1_nicolas_29": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_nicolas_29.wav",
+    "length": 0.31875,
+    "digit_id": "1"
+  },
+  "9_theo_46": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_theo_46.wav",
+    "length": 0.3855,
+    "digit_id": "9"
+  },
+  "0_lucas_32": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_lucas_32.wav",
+    "length": 0.5385,
+    "digit_id": "0"
+  },
+  "4_george_7": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_george_7.wav",
+    "length": 0.505125,
+    "digit_id": "4"
+  },
+  "2_lucas_20": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_lucas_20.wav",
+    "length": 0.363125,
+    "digit_id": "2"
+  },
+  "9_lucas_3": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_lucas_3.wav",
+    "length": 0.45325,
+    "digit_id": "9"
+  },
+  "0_jackson_0": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/0_jackson_0.wav",
+    "length": 0.6435,
+    "digit_id": "0"
+  },
+  "5_lucas_27": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/5_lucas_27.wav",
+    "length": 0.602125,
+    "digit_id": "5"
+  },
+  "7_yweweler_5": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_yweweler_5.wav",
+    "length": 0.47225,
+    "digit_id": "7"
+  },
+  "7_jackson_4": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_jackson_4.wav",
+    "length": 0.41725,
+    "digit_id": "7"
+  },
+  "2_yweweler_0": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_yweweler_0.wav",
+    "length": 0.274875,
+    "digit_id": "2"
+  },
+  "6_nicolas_29": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_nicolas_29.wav",
+    "length": 0.196125,
+    "digit_id": "6"
+  },
+  "9_theo_38": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_theo_38.wav",
+    "length": 0.513125,
+    "digit_id": "9"
+  },
+  "6_lucas_1": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_lucas_1.wav",
+    "length": 0.62225,
+    "digit_id": "6"
+  },
+  "3_george_26": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/3_george_26.wav",
+    "length": 0.401625,
+    "digit_id": "3"
+  },
+  "2_lucas_25": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_lucas_25.wav",
+    "length": 0.728625,
+    "digit_id": "2"
+  },
+  "6_theo_13": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_theo_13.wav",
+    "length": 0.340125,
+    "digit_id": "6"
+  },
+  "8_nicolas_36": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_nicolas_36.wav",
+    "length": 0.437375,
+    "digit_id": "8"
+  },
+  "7_jackson_44": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_jackson_44.wav",
+    "length": 0.5135,
+    "digit_id": "7"
+  },
+  "7_theo_46": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_theo_46.wav",
+    "length": 0.38125,
+    "digit_id": "7"
+  },
+  "1_yweweler_29": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_yweweler_29.wav",
+    "length": 0.34475,
+    "digit_id": "1"
+  },
+  "2_george_8": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_george_8.wav",
+    "length": 0.443125,
+    "digit_id": "2"
+  },
+  "9_theo_27": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_theo_27.wav",
+    "length": 0.869125,
+    "digit_id": "9"
+  },
+  "9_yweweler_37": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/9_yweweler_37.wav",
+    "length": 0.3455,
+    "digit_id": "9"
+  },
+  "8_nicolas_45": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_nicolas_45.wav",
+    "length": 0.389875,
+    "digit_id": "8"
+  },
+  "6_theo_49": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/6_theo_49.wav",
+    "length": 0.34775,
+    "digit_id": "6"
+  },
+  "4_jackson_30": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_jackson_30.wav",
+    "length": 0.44025,
+    "digit_id": "4"
+  },
+  "1_lucas_48": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_lucas_48.wav",
+    "length": 0.26,
+    "digit_id": "1"
+  },
+  "2_nicolas_2": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/2_nicolas_2.wav",
+    "length": 0.36475,
+    "digit_id": "2"
+  },
+  "1_george_23": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/1_george_23.wav",
+    "length": 0.3675,
+    "digit_id": "1"
+  },
+  "7_yweweler_31": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/7_yweweler_31.wav",
+    "length": 0.2645,
+    "digit_id": "7"
+  },
+  "4_lucas_49": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/4_lucas_49.wav",
+    "length": 0.456625,
+    "digit_id": "4"
+  },
+  "8_nicolas_26": {
+    "wav": "{data_root}/MyDrive/samples/audioMNIST_dataset/recordings/8_nicolas_26.wav",
+    "length": 0.329875,
+    "digit_id": "8"
   }
 }
