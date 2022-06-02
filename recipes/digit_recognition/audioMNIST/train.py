@@ -29,11 +29,11 @@ import sys
 import torch
 import speechbrain as sb
 from hyperpyyaml import load_hyperpyyaml
-from prepare_audioMNIST import prepare_mini_librispeech
+from prepare_audioMNIST import prepare_audioMNIST
 
 
 # Brain class for speech enhancement training
-class SpkIdBrain(sb.Brain):
+class DigitIdBrain(sb.Brain):
     def compute_forward(self, batch, stage):
         """Runs all the computation of that transforms the input into the
         output probabilities over the N classes.
@@ -111,24 +111,24 @@ class SpkIdBrain(sb.Brain):
         """
 
         _, lens = batch.sig
-        spkid, _ = batch.spk_id_encoded
+        digitid, _ = batch.digit_id_encoded
 
         # Concatenate labels (due to data augmentation)
         if stage == sb.Stage.TRAIN and hasattr(self.modules, "env_corrupt"):
-            spkid = torch.cat([spkid, spkid], dim=0)
+            digitid = torch.cat([digitid, digitid], dim=0)
             lens = torch.cat([lens, lens])
 
         # Compute the cost function
-        loss = sb.nnet.losses.nll_loss(predictions, spkid, lens)
+        loss = sb.nnet.losses.nll_loss(predictions, digitid, lens)
 
         # Append this batch of losses to the loss metric for easy
         self.loss_metric.append(
-            batch.id, predictions, spkid, lens, reduction="batch"
+            batch.id, predictions, digitid, lens, reduction="batch"
         )
 
         # Compute classification error at test time
         if stage != sb.Stage.TRAIN:
-            self.error_metrics.append(batch.id, predictions, spkid, lens)
+            self.error_metrics.append(batch.id, predictions, digitid, lens)
 
         return loss
 
@@ -236,12 +236,12 @@ def dataio_prep(hparams):
         return sig
 
     # Define label pipeline:
-    @sb.utils.data_pipeline.takes("spk_id")
-    @sb.utils.data_pipeline.provides("spk_id", "spk_id_encoded")
-    def label_pipeline(spk_id):
-        yield spk_id
-        spk_id_encoded = label_encoder.encode_label_torch(spk_id)
-        yield spk_id_encoded
+    @sb.utils.data_pipeline.takes("digit_id")
+    @sb.utils.data_pipeline.provides("digit_id", "digit_id_encoded")
+    def label_pipeline(digit_id):
+        yield digit_id
+        digit_id_encoded = label_encoder.encode_label_torch(digit_id)
+        yield digit_id_encoded
 
     # Define datasets. We also connect the dataset with the data processing
     # functions defined above.
@@ -252,7 +252,7 @@ def dataio_prep(hparams):
             json_path=hparams[f"{dataset}_annotation"],
             replacements={"data_root": hparams["data_folder"]},
             dynamic_items=[audio_pipeline, label_pipeline],
-            output_keys=["id", "sig", "spk_id_encoded"],
+            output_keys=["id", "sig", "digit_id_encoded"],
         )
 
     # Load or compute the label encoder (with multi-GPU DDP support)
@@ -262,7 +262,7 @@ def dataio_prep(hparams):
     label_encoder.load_or_create(
         path=lab_enc_file,
         from_didatasets=[datasets["train"]],
-        output_key="spk_id",
+        output_key="digit_id",
     )
 
     return datasets
@@ -290,7 +290,7 @@ if __name__ == "__main__":
 
     # Data preparation, to be run on only one process.
     sb.utils.distributed.run_on_main(
-        prepare_mini_librispeech,
+        prepare_audioMNIST,
         kwargs={
             "data_folder": hparams["data_folder"],
             "save_json_train": hparams["train_annotation"],
@@ -304,7 +304,7 @@ if __name__ == "__main__":
     datasets = dataio_prep(hparams)
 
     # Initialize the Brain object to prepare for mask training.
-    spk_id_brain = SpkIdBrain(
+    digit_id_brain = DigitIdBrain(
         modules=hparams["modules"],
         opt_class=hparams["opt_class"],
         hparams=hparams,
@@ -316,8 +316,8 @@ if __name__ == "__main__":
     # necessary to update the parameters of the model. Since all objects
     # with changing state are managed by the Checkpointer, training can be
     # stopped at any point, and will be resumed on next call.
-    spk_id_brain.fit(
-        epoch_counter=spk_id_brain.hparams.epoch_counter,
+    digit_id_brain.fit(
+        epoch_counter=digit_id_brain.hparams.epoch_counter,
         train_set=datasets["train"],
         valid_set=datasets["valid"],
         train_loader_kwargs=hparams["dataloader_options"],
@@ -325,7 +325,7 @@ if __name__ == "__main__":
     )
 
     # Load the best checkpoint for evaluation
-    test_stats = spk_id_brain.evaluate(
+    test_stats = digit_id_brain.evaluate(
         test_set=datasets["test"],
         min_key="error",
         test_loader_kwargs=hparams["dataloader_options"],

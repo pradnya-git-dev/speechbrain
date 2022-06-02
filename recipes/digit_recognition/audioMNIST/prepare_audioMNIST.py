@@ -21,7 +21,7 @@ AUDIOMNIST_DATA_FOLDER = "/content/drive/MyDrive/samples/audioMNIST_dataset/reco
 SAMPLERATE = 8000
 
 
-def prepare_mini_librispeech(
+def prepare_audioMNIST(
     data_folder,
     save_json_train,
     save_json_valid,
@@ -180,5 +180,5 @@ def split_sets(wav_list, split_ratio):
     return data_split
 
 if __name__ == "__main__":
-  prepare_mini_librispeech(
+  prepare_audioMNIST(
     AUDIOMNIST_DATA_FOLDER, 'train.json', 'valid.json', 'test.json')
