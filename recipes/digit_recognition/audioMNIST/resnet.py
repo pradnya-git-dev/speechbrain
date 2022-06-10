@@ -17,6 +17,7 @@ import speechbrain as sb
 from speechbrain.nnet.pooling import StatisticsPooling, Pooling1d, AdaptivePool
 from speechbrain.nnet.CNN import Conv1d
 from speechbrain.nnet.linear import Linear
+from speechbrain.nnet.containers import Sequential
 from speechbrain.nnet.normalization import BatchNorm1d
 
 
@@ -28,6 +29,8 @@ class ResNetBlock(torch.nn.Module):
         identity_downsample=None,
         stride=1
     ):
+
+        print("RES_NET_BLOCK HERE")
         super(ResNetBlock, self).__init__()
         self.expansion = 4
         self.conv1 = Conv1d(
@@ -87,6 +90,8 @@ class ResNet(torch.nn.Module):
         num_classes
     ):
         super(ResNet, self).__init__()
+
+
         self.in_channels = 64
         self.conv1 = Conv1d(
                         in_channels=in_channels,
@@ -121,9 +126,7 @@ class ResNet(torch.nn.Module):
         self.avgpool = AdaptivePool(1)
         self.fc = Linear(
                 input_size=512 * 4,
-                n_neurons=num_classes,
-                bias=True,
-                combine_dims=False,
+                n_neurons=num_classes
             )
 
     
@@ -132,6 +135,7 @@ class ResNet(torch.nn.Module):
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
+
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
@@ -157,15 +161,15 @@ class ResNet(torch.nn.Module):
                         kernel_size=1,
                         stride=stride,
                     ),
-                BatchNorm1d(intermediate_channels * 4),
+                BatchNorm1d(input_size=intermediate_channels * 4),
             )
 
         layers.append(
             ResNetBlock(
                 self.in_channels,
                 intermediate_channels,
-                identity_downsample,
-                stride
+                identity_downsample=identity_downsample,
+                stride=stride
             )
         )
 
@@ -179,8 +183,36 @@ class ResNet(torch.nn.Module):
                 )
             )
 
-        return nn.Sequential(*layers)
+        return Sequential(*layers)
         
+
+class ResNet50(torch.nn.Module):
+    def __init__(
+          self,
+          device="cpu",
+          resnet_layers=[3, 4, 6, 3],
+          in_channels=40,
+          lin_neurons=512
+      ):
+          super().__init__()
+          self.resnet = ResNet(
+                ResNetBlock,
+                resnet_layers,
+                in_channels,
+                lin_neurons)
+
+        
+    def forward(self, x, lens=None):
+        """Returns the x-vectors.
+
+        Arguments
+        ---------
+        x : torch.Tensor
+        """
+
+        x = self.resnet(x)
+        return x
+
 
 class Xvector(torch.nn.Module):
     """This model extracts X-vectors for speaker recognition
