@@ -14,11 +14,173 @@ Authors
 import torch  # noqa: F401
 import torch.nn as nn
 import speechbrain as sb
-from speechbrain.nnet.pooling import StatisticsPooling
+from speechbrain.nnet.pooling import StatisticsPooling, Pooling1d, AdaptivePool
 from speechbrain.nnet.CNN import Conv1d
 from speechbrain.nnet.linear import Linear
 from speechbrain.nnet.normalization import BatchNorm1d
 
+
+class ResNetBlock(torch.nn.Module):
+    def __init(
+        self,
+        in_channels,
+        intermediate_channels,
+        identity_downsample=None,
+        stride=1
+    ):
+        super(ResNetBlock, self).__init__()
+        self.expansion = 4
+        self.conv1 = Conv1d(
+                          in_channels=in_channels,
+                          out_channels=intermediate_channels,
+                          kernel_size=1,
+                          stride=1)
+        self.bn1 = BatchNorm1d(input_size=intermediate_channels)
+        
+        self.conv2 = Conv1d(
+                          in_channels=intermediate_channels,
+                          out_channels=intermediate_channels,
+                          kernel_size=3,
+                          stride=stride)
+        self.bn2 = BatchNorm1d(input_size=intermediate_channels)
+
+        self.conv3 = Conv1d(
+                          in_channels=intermediate_channels,
+                          out_channels=intermediate_channels * self.expansion,
+                          kernel_size=1,
+                          stride=1)
+        self.bn3 = BatchNorm1d(input_size=intermediate_channels * self.expansion)
+
+        self.relu = torch.nn.LeakyReLU()
+        self.identity_downsample = identity_downsample
+        self.stride = stride
+    
+    def forward(self, x):
+        identity = x.clone()
+        
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+
+        x = self.conv2(x)
+        x = self.bn2(x)
+        x = self.relu(x)
+
+        x = self.conv3(x)
+        x = self.bn3(x)
+
+        if self.identity_downsample is not None:
+          identity = self.identity_downsample(identity)
+
+        x += identity
+        x = self.relu(x)
+
+        return x
+
+
+class ResNet(torch.nn.Module):
+    def __init__(
+        self, 
+        ResNetBlock,
+        layers,
+        in_channels,
+        num_classes
+    ):
+        super(ResNet, self).__init__()
+        self.in_channels = 64
+        self.conv1 = Conv1d(
+                        in_channels=in_channels,
+                        out_channels=64,
+                        kernel_size=7,
+                        stride=2
+                    )
+        self.bn1 = BatchNorm1d(input_size=64)
+        self.relu = torch.nn.LeakyReLU()
+        self.maxpool = Pooling1d(
+                          pool_type="max",
+                          kernel_size=3,
+                          stride=2,
+                          padding=1)
+
+        self.layer1 = self._make_layer(
+            ResNetBlock, layers[0], intermediate_channels=64, stride=1
+        )
+
+        self.layer2 = self._make_layer(
+            ResNetBlock, layers[1], intermediate_channels=128, stride=2
+        )
+
+        self.layer3 = self._make_layer(
+            ResNetBlock, layers[2], intermediate_channels=256, stride=2
+        )
+
+        self.layer4 = self._make_layer(
+            ResNetBlock, layers[3], intermediate_channels=512, stride=2
+        )
+
+        self.avgpool = AdaptivePool(1)
+        self.fc = Linear(
+                input_size=512 * 4,
+                n_neurons=num_classes,
+                bias=True,
+                combine_dims=False,
+            )
+
+    
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        x = self.avgpool(x)
+        x = x.reshape(x.shape[0], -1)
+        x = self.fc(x)
+
+        return x
+
+        
+
+    def _make_layer(self, ResNetBlock, num_residual_blocks, intermediate_channels, stride):
+        identity_downsample = None
+        layers = []
+
+        if stride != 1 or self.in_channels != intermediate_channels * 4:
+            identity_downsample = nn.Sequential(
+                Conv1d(
+                        in_channels=self.in_channels,
+                        out_channels=intermediate_channels * 4,
+                        kernel_size=1,
+                        stride=stride,
+                    ),
+                BatchNorm1d(intermediate_channels * 4),
+            )
+
+        layers.append(
+            ResNetBlock(
+                self.in_channels,
+                intermediate_channels,
+                identity_downsample,
+                stride
+            )
+        )
+
+        self.in_channels = intermediate_channels * 4
+
+        for i in range(num_residual_blocks - 1):
+            layers.append(
+                ResNetBlock(
+                    self.in_channels,
+                    intermediate_channels
+                )
+            )
+
+        return nn.Sequential(*layers)
+        
 
 class Xvector(torch.nn.Module):
     """This model extracts X-vectors for speaker recognition

@@ -18,7 +18,7 @@ __set_seed: !!python/object/apply:torch.manual_seed [!ref <seed>]
 # 4- Set data_folder with the local path.
 # Reading data from the local disk of the compute node (e.g. $SLURM_TMPDIR with SLURM-based clusters) is very important.
 # It allows you to read the data much faster without slowing down the shared filesystem.
-data_folder: /content/drive/MyDrive/samples/audioMNIST_dataset/recordings
+data_folder: /content/recordings
 output_folder: !ref ./results/digit_recognition/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
@@ -66,7 +66,7 @@ mean_var_norm: !new:speechbrain.processing.features.InputNormalization
 # To design a custom model, either just edit the simple CustomModel
 # class that's listed here, or replace this `!new` call with a line
 # pointing to a different file you've defined.
-embedding_model: !new:resnet.Xvector
+embedding_model: !new:resnet.ResNet
     in_channels: !ref <n_mels>
     activation: !name:torch.nn.LeakyReLU
     tdnn_blocks: 5

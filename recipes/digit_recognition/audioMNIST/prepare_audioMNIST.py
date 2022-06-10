@@ -17,7 +17,7 @@ from speechbrain.utils.data_utils import get_all_files, download_file
 from speechbrain.dataio.dataio import read_audio
 
 logger = logging.getLogger(__name__)
-AUDIOMNIST_DATA_FOLDER = "/content/drive/MyDrive/samples/audioMNIST_dataset/recordings"
+AUDIOMNIST_DATA_FOLDER = "/content/recordings"
 SAMPLERATE = 8000
 
 
