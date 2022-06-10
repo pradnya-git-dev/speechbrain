@@ -22,7 +22,7 @@ from speechbrain.nnet.normalization import BatchNorm1d
 
 
 class ResNetBlock(torch.nn.Module):
-    def __init(
+    def __init__(
         self,
         in_channels,
         intermediate_channels,
@@ -30,7 +30,6 @@ class ResNetBlock(torch.nn.Module):
         stride=1
     ):
 
-        print("RES_NET_BLOCK HERE")
         super(ResNetBlock, self).__init__()
         self.expansion = 4
         self.conv1 = Conv1d(
@@ -101,26 +100,27 @@ class ResNet(torch.nn.Module):
                     )
         self.bn1 = BatchNorm1d(input_size=64)
         self.relu = torch.nn.LeakyReLU()
+
+
         self.maxpool = Pooling1d(
                           pool_type="max",
                           kernel_size=3,
-                          stride=2,
-                          padding=1)
+                          stride=2)
 
         self.layer1 = self._make_layer(
             ResNetBlock, layers[0], intermediate_channels=64, stride=1
         )
 
         self.layer2 = self._make_layer(
-            ResNetBlock, layers[1], intermediate_channels=128, stride=2
+            ResNetBlock, layers[1], intermediate_channels=128, stride=1
         )
 
         self.layer3 = self._make_layer(
-            ResNetBlock, layers[2], intermediate_channels=256, stride=2
+            ResNetBlock, layers[2], intermediate_channels=256, stride=1
         )
 
         self.layer4 = self._make_layer(
-            ResNetBlock, layers[3], intermediate_channels=512, stride=2
+            ResNetBlock, layers[3], intermediate_channels=512, stride=1
         )
 
         self.avgpool = AdaptivePool(1)
@@ -134,6 +134,8 @@ class ResNet(torch.nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
+
+        # import pdb ; pdb.set_trace()
         x = self.maxpool(x)
 
         x = self.layer1(x)
@@ -151,7 +153,7 @@ class ResNet(torch.nn.Module):
 
     def _make_layer(self, ResNetBlock, num_residual_blocks, intermediate_channels, stride):
         identity_downsample = None
-        layers = []
+        rb_layers = []
 
         if stride != 1 or self.in_channels != intermediate_channels * 4:
             identity_downsample = nn.Sequential(
@@ -164,7 +166,7 @@ class ResNet(torch.nn.Module):
                 BatchNorm1d(input_size=intermediate_channels * 4),
             )
 
-        layers.append(
+        rb_layers.append(
             ResNetBlock(
                 self.in_channels,
                 intermediate_channels,
@@ -176,14 +178,14 @@ class ResNet(torch.nn.Module):
         self.in_channels = intermediate_channels * 4
 
         for i in range(num_residual_blocks - 1):
-            layers.append(
+            rb_layers.append(
                 ResNetBlock(
                     self.in_channels,
                     intermediate_channels
                 )
             )
 
-        return Sequential(*layers)
+        return Sequential(*rb_layers)
         
 
 class ResNet50(torch.nn.Module):
@@ -194,7 +196,7 @@ class ResNet50(torch.nn.Module):
           in_channels=40,
           lin_neurons=512
       ):
-          super().__init__()
+          super(ResNet50, self).__init__()
           self.resnet = ResNet(
                 ResNetBlock,
                 resnet_layers,
@@ -203,13 +205,6 @@ class ResNet50(torch.nn.Module):
 
         
     def forward(self, x, lens=None):
-        """Returns the x-vectors.
-
-        Arguments
-        ---------
-        x : torch.Tensor
-        """
-
         x = self.resnet(x)
         return x
 

@@ -118,17 +118,36 @@ class DigitIdBrain(sb.Brain):
             digitid = torch.cat([digitid, digitid], dim=0)
             lens = torch.cat([lens, lens])
 
+        digitid = digitid.squeeze(1).long()
+
+
+        # print(predictions.shape, type(predictions))
+        # print(digitid.shape, type(digitid), digitid)
+        # print(lens.shape, type(lens), lens)
+
+
+        # probs = torch.rand(16, 10)
+        # labels = torch.rand(16).long()
+        # probs = torch.tensor([[0.9, 0.1], [0.1, 0.9], [0.2, 0.8]])
+        # print(probs.shape)
+        # print(torch.tensor([1, 1, 0]).shape)
+        # temp_loss = sb.nnet.losses.nll_loss(predictions.to(digitid.device), digitid)
+        # print(temp_loss)
+
+
+        # import pdb ; pdb.set_trace()
+
         # Compute the cost function
-        loss = sb.nnet.losses.nll_loss(predictions, digitid, lens)
+        loss = sb.nnet.losses.nll_loss(predictions, digitid)
 
         # Append this batch of losses to the loss metric for easy
         self.loss_metric.append(
-            batch.id, predictions, digitid, lens, reduction="batch"
+            batch.id, predictions, digitid, reduction="batch"
         )
 
         # Compute classification error at test time
         if stage != sb.Stage.TRAIN:
-            self.error_metrics.append(batch.id, predictions, digitid, lens)
+            self.error_metrics.append(batch.id, predictions, digitid)
 
         return loss
 
