@@ -28,12 +28,10 @@ n_mels: 40
 
 # Training Parameters
 sample_rate: 8000
-number_of_epochs: 50
+number_of_epochs: 70
 batch_size: 16
 lr_start: 0.001
 lr_final: 0.0001
-n_classes: 10 # We have 10 digits
-emb_dim: 512 # dimensionality of the embeddings
 dataloader_options:
     batch_size: !ref <batch_size>
 
@@ -48,7 +46,7 @@ mean_var_norm: !new:speechbrain.processing.features.InputNormalization
     std_norm: True
 
 # Model to be used
-embedding_model: !new:auto_encoder_model.AudioAutoencoder
+autoencoder_model: !new:auto_encoder_model.AudioAutoencoder
     in_channels: !ref <n_mels>
 
 # The first object passed to the Brain class is this "Epoch Counter"
@@ -61,7 +59,7 @@ epoch_counter: !new:speechbrain.utils.epoch_loop.EpochCounter
 # device, as well as having train()/eval() called on them by the Brain class.
 modules:
     compute_features: !ref <compute_features>
-    embedding_model: !ref <embedding_model>
+    autoencoder_model: !ref <autoencoder_model>
     mean_var_norm: !ref <mean_var_norm>
 
 # This optimizer will be constructed by the Brain class after all parameters
@@ -83,6 +81,6 @@ lr_annealing: !new:speechbrain.nnet.schedulers.LinearScheduler
 checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
     checkpoints_dir: !ref <save_folder>
     recoverables:
-        embedding_model: !ref <embedding_model>
+        autoencoder_model: !ref <autoencoder_model>
         normalizer: !ref <mean_var_norm>
         counter: !ref <epoch_counter>
