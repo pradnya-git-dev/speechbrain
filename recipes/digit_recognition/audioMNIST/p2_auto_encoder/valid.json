@@ -1,0 +1,1502 @@
+{
+  "8_lucas_21": {
+    "wav": "/content/recordings/8_lucas_21.wav",
+    "length": 0.702,
+    "digit_id": "8"
+  },
+  "6_jackson_9": {
+    "wav": "/content/recordings/6_jackson_9.wav",
+    "length": 0.826125,
+    "digit_id": "6"
+  },
+  "9_lucas_16": {
+    "wav": "/content/recordings/9_lucas_16.wav",
+    "length": 0.427875,
+    "digit_id": "9"
+  },
+  "1_theo_12": {
+    "wav": "/content/recordings/1_theo_12.wav",
+    "length": 0.23375,
+    "digit_id": "1"
+  },
+  "0_theo_2": {
+    "wav": "/content/recordings/0_theo_2.wav",
+    "length": 0.3415,
+    "digit_id": "0"
+  },
+  "1_lucas_26": {
+    "wav": "/content/recordings/1_lucas_26.wav",
+    "length": 0.420625,
+    "digit_id": "1"
+  },
+  "9_george_7": {
+    "wav": "/content/recordings/9_george_7.wav",
+    "length": 0.630375,
+    "digit_id": "9"
+  },
+  "8_jackson_36": {
+    "wav": "/content/recordings/8_jackson_36.wav",
+    "length": 0.417375,
+    "digit_id": "8"
+  },
+  "6_george_37": {
+    "wav": "/content/recordings/6_george_37.wav",
+    "length": 0.348875,
+    "digit_id": "6"
+  },
+  "6_george_0": {
+    "wav": "/content/recordings/6_george_0.wav",
+    "length": 0.519375,
+    "digit_id": "6"
+  },
+  "0_jackson_40": {
+    "wav": "/content/recordings/0_jackson_40.wav",
+    "length": 0.713875,
+    "digit_id": "0"
+  },
+  "8_lucas_8": {
+    "wav": "/content/recordings/8_lucas_8.wav",
+    "length": 0.45575,
+    "digit_id": "8"
+  },
+  "2_nicolas_23": {
+    "wav": "/content/recordings/2_nicolas_23.wav",
+    "length": 0.190625,
+    "digit_id": "2"
+  },
+  "4_theo_28": {
+    "wav": "/content/recordings/4_theo_28.wav",
+    "length": 0.683375,
+    "digit_id": "4"
+  },
+  "0_george_6": {
+    "wav": "/content/recordings/0_george_6.wav",
+    "length": 0.6435,
+    "digit_id": "0"
+  },
+  "8_nicolas_48": {
+    "wav": "/content/recordings/8_nicolas_48.wav",
+    "length": 0.393875,
+    "digit_id": "8"
+  },
+  "7_nicolas_34": {
+    "wav": "/content/recordings/7_nicolas_34.wav",
+    "length": 0.305,
+    "digit_id": "7"
+  },
+  "5_jackson_5": {
+    "wav": "/content/recordings/5_jackson_5.wav",
+    "length": 0.38725,
+    "digit_id": "5"
+  },
+  "8_nicolas_23": {
+    "wav": "/content/recordings/8_nicolas_23.wav",
+    "length": 0.4045,
+    "digit_id": "8"
+  },
+  "2_theo_43": {
+    "wav": "/content/recordings/2_theo_43.wav",
+    "length": 0.23175,
+    "digit_id": "2"
+  },
+  "8_nicolas_6": {
+    "wav": "/content/recordings/8_nicolas_6.wav",
+    "length": 0.4055,
+    "digit_id": "8"
+  },
+  "7_theo_9": {
+    "wav": "/content/recordings/7_theo_9.wav",
+    "length": 0.399,
+    "digit_id": "7"
+  },
+  "2_yweweler_18": {
+    "wav": "/content/recordings/2_yweweler_18.wav",
+    "length": 0.30025,
+    "digit_id": "2"
+  },
+  "4_nicolas_27": {
+    "wav": "/content/recordings/4_nicolas_27.wav",
+    "length": 0.339625,
+    "digit_id": "4"
+  },
+  "0_yweweler_36": {
+    "wav": "/content/recordings/0_yweweler_36.wav",
+    "length": 0.454125,
+    "digit_id": "0"
+  },
+  "8_theo_14": {
+    "wav": "/content/recordings/8_theo_14.wav",
+    "length": 0.32575,
+    "digit_id": "8"
+  },
+  "0_lucas_12": {
+    "wav": "/content/recordings/0_lucas_12.wav",
+    "length": 0.543,
+    "digit_id": "0"
+  },
+  "7_george_9": {
+    "wav": "/content/recordings/7_george_9.wav",
+    "length": 0.568375,
+    "digit_id": "7"
+  },
+  "8_yweweler_3": {
+    "wav": "/content/recordings/8_yweweler_3.wav",
+    "length": 0.324625,
+    "digit_id": "8"
+  },
+  "0_jackson_48": {
+    "wav": "/content/recordings/0_jackson_48.wav",
+    "length": 0.648375,
+    "digit_id": "0"
+  },
+  "7_theo_31": {
+    "wav": "/content/recordings/7_theo_31.wav",
+    "length": 0.412625,
+    "digit_id": "7"
+  },
+  "2_jackson_45": {
+    "wav": "/content/recordings/2_jackson_45.wav",
+    "length": 0.65275,
+    "digit_id": "2"
+  },
+  "4_jackson_11": {
+    "wav": "/content/recordings/4_jackson_11.wav",
+    "length": 0.3765,
+    "digit_id": "4"
+  },
+  "3_theo_26": {
+    "wav": "/content/recordings/3_theo_26.wav",
+    "length": 0.41275,
+    "digit_id": "3"
+  },
+  "4_nicolas_21": {
+    "wav": "/content/recordings/4_nicolas_21.wav",
+    "length": 0.279625,
+    "digit_id": "4"
+  },
+  "8_nicolas_25": {
+    "wav": "/content/recordings/8_nicolas_25.wav",
+    "length": 0.392125,
+    "digit_id": "8"
+  },
+  "3_yweweler_39": {
+    "wav": "/content/recordings/3_yweweler_39.wav",
+    "length": 0.293125,
+    "digit_id": "3"
+  },
+  "5_jackson_44": {
+    "wav": "/content/recordings/5_jackson_44.wav",
+    "length": 0.48775,
+    "digit_id": "5"
+  },
+  "0_nicolas_10": {
+    "wav": "/content/recordings/0_nicolas_10.wav",
+    "length": 0.469375,
+    "digit_id": "0"
+  },
+  "1_yweweler_9": {
+    "wav": "/content/recordings/1_yweweler_9.wav",
+    "length": 0.270625,
+    "digit_id": "1"
+  },
+  "2_theo_27": {
+    "wav": "/content/recordings/2_theo_27.wav",
+    "length": 0.4435,
+    "digit_id": "2"
+  },
+  "8_lucas_32": {
+    "wav": "/content/recordings/8_lucas_32.wav",
+    "length": 0.549,
+    "digit_id": "8"
+  },
+  "9_george_0": {
+    "wav": "/content/recordings/9_george_0.wav",
+    "length": 0.523625,
+    "digit_id": "9"
+  },
+  "7_yweweler_21": {
+    "wav": "/content/recordings/7_yweweler_21.wav",
+    "length": 0.42075,
+    "digit_id": "7"
+  },
+  "9_george_9": {
+    "wav": "/content/recordings/9_george_9.wav",
+    "length": 0.515625,
+    "digit_id": "9"
+  },
+  "9_theo_33": {
+    "wav": "/content/recordings/9_theo_33.wav",
+    "length": 0.495625,
+    "digit_id": "9"
+  },
+  "7_theo_6": {
+    "wav": "/content/recordings/7_theo_6.wav",
+    "length": 0.280625,
+    "digit_id": "7"
+  },
+  "1_jackson_6": {
+    "wav": "/content/recordings/1_jackson_6.wav",
+    "length": 0.507125,
+    "digit_id": "1"
+  },
+  "6_yweweler_30": {
+    "wav": "/content/recordings/6_yweweler_30.wav",
+    "length": 0.306625,
+    "digit_id": "6"
+  },
+  "5_lucas_45": {
+    "wav": "/content/recordings/5_lucas_45.wav",
+    "length": 0.902875,
+    "digit_id": "5"
+  },
+  "0_yweweler_4": {
+    "wav": "/content/recordings/0_yweweler_4.wav",
+    "length": 0.316375,
+    "digit_id": "0"
+  },
+  "2_theo_16": {
+    "wav": "/content/recordings/2_theo_16.wav",
+    "length": 0.48125,
+    "digit_id": "2"
+  },
+  "3_yweweler_45": {
+    "wav": "/content/recordings/3_yweweler_45.wav",
+    "length": 0.336,
+    "digit_id": "3"
+  },
+  "4_george_16": {
+    "wav": "/content/recordings/4_george_16.wav",
+    "length": 0.494,
+    "digit_id": "4"
+  },
+  "3_nicolas_15": {
+    "wav": "/content/recordings/3_nicolas_15.wav",
+    "length": 0.371375,
+    "digit_id": "3"
+  },
+  "0_nicolas_24": {
+    "wav": "/content/recordings/0_nicolas_24.wav",
+    "length": 0.433125,
+    "digit_id": "0"
+  },
+  "3_jackson_13": {
+    "wav": "/content/recordings/3_jackson_13.wav",
+    "length": 0.43525,
+    "digit_id": "3"
+  },
+  "0_theo_46": {
+    "wav": "/content/recordings/0_theo_46.wav",
+    "length": 0.399875,
+    "digit_id": "0"
+  },
+  "1_theo_36": {
+    "wav": "/content/recordings/1_theo_36.wav",
+    "length": 0.2805,
+    "digit_id": "1"
+  },
+  "5_theo_18": {
+    "wav": "/content/recordings/5_theo_18.wav",
+    "length": 0.3645,
+    "digit_id": "5"
+  },
+  "9_nicolas_37": {
+    "wav": "/content/recordings/9_nicolas_37.wav",
+    "length": 0.428625,
+    "digit_id": "9"
+  },
+  "0_george_14": {
+    "wav": "/content/recordings/0_george_14.wav",
+    "length": 0.538,
+    "digit_id": "0"
+  },
+  "5_jackson_27": {
+    "wav": "/content/recordings/5_jackson_27.wav",
+    "length": 0.404375,
+    "digit_id": "5"
+  },
+  "3_lucas_13": {
+    "wav": "/content/recordings/3_lucas_13.wav",
+    "length": 0.5015,
+    "digit_id": "3"
+  },
+  "0_jackson_19": {
+    "wav": "/content/recordings/0_jackson_19.wav",
+    "length": 0.637875,
+    "digit_id": "0"
+  },
+  "7_theo_29": {
+    "wav": "/content/recordings/7_theo_29.wav",
+    "length": 0.26,
+    "digit_id": "7"
+  },
+  "5_theo_34": {
+    "wav": "/content/recordings/5_theo_34.wav",
+    "length": 0.481625,
+    "digit_id": "5"
+  },
+  "1_yweweler_11": {
+    "wav": "/content/recordings/1_yweweler_11.wav",
+    "length": 0.3395,
+    "digit_id": "1"
+  },
+  "8_yweweler_38": {
+    "wav": "/content/recordings/8_yweweler_38.wav",
+    "length": 0.357125,
+    "digit_id": "8"
+  },
+  "9_lucas_7": {
+    "wav": "/content/recordings/9_lucas_7.wav",
+    "length": 0.570125,
+    "digit_id": "9"
+  },
+  "5_george_41": {
+    "wav": "/content/recordings/5_george_41.wav",
+    "length": 0.506,
+    "digit_id": "5"
+  },
+  "5_theo_0": {
+    "wav": "/content/recordings/5_theo_0.wav",
+    "length": 0.303375,
+    "digit_id": "5"
+  },
+  "9_george_28": {
+    "wav": "/content/recordings/9_george_28.wav",
+    "length": 0.49175,
+    "digit_id": "9"
+  },
+  "5_george_45": {
+    "wav": "/content/recordings/5_george_45.wav",
+    "length": 0.42525,
+    "digit_id": "5"
+  },
+  "5_nicolas_16": {
+    "wav": "/content/recordings/5_nicolas_16.wav",
+    "length": 0.481125,
+    "digit_id": "5"
+  },
+  "1_jackson_11": {
+    "wav": "/content/recordings/1_jackson_11.wav",
+    "length": 0.51075,
+    "digit_id": "1"
+  },
+  "6_nicolas_12": {
+    "wav": "/content/recordings/6_nicolas_12.wav",
+    "length": 0.303,
+    "digit_id": "6"
+  },
+  "8_lucas_14": {
+    "wav": "/content/recordings/8_lucas_14.wav",
+    "length": 0.876375,
+    "digit_id": "8"
+  },
+  "9_lucas_17": {
+    "wav": "/content/recordings/9_lucas_17.wav",
+    "length": 0.445,
+    "digit_id": "9"
+  },
+  "1_george_21": {
+    "wav": "/content/recordings/1_george_21.wav",
+    "length": 0.381,
+    "digit_id": "1"
+  },
+  "1_jackson_29": {
+    "wav": "/content/recordings/1_jackson_29.wav",
+    "length": 0.468125,
+    "digit_id": "1"
+  },
+  "5_yweweler_0": {
+    "wav": "/content/recordings/5_yweweler_0.wav",
+    "length": 0.303125,
+    "digit_id": "5"
+  },
+  "2_theo_11": {
+    "wav": "/content/recordings/2_theo_11.wav",
+    "length": 0.24525,
+    "digit_id": "2"
+  },
+  "9_george_47": {
+    "wav": "/content/recordings/9_george_47.wav",
+    "length": 0.47575,
+    "digit_id": "9"
+  },
+  "5_lucas_10": {
+    "wav": "/content/recordings/5_lucas_10.wav",
+    "length": 0.562375,
+    "digit_id": "5"
+  },
+  "0_nicolas_21": {
+    "wav": "/content/recordings/0_nicolas_21.wav",
+    "length": 0.5095,
+    "digit_id": "0"
+  },
+  "5_lucas_25": {
+    "wav": "/content/recordings/5_lucas_25.wav",
+    "length": 0.611875,
+    "digit_id": "5"
+  },
+  "7_jackson_37": {
+    "wav": "/content/recordings/7_jackson_37.wav",
+    "length": 0.405125,
+    "digit_id": "7"
+  },
+  "6_theo_30": {
+    "wav": "/content/recordings/6_theo_30.wav",
+    "length": 0.341375,
+    "digit_id": "6"
+  },
+  "1_yweweler_24": {
+    "wav": "/content/recordings/1_yweweler_24.wav",
+    "length": 0.305125,
+    "digit_id": "1"
+  },
+  "7_lucas_28": {
+    "wav": "/content/recordings/7_lucas_28.wav",
+    "length": 1.166375,
+    "digit_id": "7"
+  },
+  "1_jackson_18": {
+    "wav": "/content/recordings/1_jackson_18.wav",
+    "length": 0.45275,
+    "digit_id": "1"
+  },
+  "4_nicolas_31": {
+    "wav": "/content/recordings/4_nicolas_31.wav",
+    "length": 0.347875,
+    "digit_id": "4"
+  },
+  "8_yweweler_9": {
+    "wav": "/content/recordings/8_yweweler_9.wav",
+    "length": 0.312375,
+    "digit_id": "8"
+  },
+  "7_theo_11": {
+    "wav": "/content/recordings/7_theo_11.wav",
+    "length": 0.4385,
+    "digit_id": "7"
+  },
+  "0_yweweler_25": {
+    "wav": "/content/recordings/0_yweweler_25.wav",
+    "length": 0.38575,
+    "digit_id": "0"
+  },
+  "5_theo_10": {
+    "wav": "/content/recordings/5_theo_10.wav",
+    "length": 0.275125,
+    "digit_id": "5"
+  },
+  "2_george_41": {
+    "wav": "/content/recordings/2_george_41.wav",
+    "length": 0.296,
+    "digit_id": "2"
+  },
+  "9_theo_21": {
+    "wav": "/content/recordings/9_theo_21.wav",
+    "length": 0.36725,
+    "digit_id": "9"
+  },
+  "2_george_19": {
+    "wav": "/content/recordings/2_george_19.wav",
+    "length": 0.4025,
+    "digit_id": "2"
+  },
+  "4_george_18": {
+    "wav": "/content/recordings/4_george_18.wav",
+    "length": 0.577,
+    "digit_id": "4"
+  },
+  "1_nicolas_33": {
+    "wav": "/content/recordings/1_nicolas_33.wav",
+    "length": 0.3955,
+    "digit_id": "1"
+  },
+  "4_lucas_43": {
+    "wav": "/content/recordings/4_lucas_43.wav",
+    "length": 0.567,
+    "digit_id": "4"
+  },
+  "1_jackson_21": {
+    "wav": "/content/recordings/1_jackson_21.wav",
+    "length": 0.487,
+    "digit_id": "1"
+  },
+  "2_george_24": {
+    "wav": "/content/recordings/2_george_24.wav",
+    "length": 0.340625,
+    "digit_id": "2"
+  },
+  "2_jackson_28": {
+    "wav": "/content/recordings/2_jackson_28.wav",
+    "length": 0.507,
+    "digit_id": "2"
+  },
+  "8_lucas_26": {
+    "wav": "/content/recordings/8_lucas_26.wav",
+    "length": 0.4765,
+    "digit_id": "8"
+  },
+  "7_nicolas_12": {
+    "wav": "/content/recordings/7_nicolas_12.wav",
+    "length": 0.367,
+    "digit_id": "7"
+  },
+  "7_yweweler_0": {
+    "wav": "/content/recordings/7_yweweler_0.wav",
+    "length": 0.436375,
+    "digit_id": "7"
+  },
+  "2_jackson_10": {
+    "wav": "/content/recordings/2_jackson_10.wav",
+    "length": 0.517875,
+    "digit_id": "2"
+  },
+  "7_nicolas_6": {
+    "wav": "/content/recordings/7_nicolas_6.wav",
+    "length": 0.368875,
+    "digit_id": "7"
+  },
+  "8_jackson_38": {
+    "wav": "/content/recordings/8_jackson_38.wav",
+    "length": 0.449875,
+    "digit_id": "8"
+  },
+  "2_jackson_17": {
+    "wav": "/content/recordings/2_jackson_17.wav",
+    "length": 0.5375,
+    "digit_id": "2"
+  },
+  "3_george_41": {
+    "wav": "/content/recordings/3_george_41.wav",
+    "length": 0.384,
+    "digit_id": "3"
+  },
+  "8_jackson_47": {
+    "wav": "/content/recordings/8_jackson_47.wav",
+    "length": 0.427625,
+    "digit_id": "8"
+  },
+  "5_lucas_26": {
+    "wav": "/content/recordings/5_lucas_26.wav",
+    "length": 0.59925,
+    "digit_id": "5"
+  },
+  "7_yweweler_42": {
+    "wav": "/content/recordings/7_yweweler_42.wav",
+    "length": 0.38925,
+    "digit_id": "7"
+  },
+  "9_yweweler_4": {
+    "wav": "/content/recordings/9_yweweler_4.wav",
+    "length": 0.42,
+    "digit_id": "9"
+  },
+  "7_jackson_43": {
+    "wav": "/content/recordings/7_jackson_43.wav",
+    "length": 0.537875,
+    "digit_id": "7"
+  },
+  "0_jackson_49": {
+    "wav": "/content/recordings/0_jackson_49.wav",
+    "length": 0.784125,
+    "digit_id": "0"
+  },
+  "1_george_37": {
+    "wav": "/content/recordings/1_george_37.wav",
+    "length": 0.174875,
+    "digit_id": "1"
+  },
+  "7_george_29": {
+    "wav": "/content/recordings/7_george_29.wav",
+    "length": 0.999875,
+    "digit_id": "7"
+  },
+  "2_jackson_12": {
+    "wav": "/content/recordings/2_jackson_12.wav",
+    "length": 0.4875,
+    "digit_id": "2"
+  },
+  "7_lucas_35": {
+    "wav": "/content/recordings/7_lucas_35.wav",
+    "length": 0.44525,
+    "digit_id": "7"
+  },
+  "7_lucas_6": {
+    "wav": "/content/recordings/7_lucas_6.wav",
+    "length": 0.544625,
+    "digit_id": "7"
+  },
+  "7_theo_19": {
+    "wav": "/content/recordings/7_theo_19.wav",
+    "length": 0.29275,
+    "digit_id": "7"
+  },
+  "4_lucas_37": {
+    "wav": "/content/recordings/4_lucas_37.wav",
+    "length": 0.539,
+    "digit_id": "4"
+  },
+  "2_lucas_27": {
+    "wav": "/content/recordings/2_lucas_27.wav",
+    "length": 0.48,
+    "digit_id": "2"
+  },
+  "6_jackson_8": {
+    "wav": "/content/recordings/6_jackson_8.wav",
+    "length": 0.828125,
+    "digit_id": "6"
+  },
+  "3_lucas_29": {
+    "wav": "/content/recordings/3_lucas_29.wav",
+    "length": 0.6565,
+    "digit_id": "3"
+  },
+  "6_jackson_5": {
+    "wav": "/content/recordings/6_jackson_5.wav",
+    "length": 0.6785,
+    "digit_id": "6"
+  },
+  "3_lucas_9": {
+    "wav": "/content/recordings/3_lucas_9.wav",
+    "length": 1.261875,
+    "digit_id": "3"
+  },
+  "4_george_14": {
+    "wav": "/content/recordings/4_george_14.wav",
+    "length": 0.475625,
+    "digit_id": "4"
+  },
+  "7_nicolas_27": {
+    "wav": "/content/recordings/7_nicolas_27.wav",
+    "length": 0.36525,
+    "digit_id": "7"
+  },
+  "2_theo_35": {
+    "wav": "/content/recordings/2_theo_35.wav",
+    "length": 0.269125,
+    "digit_id": "2"
+  },
+  "2_lucas_28": {
+    "wav": "/content/recordings/2_lucas_28.wav",
+    "length": 0.433375,
+    "digit_id": "2"
+  },
+  "1_george_19": {
+    "wav": "/content/recordings/1_george_19.wav",
+    "length": 0.490125,
+    "digit_id": "1"
+  },
+  "0_yweweler_28": {
+    "wav": "/content/recordings/0_yweweler_28.wav",
+    "length": 0.420125,
+    "digit_id": "0"
+  },
+  "8_lucas_18": {
+    "wav": "/content/recordings/8_lucas_18.wav",
+    "length": 0.559875,
+    "digit_id": "8"
+  },
+  "5_jackson_2": {
+    "wav": "/content/recordings/5_jackson_2.wav",
+    "length": 0.454375,
+    "digit_id": "5"
+  },
+  "8_theo_27": {
+    "wav": "/content/recordings/8_theo_27.wav",
+    "length": 0.62825,
+    "digit_id": "8"
+  },
+  "4_jackson_3": {
+    "wav": "/content/recordings/4_jackson_3.wav",
+    "length": 0.406125,
+    "digit_id": "4"
+  },
+  "9_theo_0": {
+    "wav": "/content/recordings/9_theo_0.wav",
+    "length": 0.384875,
+    "digit_id": "9"
+  },
+  "2_yweweler_40": {
+    "wav": "/content/recordings/2_yweweler_40.wav",
+    "length": 0.342125,
+    "digit_id": "2"
+  },
+  "7_george_1": {
+    "wav": "/content/recordings/7_george_1.wav",
+    "length": 0.589875,
+    "digit_id": "7"
+  },
+  "5_lucas_42": {
+    "wav": "/content/recordings/5_lucas_42.wav",
+    "length": 0.699375,
+    "digit_id": "5"
+  },
+  "2_george_35": {
+    "wav": "/content/recordings/2_george_35.wav",
+    "length": 0.34225,
+    "digit_id": "2"
+  },
+  "8_jackson_30": {
+    "wav": "/content/recordings/8_jackson_30.wav",
+    "length": 0.439875,
+    "digit_id": "8"
+  },
+  "1_lucas_21": {
+    "wav": "/content/recordings/1_lucas_21.wav",
+    "length": 0.682125,
+    "digit_id": "1"
+  },
+  "3_theo_42": {
+    "wav": "/content/recordings/3_theo_42.wav",
+    "length": 0.2545,
+    "digit_id": "3"
+  },
+  "2_lucas_3": {
+    "wav": "/content/recordings/2_lucas_3.wav",
+    "length": 0.42425,
+    "digit_id": "2"
+  },
+  "1_yweweler_27": {
+    "wav": "/content/recordings/1_yweweler_27.wav",
+    "length": 0.27925,
+    "digit_id": "1"
+  },
+  "5_theo_49": {
+    "wav": "/content/recordings/5_theo_49.wav",
+    "length": 0.451375,
+    "digit_id": "5"
+  },
+  "1_yweweler_6": {
+    "wav": "/content/recordings/1_yweweler_6.wav",
+    "length": 0.262125,
+    "digit_id": "1"
+  },
+  "8_jackson_2": {
+    "wav": "/content/recordings/8_jackson_2.wav",
+    "length": 0.382625,
+    "digit_id": "8"
+  },
+  "3_jackson_2": {
+    "wav": "/content/recordings/3_jackson_2.wav",
+    "length": 0.509625,
+    "digit_id": "3"
+  },
+  "1_jackson_23": {
+    "wav": "/content/recordings/1_jackson_23.wav",
+    "length": 0.467875,
+    "digit_id": "1"
+  },
+  "6_yweweler_36": {
+    "wav": "/content/recordings/6_yweweler_36.wav",
+    "length": 0.2805,
+    "digit_id": "6"
+  },
+  "2_nicolas_11": {
+    "wav": "/content/recordings/2_nicolas_11.wav",
+    "length": 0.343,
+    "digit_id": "2"
+  },
+  "1_lucas_5": {
+    "wav": "/content/recordings/1_lucas_5.wav",
+    "length": 0.337,
+    "digit_id": "1"
+  },
+  "2_jackson_11": {
+    "wav": "/content/recordings/2_jackson_11.wav",
+    "length": 0.516625,
+    "digit_id": "2"
+  },
+  "8_theo_17": {
+    "wav": "/content/recordings/8_theo_17.wav",
+    "length": 0.344625,
+    "digit_id": "8"
+  },
+  "6_theo_16": {
+    "wav": "/content/recordings/6_theo_16.wav",
+    "length": 0.361125,
+    "digit_id": "6"
+  },
+  "2_yweweler_0": {
+    "wav": "/content/recordings/2_yweweler_0.wav",
+    "length": 0.274875,
+    "digit_id": "2"
+  },
+  "3_yweweler_7": {
+    "wav": "/content/recordings/3_yweweler_7.wav",
+    "length": 0.239875,
+    "digit_id": "3"
+  },
+  "7_nicolas_20": {
+    "wav": "/content/recordings/7_nicolas_20.wav",
+    "length": 0.3395,
+    "digit_id": "7"
+  },
+  "6_yweweler_38": {
+    "wav": "/content/recordings/6_yweweler_38.wav",
+    "length": 0.4355,
+    "digit_id": "6"
+  },
+  "4_theo_9": {
+    "wav": "/content/recordings/4_theo_9.wav",
+    "length": 0.263625,
+    "digit_id": "4"
+  },
+  "8_george_28": {
+    "wav": "/content/recordings/8_george_28.wav",
+    "length": 0.583625,
+    "digit_id": "8"
+  },
+  "2_george_40": {
+    "wav": "/content/recordings/2_george_40.wav",
+    "length": 0.3475,
+    "digit_id": "2"
+  },
+  "5_george_19": {
+    "wav": "/content/recordings/5_george_19.wav",
+    "length": 0.5255,
+    "digit_id": "5"
+  },
+  "4_yweweler_4": {
+    "wav": "/content/recordings/4_yweweler_4.wav",
+    "length": 0.349625,
+    "digit_id": "4"
+  },
+  "2_nicolas_20": {
+    "wav": "/content/recordings/2_nicolas_20.wav",
+    "length": 0.28,
+    "digit_id": "2"
+  },
+  "4_nicolas_7": {
+    "wav": "/content/recordings/4_nicolas_7.wav",
+    "length": 0.294625,
+    "digit_id": "4"
+  },
+  "9_nicolas_27": {
+    "wav": "/content/recordings/9_nicolas_27.wav",
+    "length": 0.450375,
+    "digit_id": "9"
+  },
+  "1_lucas_22": {
+    "wav": "/content/recordings/1_lucas_22.wav",
+    "length": 0.447625,
+    "digit_id": "1"
+  },
+  "4_lucas_3": {
+    "wav": "/content/recordings/4_lucas_3.wav",
+    "length": 0.441125,
+    "digit_id": "4"
+  },
+  "6_yweweler_29": {
+    "wav": "/content/recordings/6_yweweler_29.wav",
+    "length": 0.342,
+    "digit_id": "6"
+  },
+  "8_theo_38": {
+    "wav": "/content/recordings/8_theo_38.wav",
+    "length": 0.288875,
+    "digit_id": "8"
+  },
+  "8_theo_32": {
+    "wav": "/content/recordings/8_theo_32.wav",
+    "length": 0.439125,
+    "digit_id": "8"
+  },
+  "7_lucas_9": {
+    "wav": "/content/recordings/7_lucas_9.wav",
+    "length": 0.461625,
+    "digit_id": "7"
+  },
+  "2_yweweler_47": {
+    "wav": "/content/recordings/2_yweweler_47.wav",
+    "length": 0.246625,
+    "digit_id": "2"
+  },
+  "3_nicolas_9": {
+    "wav": "/content/recordings/3_nicolas_9.wav",
+    "length": 0.239375,
+    "digit_id": "3"
+  },
+  "2_lucas_22": {
+    "wav": "/content/recordings/2_lucas_22.wav",
+    "length": 0.44925,
+    "digit_id": "2"
+  },
+  "4_yweweler_29": {
+    "wav": "/content/recordings/4_yweweler_29.wav",
+    "length": 0.359125,
+    "digit_id": "4"
+  },
+  "6_yweweler_44": {
+    "wav": "/content/recordings/6_yweweler_44.wav",
+    "length": 0.180375,
+    "digit_id": "6"
+  },
+  "9_theo_45": {
+    "wav": "/content/recordings/9_theo_45.wav",
+    "length": 0.22225,
+    "digit_id": "9"
+  },
+  "2_nicolas_19": {
+    "wav": "/content/recordings/2_nicolas_19.wav",
+    "length": 0.252,
+    "digit_id": "2"
+  },
+  "4_jackson_1": {
+    "wav": "/content/recordings/4_jackson_1.wav",
+    "length": 0.418625,
+    "digit_id": "4"
+  },
+  "5_nicolas_7": {
+    "wav": "/content/recordings/5_nicolas_7.wav",
+    "length": 0.354,
+    "digit_id": "5"
+  },
+  "8_george_33": {
+    "wav": "/content/recordings/8_george_33.wav",
+    "length": 0.474125,
+    "digit_id": "8"
+  },
+  "1_yweweler_20": {
+    "wav": "/content/recordings/1_yweweler_20.wav",
+    "length": 0.366,
+    "digit_id": "1"
+  },
+  "9_yweweler_2": {
+    "wav": "/content/recordings/9_yweweler_2.wav",
+    "length": 0.39775,
+    "digit_id": "9"
+  },
+  "2_george_30": {
+    "wav": "/content/recordings/2_george_30.wav",
+    "length": 0.362375,
+    "digit_id": "2"
+  },
+  "2_nicolas_21": {
+    "wav": "/content/recordings/2_nicolas_21.wav",
+    "length": 0.186625,
+    "digit_id": "2"
+  },
+  "9_george_18": {
+    "wav": "/content/recordings/9_george_18.wav",
+    "length": 0.493875,
+    "digit_id": "9"
+  },
+  "4_jackson_44": {
+    "wav": "/content/recordings/4_jackson_44.wav",
+    "length": 0.470375,
+    "digit_id": "4"
+  },
+  "3_jackson_37": {
+    "wav": "/content/recordings/3_jackson_37.wav",
+    "length": 0.51075,
+    "digit_id": "3"
+  },
+  "0_lucas_13": {
+    "wav": "/content/recordings/0_lucas_13.wav",
+    "length": 0.592,
+    "digit_id": "0"
+  },
+  "2_lucas_33": {
+    "wav": "/content/recordings/2_lucas_33.wav",
+    "length": 0.392125,
+    "digit_id": "2"
+  },
+  "7_lucas_25": {
+    "wav": "/content/recordings/7_lucas_25.wav",
+    "length": 0.47775,
+    "digit_id": "7"
+  },
+  "3_george_36": {
+    "wav": "/content/recordings/3_george_36.wav",
+    "length": 0.2815,
+    "digit_id": "3"
+  },
+  "8_george_31": {
+    "wav": "/content/recordings/8_george_31.wav",
+    "length": 0.31875,
+    "digit_id": "8"
+  },
+  "8_theo_9": {
+    "wav": "/content/recordings/8_theo_9.wav",
+    "length": 0.351625,
+    "digit_id": "8"
+  },
+  "5_yweweler_36": {
+    "wav": "/content/recordings/5_yweweler_36.wav",
+    "length": 0.471,
+    "digit_id": "5"
+  },
+  "2_jackson_44": {
+    "wav": "/content/recordings/2_jackson_44.wav",
+    "length": 0.62075,
+    "digit_id": "2"
+  },
+  "5_george_6": {
+    "wav": "/content/recordings/5_george_6.wav",
+    "length": 0.549625,
+    "digit_id": "5"
+  },
+  "1_lucas_17": {
+    "wav": "/content/recordings/1_lucas_17.wav",
+    "length": 0.43725,
+    "digit_id": "1"
+  },
+  "1_yweweler_26": {
+    "wav": "/content/recordings/1_yweweler_26.wav",
+    "length": 0.3815,
+    "digit_id": "1"
+  },
+  "8_theo_6": {
+    "wav": "/content/recordings/8_theo_6.wav",
+    "length": 0.39275,
+    "digit_id": "8"
+  },
+  "6_nicolas_45": {
+    "wav": "/content/recordings/6_nicolas_45.wav",
+    "length": 0.29675,
+    "digit_id": "6"
+  },
+  "8_nicolas_3": {
+    "wav": "/content/recordings/8_nicolas_3.wav",
+    "length": 0.251875,
+    "digit_id": "8"
+  },
+  "0_yweweler_43": {
+    "wav": "/content/recordings/0_yweweler_43.wav",
+    "length": 0.344,
+    "digit_id": "0"
+  },
+  "0_lucas_41": {
+    "wav": "/content/recordings/0_lucas_41.wav",
+    "length": 0.55425,
+    "digit_id": "0"
+  },
+  "8_nicolas_41": {
+    "wav": "/content/recordings/8_nicolas_41.wav",
+    "length": 0.3775,
+    "digit_id": "8"
+  },
+  "4_yweweler_5": {
+    "wav": "/content/recordings/4_yweweler_5.wav",
+    "length": 0.333875,
+    "digit_id": "4"
+  },
+  "1_george_47": {
+    "wav": "/content/recordings/1_george_47.wav",
+    "length": 0.41,
+    "digit_id": "1"
+  },
+  "4_george_48": {
+    "wav": "/content/recordings/4_george_48.wav",
+    "length": 0.470875,
+    "digit_id": "4"
+  },
+  "7_george_14": {
+    "wav": "/content/recordings/7_george_14.wav",
+    "length": 0.547625,
+    "digit_id": "7"
+  },
+  "6_yweweler_26": {
+    "wav": "/content/recordings/6_yweweler_26.wav",
+    "length": 0.19275,
+    "digit_id": "6"
+  },
+  "8_jackson_41": {
+    "wav": "/content/recordings/8_jackson_41.wav",
+    "length": 0.5755,
+    "digit_id": "8"
+  },
+  "4_yweweler_45": {
+    "wav": "/content/recordings/4_yweweler_45.wav",
+    "length": 0.29775,
+    "digit_id": "4"
+  },
+  "0_george_23": {
+    "wav": "/content/recordings/0_george_23.wav",
+    "length": 0.498,
+    "digit_id": "0"
+  },
+  "4_lucas_34": {
+    "wav": "/content/recordings/4_lucas_34.wav",
+    "length": 0.476125,
+    "digit_id": "4"
+  },
+  "9_theo_1": {
+    "wav": "/content/recordings/9_theo_1.wav",
+    "length": 0.29075,
+    "digit_id": "9"
+  },
+  "1_theo_10": {
+    "wav": "/content/recordings/1_theo_10.wav",
+    "length": 0.269375,
+    "digit_id": "1"
+  },
+  "3_jackson_6": {
+    "wav": "/content/recordings/3_jackson_6.wav",
+    "length": 0.467875,
+    "digit_id": "3"
+  },
+  "7_george_7": {
+    "wav": "/content/recordings/7_george_7.wav",
+    "length": 0.540375,
+    "digit_id": "7"
+  },
+  "9_lucas_32": {
+    "wav": "/content/recordings/9_lucas_32.wav",
+    "length": 0.61675,
+    "digit_id": "9"
+  },
+  "9_lucas_36": {
+    "wav": "/content/recordings/9_lucas_36.wav",
+    "length": 0.551,
+    "digit_id": "9"
+  },
+  "4_jackson_13": {
+    "wav": "/content/recordings/4_jackson_13.wav",
+    "length": 0.37325,
+    "digit_id": "4"
+  },
+  "4_george_42": {
+    "wav": "/content/recordings/4_george_42.wav",
+    "length": 0.40225,
+    "digit_id": "4"
+  },
+  "2_nicolas_13": {
+    "wav": "/content/recordings/2_nicolas_13.wav",
+    "length": 0.309875,
+    "digit_id": "2"
+  },
+  "2_yweweler_23": {
+    "wav": "/content/recordings/2_yweweler_23.wav",
+    "length": 0.300375,
+    "digit_id": "2"
+  },
+  "9_theo_41": {
+    "wav": "/content/recordings/9_theo_41.wav",
+    "length": 0.393625,
+    "digit_id": "9"
+  },
+  "2_yweweler_31": {
+    "wav": "/content/recordings/2_yweweler_31.wav",
+    "length": 0.279875,
+    "digit_id": "2"
+  },
+  "3_george_46": {
+    "wav": "/content/recordings/3_george_46.wav",
+    "length": 0.41425,
+    "digit_id": "3"
+  },
+  "3_yweweler_38": {
+    "wav": "/content/recordings/3_yweweler_38.wav",
+    "length": 0.27875,
+    "digit_id": "3"
+  },
+  "9_nicolas_43": {
+    "wav": "/content/recordings/9_nicolas_43.wav",
+    "length": 0.473375,
+    "digit_id": "9"
+  },
+  "0_theo_4": {
+    "wav": "/content/recordings/0_theo_4.wav",
+    "length": 0.405625,
+    "digit_id": "0"
+  },
+  "5_george_7": {
+    "wav": "/content/recordings/5_george_7.wav",
+    "length": 0.518875,
+    "digit_id": "5"
+  },
+  "2_nicolas_8": {
+    "wav": "/content/recordings/2_nicolas_8.wav",
+    "length": 0.23925,
+    "digit_id": "2"
+  },
+  "5_nicolas_39": {
+    "wav": "/content/recordings/5_nicolas_39.wav",
+    "length": 0.333625,
+    "digit_id": "5"
+  },
+  "6_george_35": {
+    "wav": "/content/recordings/6_george_35.wav",
+    "length": 0.521875,
+    "digit_id": "6"
+  },
+  "1_yweweler_15": {
+    "wav": "/content/recordings/1_yweweler_15.wav",
+    "length": 0.514125,
+    "digit_id": "1"
+  },
+  "3_george_15": {
+    "wav": "/content/recordings/3_george_15.wav",
+    "length": 0.398375,
+    "digit_id": "3"
+  },
+  "6_theo_24": {
+    "wav": "/content/recordings/6_theo_24.wav",
+    "length": 0.499,
+    "digit_id": "6"
+  },
+  "5_theo_32": {
+    "wav": "/content/recordings/5_theo_32.wav",
+    "length": 0.436875,
+    "digit_id": "5"
+  },
+  "7_lucas_48": {
+    "wav": "/content/recordings/7_lucas_48.wav",
+    "length": 0.6535,
+    "digit_id": "7"
+  },
+  "5_jackson_25": {
+    "wav": "/content/recordings/5_jackson_25.wav",
+    "length": 0.39475,
+    "digit_id": "5"
+  },
+  "4_george_9": {
+    "wav": "/content/recordings/4_george_9.wav",
+    "length": 0.542625,
+    "digit_id": "4"
+  },
+  "6_yweweler_35": {
+    "wav": "/content/recordings/6_yweweler_35.wav",
+    "length": 0.252,
+    "digit_id": "6"
+  },
+  "9_nicolas_23": {
+    "wav": "/content/recordings/9_nicolas_23.wav",
+    "length": 0.3975,
+    "digit_id": "9"
+  },
+  "1_george_3": {
+    "wav": "/content/recordings/1_george_3.wav",
+    "length": 0.53175,
+    "digit_id": "1"
+  },
+  "3_lucas_21": {
+    "wav": "/content/recordings/3_lucas_21.wav",
+    "length": 0.4465,
+    "digit_id": "3"
+  },
+  "5_lucas_19": {
+    "wav": "/content/recordings/5_lucas_19.wav",
+    "length": 0.707375,
+    "digit_id": "5"
+  },
+  "0_george_33": {
+    "wav": "/content/recordings/0_george_33.wav",
+    "length": 0.457375,
+    "digit_id": "0"
+  },
+  "3_george_38": {
+    "wav": "/content/recordings/3_george_38.wav",
+    "length": 0.297125,
+    "digit_id": "3"
+  },
+  "8_lucas_35": {
+    "wav": "/content/recordings/8_lucas_35.wav",
+    "length": 0.534875,
+    "digit_id": "8"
+  },
+  "3_lucas_25": {
+    "wav": "/content/recordings/3_lucas_25.wav",
+    "length": 0.71875,
+    "digit_id": "3"
+  },
+  "9_jackson_12": {
+    "wav": "/content/recordings/9_jackson_12.wav",
+    "length": 0.57775,
+    "digit_id": "9"
+  },
+  "2_lucas_40": {
+    "wav": "/content/recordings/2_lucas_40.wav",
+    "length": 0.44825,
+    "digit_id": "2"
+  },
+  "8_george_43": {
+    "wav": "/content/recordings/8_george_43.wav",
+    "length": 0.424125,
+    "digit_id": "8"
+  },
+  "1_george_22": {
+    "wav": "/content/recordings/1_george_22.wav",
+    "length": 0.386625,
+    "digit_id": "1"
+  },
+  "0_lucas_20": {
+    "wav": "/content/recordings/0_lucas_20.wav",
+    "length": 0.644625,
+    "digit_id": "0"
+  },
+  "4_lucas_8": {
+    "wav": "/content/recordings/4_lucas_8.wav",
+    "length": 0.531125,
+    "digit_id": "4"
+  },
+  "2_jackson_41": {
+    "wav": "/content/recordings/2_jackson_41.wav",
+    "length": 0.584625,
+    "digit_id": "2"
+  },
+  "5_jackson_1": {
+    "wav": "/content/recordings/5_jackson_1.wav",
+    "length": 0.414875,
+    "digit_id": "5"
+  },
+  "7_yweweler_14": {
+    "wav": "/content/recordings/7_yweweler_14.wav",
+    "length": 0.32375,
+    "digit_id": "7"
+  },
+  "6_theo_42": {
+    "wav": "/content/recordings/6_theo_42.wav",
+    "length": 0.4585,
+    "digit_id": "6"
+  },
+  "3_nicolas_48": {
+    "wav": "/content/recordings/3_nicolas_48.wav",
+    "length": 0.299625,
+    "digit_id": "3"
+  },
+  "2_theo_12": {
+    "wav": "/content/recordings/2_theo_12.wav",
+    "length": 0.284125,
+    "digit_id": "2"
+  },
+  "2_theo_36": {
+    "wav": "/content/recordings/2_theo_36.wav",
+    "length": 0.27375,
+    "digit_id": "2"
+  },
+  "4_theo_34": {
+    "wav": "/content/recordings/4_theo_34.wav",
+    "length": 0.385375,
+    "digit_id": "4"
+  },
+  "3_george_5": {
+    "wav": "/content/recordings/3_george_5.wav",
+    "length": 0.37925,
+    "digit_id": "3"
+  },
+  "5_lucas_48": {
+    "wav": "/content/recordings/5_lucas_48.wav",
+    "length": 0.61675,
+    "digit_id": "5"
+  },
+  "1_jackson_43": {
+    "wav": "/content/recordings/1_jackson_43.wav",
+    "length": 0.57575,
+    "digit_id": "1"
+  },
+  "3_jackson_45": {
+    "wav": "/content/recordings/3_jackson_45.wav",
+    "length": 0.56975,
+    "digit_id": "3"
+  },
+  "7_theo_16": {
+    "wav": "/content/recordings/7_theo_16.wav",
+    "length": 0.391875,
+    "digit_id": "7"
+  },
+  "6_george_32": {
+    "wav": "/content/recordings/6_george_32.wav",
+    "length": 0.3665,
+    "digit_id": "6"
+  },
+  "6_george_39": {
+    "wav": "/content/recordings/6_george_39.wav",
+    "length": 0.441375,
+    "digit_id": "6"
+  },
+  "8_yweweler_22": {
+    "wav": "/content/recordings/8_yweweler_22.wav",
+    "length": 0.38975,
+    "digit_id": "8"
+  },
+  "0_jackson_47": {
+    "wav": "/content/recordings/0_jackson_47.wav",
+    "length": 0.666,
+    "digit_id": "0"
+  },
+  "7_nicolas_25": {
+    "wav": "/content/recordings/7_nicolas_25.wav",
+    "length": 0.24725,
+    "digit_id": "7"
+  },
+  "0_theo_24": {
+    "wav": "/content/recordings/0_theo_24.wav",
+    "length": 0.430125,
+    "digit_id": "0"
+  },
+  "0_lucas_43": {
+    "wav": "/content/recordings/0_lucas_43.wav",
+    "length": 0.56025,
+    "digit_id": "0"
+  },
+  "9_jackson_46": {
+    "wav": "/content/recordings/9_jackson_46.wav",
+    "length": 0.647125,
+    "digit_id": "9"
+  },
+  "5_yweweler_34": {
+    "wav": "/content/recordings/5_yweweler_34.wav",
+    "length": 0.642375,
+    "digit_id": "5"
+  },
+  "9_jackson_36": {
+    "wav": "/content/recordings/9_jackson_36.wav",
+    "length": 0.658375,
+    "digit_id": "9"
+  },
+  "1_lucas_41": {
+    "wav": "/content/recordings/1_lucas_41.wav",
+    "length": 0.747,
+    "digit_id": "1"
+  },
+  "7_jackson_31": {
+    "wav": "/content/recordings/7_jackson_31.wav",
+    "length": 0.420875,
+    "digit_id": "7"
+  },
+  "4_lucas_4": {
+    "wav": "/content/recordings/4_lucas_4.wav",
+    "length": 0.554125,
+    "digit_id": "4"
+  },
+  "0_theo_13": {
+    "wav": "/content/recordings/0_theo_13.wav",
+    "length": 0.42275,
+    "digit_id": "0"
+  },
+  "6_lucas_13": {
+    "wav": "/content/recordings/6_lucas_13.wav",
+    "length": 0.517375,
+    "digit_id": "6"
+  },
+  "7_george_44": {
+    "wav": "/content/recordings/7_george_44.wav",
+    "length": 0.457,
+    "digit_id": "7"
+  },
+  "4_jackson_32": {
+    "wav": "/content/recordings/4_jackson_32.wav",
+    "length": 0.433375,
+    "digit_id": "4"
+  },
+  "0_nicolas_32": {
+    "wav": "/content/recordings/0_nicolas_32.wav",
+    "length": 0.359,
+    "digit_id": "0"
+  },
+  "3_yweweler_20": {
+    "wav": "/content/recordings/3_yweweler_20.wav",
+    "length": 0.27725,
+    "digit_id": "3"
+  },
+  "2_yweweler_32": {
+    "wav": "/content/recordings/2_yweweler_32.wav",
+    "length": 0.305125,
+    "digit_id": "2"
+  },
+  "6_nicolas_13": {
+    "wav": "/content/recordings/6_nicolas_13.wav",
+    "length": 0.327375,
+    "digit_id": "6"
+  }
+}
