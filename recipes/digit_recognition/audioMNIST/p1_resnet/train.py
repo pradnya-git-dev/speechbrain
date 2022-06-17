@@ -1,28 +1,9 @@
 #!/usr/bin/env python3
-"""Recipe for training a speaker-id system. The template can use used as a
-basic example for any signal classification task such as language_id,
-emotion recognition, command classification, etc. The proposed task classifies
-28 speakers using Mini Librispeech. This task is very easy. In a real
-scenario, you need to use datasets with a larger number of speakers such as
-the voxceleb one (see recipes/VoxCeleb). Speechbrain has already some built-in
-models for signal classifications (see the ECAPA one in
-speechbrain.lobes.models.ECAPA_TDNN.py or the xvector in
-speechbrain/lobes/models/Xvector.py)
-
-To run this recipe, do the following:
-> python train.py train.yaml
-
-To read the code, first scroll to the bottom to see the "main" code.
-This gives a high-level overview of what is going on, while the
-Brain class definition provides the details of what happens
-for each batch during training.
-
-The first time you run it, this script should automatically download
-and prepare the Mini Librispeech dataset for computation. Noise and
-reverberation are automatically added to each sample from OpenRIR.
+"""Recipe for training a digit recognition system.
 
 Authors
- * Mirco Ravanelli 2021
+ * Mirco Ravanelli, 2021
+ * Pradnya Kandarkar, 2022
 """
 import os
 import sys
@@ -35,23 +16,24 @@ from prepare_audioMNIST import prepare_audioMNIST
 # Brain class for speech enhancement training
 class DigitIdBrain(sb.Brain):
     def compute_forward(self, batch, stage):
-        """Runs all the computation of that transforms the input into the
-        output probabilities over the N classes.
+        """Runs all computations for an input sequence - computes embeddings and
+        applies a linear classifier on top to get the output probabilities over
+        the 10 digit classes
 
         Arguments
         ---------
         batch : PaddedBatch
-            This batch object contains all the relevant tensors for computation.
+            This batch object contains all the relevant tensors for computation
         stage : sb.Stage
-            One of sb.Stage.TRAIN, sb.Stage.VALID, or sb.Stage.TEST.
+            One of sb.Stage.TRAIN, sb.Stage.VALID, or sb.Stage.TEST
 
         Returns
         -------
         predictions : Tensor
-            Tensor that contains the posterior probabilities over the N classes.
+            Tensor that contains the posterior probabilities over the 10 classes
         """
 
-        # We first move the batch to the appropriate device.
+        # Moves the batch to the appropriate device
         batch = batch.to(self.device)
 
         # Compute features, embeddings, and predictions
@@ -62,14 +44,14 @@ class DigitIdBrain(sb.Brain):
         return predictions
 
     def prepare_features(self, wavs, stage):
-        """Prepare the features for computation, including augmentation.
+        """Prepare the features for computation, including augmentation
 
         Arguments
         ---------
         wavs : tuple
-            Input signals (tensor) and their relative lengths (tensor).
+            Input signals (tensor) and their relative lengths (tensor)
         stage : sb.Stage
-            The current stage of training.
+            The current stage of training
         """
         wavs, lens = wavs
 
@@ -93,16 +75,16 @@ class DigitIdBrain(sb.Brain):
         return feats, lens
 
     def compute_objectives(self, predictions, batch, stage):
-        """Computes the loss given the predicted and targeted outputs.
+        """Computes the loss given the predicted and targeted outputs
 
         Arguments
         ---------
         predictions : tensor
-            The output tensor from `compute_forward`.
+            The output tensor from "compute_forward"
         batch : PaddedBatch
-            This batch object contains all the relevant tensors for computation.
+            This batch object contains all the relevant tensors for computation
         stage : sb.Stage
-            One of sb.Stage.TRAIN, sb.Stage.VALID, or sb.Stage.TEST.
+            One of sb.Stage.TRAIN, sb.Stage.VALID, or sb.Stage.TEST
 
         Returns
         -------
@@ -113,84 +95,67 @@ class DigitIdBrain(sb.Brain):
         _, lens = batch.sig
         digitid, _ = batch.digit_id_encoded
 
-        # Concatenate labels (due to data augmentation)
+        # Concatenates labels (due to data augmentation)
         if stage == sb.Stage.TRAIN and hasattr(self.modules, "env_corrupt"):
             digitid = torch.cat([digitid, digitid], dim=0)
             lens = torch.cat([lens, lens])
 
         digitid = digitid.squeeze(1).long()
 
-
-        # print(predictions.shape, type(predictions))
-        # print(digitid.shape, type(digitid), digitid)
-        # print(lens.shape, type(lens), lens)
-
-
-        # probs = torch.rand(16, 10)
-        # labels = torch.rand(16).long()
-        # probs = torch.tensor([[0.9, 0.1], [0.1, 0.9], [0.2, 0.8]])
-        # print(probs.shape)
-        # print(torch.tensor([1, 1, 0]).shape)
-        # temp_loss = sb.nnet.losses.nll_loss(predictions.to(digitid.device), digitid)
-        # print(temp_loss)
-
-
-        # import pdb ; pdb.set_trace()
-
-        # Compute the cost function
+        # Computes the cost function
         loss = sb.nnet.losses.nll_loss(predictions, digitid)
 
-        # Append this batch of losses to the loss metric for easy
+        # Appends this batch of losses to the loss metric for easy
         self.loss_metric.append(
             batch.id, predictions, digitid, reduction="batch"
         )
 
-        # Compute classification error at test time
+        # Computes classification error at test time
         if stage != sb.Stage.TRAIN:
             self.error_metrics.append(batch.id, predictions, digitid)
 
         return loss
 
     def on_stage_start(self, stage, epoch=None):
-        """Gets called at the beginning of each epoch.
+        """Gets called at the beginning of each epoch
 
         Arguments
         ---------
         stage : sb.Stage
-            One of sb.Stage.TRAIN, sb.Stage.VALID, or sb.Stage.TEST.
+            One of sb.Stage.TRAIN, sb.Stage.VALID, or sb.Stage.TEST
         epoch : int
             The currently-starting epoch. This is passed
             `None` during the test stage.
         """
 
-        # Set up statistics trackers for this stage
+        # Sets up statistics trackers for this stage
         self.loss_metric = sb.utils.metric_stats.MetricStats(
             metric=sb.nnet.losses.nll_loss
         )
 
-        # Set up evaluation-only statistics trackers
+        # Sets up evaluation-only statistics trackers
         if stage != sb.Stage.TRAIN:
             self.error_metrics = self.hparams.error_stats()
 
     def on_stage_end(self, stage, stage_loss, epoch=None):
-        """Gets called at the end of an epoch.
+        """Gets called at the end of an epoch
 
         Arguments
         ---------
         stage : sb.Stage
             One of sb.Stage.TRAIN, sb.Stage.VALID, sb.Stage.TEST
         stage_loss : float
-            The average loss for all of the data processed in this stage.
+            The average loss for all of the data processed in this stage
         epoch : int
             The currently-starting epoch. This is passed
             `None` during the test stage.
         """
 
-        # Store the train loss until the validation stage.
+        # Stores the train loss until the validation stage.
         if stage == sb.Stage.TRAIN:
             self.train_loss = stage_loss
 
-        # Summarize the statistics from the stage for record-keeping.
+        # Summarizes the statistics from the stage for record-keeping.
         else:
             stats = {
                 "loss": stage_loss,
@@ -203,17 +168,17 @@ class DigitIdBrain(sb.Brain):
             old_lr, new_lr = self.hparams.lr_annealing(epoch)
             sb.nnet.schedulers.update_learning_rate(self.optimizer, new_lr)
 
-            # The train_logger writes a summary to stdout and to the logfile.
+            # The train_logger writes a summary to stdout and to the logfile
             self.hparams.train_logger.log_stats(
                 {"Epoch": epoch, "lr": old_lr},
                 train_stats={"loss": self.train_loss},
                 valid_stats=stats,
             )
 
-            # Save the current checkpoint and delete previous checkpoints,
+            # Saves the current checkpoint and deletes previous checkpoints
             self.checkpointer.save_and_keep_only(meta=stats, min_keys=["error"])
 
-        # We also write statistics about test data to stdout and to the logfile.
+        # Writes statistics about test data to stdout and to the logfile
         if stage == sb.Stage.TEST:
             self.hparams.train_logger.log_stats(
                 {"Epoch loaded": self.hparams.epoch_counter.current},
@@ -224,14 +189,14 @@ class DigitIdBrain(sb.Brain):
 def dataio_prep(hparams):
     """This function prepares the datasets to be used in the brain class.
     It also defines the data processing pipeline through user-defined functions.
-    We expect `prepare_mini_librispeech` to have been called before this,
-    so that the `train.json`, `valid.json`,  and `valid.json` manifest files
+    We expect "prepare_audioMNIST" to have been called before this,
+    so that the "train.json", "valid.json",  and "valid.json" manifest files
     are available.
 
     Arguments
     ---------
     hparams : dict
-        This dictionary is loaded from the `train.yaml` file, and it includes
+        This dictionary is loaded from the "hparams.yaml" file, and it includes
         all the hyperparameters needed for dataset construction and loading.
 
     Returns
@@ -250,7 +215,7 @@ def dataio_prep(hparams):
     @sb.utils.data_pipeline.provides("sig")
     def audio_pipeline(wav):
         """Load the signal, and pass it and its length to the corruption class.
-        This is done on the CPU in the `collate_fn`."""
+        This is done on the CPU in the "collate_fn"."""
         sig = sb.dataio.dataio.read_audio(wav)
         return sig
 

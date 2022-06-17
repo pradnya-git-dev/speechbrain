@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Recipe for training an autoencoder system. 
+"""Recipe for training an autoencoder system.
 
 Authors
- * 
+ *
 """
 import os
 import sys
@@ -15,7 +15,7 @@ from prepare_audioMNIST import prepare_audioMNIST
 # Brain class for autoencoder training
 class DigitIdBrain(sb.Brain):
     def compute_forward(self, batch, stage):
-        """Runs all the computations that apply transformations to the provided 
+        """Runs all the computations that apply transformations to the provided
         input and perform reconstruction for audio tensors
 
         Arguments
@@ -27,8 +27,9 @@ class DigitIdBrain(sb.Brain):
 
         Returns
         -------
-        output : Tensor
-            Tensor that contains the reconstructed output
+        result : tuple
+            A tuple (preditions, feats) that contains the reconstruction
+            predictions and the original input features
         """
 
         # Moves the batch to the appropriate device
@@ -40,16 +41,15 @@ class DigitIdBrain(sb.Brain):
 
         return predictions, feats
 
-
     def prepare_features(self, wavs, stage):
         """Prepare the features for computation, including augmentation.
 
         Arguments
         ---------
         wavs : tuple
-            Input signals (tensor) and their relative lengths (tensor).
+            Input signals (tensor) and their relative lengths (tensor)
         stage : sb.Stage
-            The current stage of training.
+            The current stage of training
         """
         wavs, lens = wavs
 
@@ -72,14 +72,14 @@ class DigitIdBrain(sb.Brain):
 
         return feats, lens
 
-
     def compute_objectives(self, cf_results, batch, stage):
         """Computes the loss given the predicted and targeted outputs.
 
         Arguments
         ---------
-        predictions : tensor
-            The output tensor from `compute_forward`.
+        cf_results : tuple
+            A tuple (preditions, feats) that contains the reconstruction
+            predictions and the original input features
         batch : PaddedBatch
             This batch object contains all the relevant tensors for computation.
         stage : sb.Stage
@@ -107,7 +107,6 @@ class DigitIdBrain(sb.Brain):
 
         return loss
 
-
     def on_stage_start(self, stage, epoch=None):
         """Gets called at the beginning of each epoch.
 
@@ -128,7 +127,6 @@ class DigitIdBrain(sb.Brain):
         # Sets up evaluation-only statistics trackers
         if stage != sb.Stage.TRAIN:
             self.error_metrics = self.hparams.error_stats()
-
 
     def on_stage_end(self, stage, stage_loss, epoch=None):
         """Gets called at the end of an epoch.
@@ -204,7 +202,7 @@ def dataio_prep(hparams):
     @sb.utils.data_pipeline.provides("sig")
     def audio_pipeline(wav):
         """Load the signal, and pass it and its length to the corruption class.
-        This is done on the CPU in the `collate_fn`."""
+        This is done on the CPU in the "collate_fn"."""
         sig = sb.dataio.dataio.read_audio(wav)
         return sig
 
@@ -222,7 +220,7 @@ def dataio_prep(hparams):
             dynamic_items=[audio_pipeline],
             output_keys=["id", "sig"],
         )
-    
+
     return datasets
 
 

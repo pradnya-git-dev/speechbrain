@@ -38,7 +38,7 @@ class AudioAutoencoder(torch.nn.Module):
 
         self.in_channels = in_channels
 
-        # Encoder block - This block has 2 convolutional layers and compresses 
+        # Encoder block - This block has 2 convolutional layers and compresses
         # the provided input into its latent representation
         self.encoder = ModuleList()
         self.encoder.extend([

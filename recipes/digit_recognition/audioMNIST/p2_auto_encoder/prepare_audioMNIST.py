@@ -2,7 +2,8 @@
 Creates data manifest files for audio reconstruction.
 
 Authors:
- *
+ * Mirco Ravanelli, 2021
+ * Pradnya Kandarkar, 2022
 """
 
 import os

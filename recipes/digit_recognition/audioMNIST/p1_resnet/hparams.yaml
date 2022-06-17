@@ -1,30 +1,24 @@
 # #################################
-# Basic training parameters for speaker-id. We have first a network that
-# computes some embeddings. On the top of that, we employ a classifier.
+# Basic training parameters for digit_id. First, a ResNet model computes 
+# embeddings. A classifier is applied on top of the computed embeddings.
 #
-# Author:
+# Authors:
 #  * Mirco Ravanelli 2021
+#  * Pradnya Kandarkar 2022
 # #################################
 
 # Seed needs to be set at top of yaml, before objects with parameters are made
 seed: 1986
 __set_seed: !!python/object/apply:torch.manual_seed [!ref <seed>]
 
-# If you plan to train a system on an HPC cluster with a big dataset,
-# we strongly suggest doing the following:
-# 1- Compress the dataset in a single tar or zip file.
-# 2- Copy your dataset locally (i.e., the local disk of the computing node).
-# 3- Uncompress the dataset in the local folder.
-# 4- Set data_folder with the local path.
-# Reading data from the local disk of the compute node (e.g. $SLURM_TMPDIR with SLURM-based clusters) is very important.
-# It allows you to read the data much faster without slowing down the shared filesystem.
-data_folder: /content/recordings
+# Directory setup
+data_folder: /
 output_folder: !ref ./results/digit_recognition/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
 
 # Path where data manifest files will be stored
-# The data manifest files are created by the data preparation script.
+# The data manifest files are created by the data preparation script
 train_annotation: train.json
 valid_annotation: valid.json
 test_annotation: test.json
@@ -63,14 +57,14 @@ mean_var_norm: !new:speechbrain.processing.features.InputNormalization
     norm_type: sentence
     std_norm: True
 
-# To design a custom model, either just edit the simple CustomModel
-# class that's listed here, or replace this `!new` call with a line
-# pointing to a different file you've defined.
-embedding_model: !new:resnet.ResNet50
+# ResNet model to compute the embeddings
+# Path: /content/speechbrain/speechbrain/lobes/models/resnet.py
+embedding_model: !new:resnet.ResNetModel
     in_channels: !ref <n_mels>
     resnet_layers: [3, 4, 6, 3]
     lin_neurons: !ref <emb_dim>
 
+# Classifier model to be applied on top of the computed emmbeddings
 classifier: !new:resnet.Classifier
     input_shape: [null, null, !ref <emb_dim>]
     activation: !name:torch.nn.LeakyReLU

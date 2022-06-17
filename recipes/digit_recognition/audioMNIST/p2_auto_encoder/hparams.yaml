@@ -1,8 +1,16 @@
+# #################################
+# Training parameters for autoencoder
+#
+# Authors:
+#  * 
+# #################################
+
 # Seed needs to be set at top of yaml, before objects with parameters are made
 seed: 1986
 __set_seed: !!python/object/apply:torch.manual_seed [!ref <seed>]
 
-data_folder: /content/recordings
+# Directory setup
+data_folder: /
 output_folder: !ref ./results/digit_recognition/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt

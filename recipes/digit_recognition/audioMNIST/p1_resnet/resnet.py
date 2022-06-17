@@ -287,7 +287,7 @@ class ResNet(torch.nn.Module):
 
 
 class ResNetModel(torch.nn.Module):
-    """This class can be used to construct a ResNet model with different number 
+    """This class can be used to construct a ResNet model with different number
     of layers.
 
     Arguments
