@@ -10,6 +10,7 @@ import torch
 import speechbrain as sb
 from hyperpyyaml import load_hyperpyyaml
 from prepare_audioMNIST import prepare_audioMNIST
+import torchaudio
 
 
 # Brain class for autoencoder training
@@ -36,10 +37,19 @@ class DigitIdBrain(sb.Brain):
         batch = batch.to(self.device)
 
         # Computes features, and predictions
-        feats, lens = self.prepare_features(batch.sig, stage)
-        predictions = self.modules.autoencoder_model(feats, lens)
+        # feats, lens = self.prepare_features(batch.sig, stage)
 
-        return predictions, feats
+        ae_input, lens = batch.sig
+        ae_input = ae_input.unsqueeze(-1)
+        predictions = self.modules.autoencoder_model(ae_input, lens)
+        
+
+        if stage == sb.Stage.TEST:
+          print("Before saving: ", predictions.shape)
+          signal = predictions[1].cpu()
+          torchaudio.save("out.wav", signal, sample_rate=8000)
+
+        return predictions, ae_input
 
     def prepare_features(self, wavs, stage):
         """Prepare the features for computation, including augmentation.

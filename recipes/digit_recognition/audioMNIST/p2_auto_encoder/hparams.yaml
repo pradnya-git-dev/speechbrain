@@ -36,7 +36,7 @@ n_mels: 40
 
 # Training Parameters
 sample_rate: 8000
-number_of_epochs: 70
+number_of_epochs: 35
 batch_size: 16
 lr_start: 0.001
 lr_final: 0.0001
@@ -55,7 +55,7 @@ mean_var_norm: !new:speechbrain.processing.features.InputNormalization
 
 # Model to be used
 autoencoder_model: !new:auto_encoder_model.AudioAutoencoder
-    in_channels: !ref <n_mels>
+    in_channels: 1
 
 # The first object passed to the Brain class is this "Epoch Counter"
 # which is saved by the Checkpointer so that training can be resumed

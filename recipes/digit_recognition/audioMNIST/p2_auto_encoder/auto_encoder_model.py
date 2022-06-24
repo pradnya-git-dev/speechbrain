@@ -32,7 +32,7 @@ class AudioAutoencoder(torch.nn.Module):
 
     def __init__(
         self,
-        in_channels=40,
+        in_channels=1,
     ):
         super(AudioAutoencoder, self).__init__()
 
@@ -44,12 +44,7 @@ class AudioAutoencoder(torch.nn.Module):
         self.encoder.extend([
             Conv1d(
                 in_channels=self.in_channels,
-                out_channels=30,
-                kernel_size=1),
-            torch.nn.LeakyReLU(),
-            Conv1d(
-                in_channels=30,
-                out_channels=20,
+                out_channels=self.in_channels * 2,
                 kernel_size=1)
         ])
 
@@ -57,15 +52,10 @@ class AudioAutoencoder(torch.nn.Module):
         # are used to progressively unsample the latent representations to match
         # the dimentionality of the provided input
         self.decoder = ModuleList()
-        self.encoder.extend([
-            ConvTranspose1d(
-                out_channels=30,
-                in_channels=20,
-                kernel_size=1),
-            torch.nn.LeakyReLU(),
+        self.decoder.extend([
             ConvTranspose1d(
                 out_channels=self.in_channels,
-                in_channels=30,
+                in_channels=self.in_channels * 2,
                 kernel_size=1)
         ])
 
@@ -86,6 +76,5 @@ class AudioAutoencoder(torch.nn.Module):
 
         x = self.encoder(x)
         x = self.decoder(x)
-        out = torch.tanh(x)
 
-        return out
+        return x
