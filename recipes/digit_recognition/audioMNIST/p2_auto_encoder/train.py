@@ -10,7 +10,14 @@ import torch
 import speechbrain as sb
 from hyperpyyaml import load_hyperpyyaml
 from prepare_audioMNIST import prepare_audioMNIST
+
+
 import torchaudio
+from speechbrain.dataio.dataio import read_audio
+from IPython.display import Audio
+
+import matplotlib.pyplot as plt
+
 
 
 # Brain class for autoencoder training
@@ -35,9 +42,9 @@ class DigitIdBrain(sb.Brain):
 
         # Moves the batch to the appropriate device
         batch = batch.to(self.device)
-
-        # Computes features, and predictions
-        # feats, lens = self.prepare_features(batch.sig, stage)
+        # print("batch.shape: ", batch.shape)
+        # padded_batch, _ = sb.utils.data_utils.batch_pad_right(batch)
+        # print("padded_batch.shape: ", padded_batch.shape)
 
         ae_input, lens = batch.sig
         ae_input = ae_input.unsqueeze(-1)
@@ -45,8 +52,8 @@ class DigitIdBrain(sb.Brain):
         
 
         if stage == sb.Stage.TEST:
-          print("Before saving: ", predictions.shape)
-          signal = predictions[1].cpu()
+          signal = predictions[3]
+          signal = torch.transpose(signal, 0, 1).cpu()
           torchaudio.save("out.wav", signal, sample_rate=8000)
 
         return predictions, ae_input
@@ -104,6 +111,11 @@ class DigitIdBrain(sb.Brain):
         # Computes the cost function
         _, lens = batch.sig
         predictions, feats = cf_results
+        # import pdb; pdb.set_trace()
+        # print("Loss calculation: predictions.shape: ", predictions.shape)
+        # print("Loss calculation: feats.shape: ", feats.shape)
+        # predictions, feats = sb.nnet.losses.truncate(predictions, feats, allowed_len_diff=10)
+        predictions, _ = sb.utils.data_utils.pad_right_to(predictions, feats.shape)
         loss = sb.nnet.losses.mse_loss(predictions, feats, lens)
 
         # Appends this batch of losses to the loss metric for easy
@@ -229,7 +241,7 @@ def dataio_prep(hparams):
             replacements={"data_root": hparams["data_folder"]},
             dynamic_items=[audio_pipeline],
             output_keys=["id", "sig"],
-        )
+        ).filtered_sorted(sort_key="length")
 
     return datasets
 
