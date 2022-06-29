@@ -19,65 +19,84 @@ class AudioAutoencoder(torch.nn.Module):
 
     Arguments
     ---------
+    num_layers : int
+      Number of layers for the encoder and the decoder
     in_channels : int
       Number of input channels
-
-    Example
-    -------
-    >>> input_features = torch.rand([5, 10, 40])
-    >>> sample_encoder = AudioAutoencoder()
-    >>> output = sample_encoder(input_features)
-    >>> output.shape
-    torch.Size([5, 10, 40])
+    kernel_size : int
+      Kernel size
+    stride : int
+      Stride
     """
 
     def __init__(
         self,
+        num_layers=2,
         in_channels=1,
+        kernel_size=5,
+        stride=3
     ):
         super(AudioAutoencoder, self).__init__()
 
+        # Initalization
+        self.num_layers = num_layers
         self.in_channels = in_channels
-        self.kernel_size = 7
-        self.stride = 3
+        self.kernel_size = kernel_size
+        self.stride = stride
 
-        # Encoder block - This block has 2 convolutional layers and compresses
-        # the provided input into its latent representation
+        # Defines the channels to be used in the encoder and decoder blocks
+        self.channels = [self.in_channels
+                         * (2 ** i) for i in range(self.num_layers + 1)]
+
+        # Encoder block
         self.encoder = ModuleList()
-        self.encoder.extend([
+
+        # Appends convolutional layers and leaky ReLU layers to the encoder
+        # block
+        for i in range(len(self.channels) - 2):
+            self.encoder.extend([
+                Conv1d(
+                    in_channels=self.channels[i],
+                    out_channels=self.channels[i + 1],
+                    kernel_size=self.kernel_size,
+                    stride=self.stride),
+                torch.nn.LeakyReLU()
+            ])
+
+        # Appends the last convolutional layer to the encoder block
+        self.encoder.append(
             Conv1d(
-                in_channels=self.in_channels,
-                out_channels=self.in_channels * 2,
-                kernel_size=self.kernel_size,
-                stride=self.stride),
-            torch.nn.LeakyReLU(),
-            Conv1d(
-                in_channels=self.in_channels * 2,
-                out_channels=self.in_channels * 4,
+                in_channels=self.channels[-2],
+                out_channels=self.channels[-1],
                 kernel_size=self.kernel_size,
                 stride=self.stride)
+        )
 
-        ])
-
-        # Decoder block - This block has 2 transposed convolutional layers. They
-        # are used to progressively unsample the latent representations to match
-        # the dimentionality of the provided input
+        # Decoder block
         self.decoder = ModuleList()
-        self.decoder.extend([
+
+        # Appends the transposed convolutional layers and leaky ReLU layers to
+        # the decoder block
+        for i in range(len(self.channels) - 1, 1, -1):
+            self.decoder.extend([
+                ConvTranspose1d(
+                    in_channels=self.channels[i],
+                    out_channels=self.channels[i - 1],
+                    kernel_size=self.kernel_size,
+                    stride=self.stride,
+                    padding=floor(self.kernel_size / 2)),
+                torch.nn.LeakyReLU()
+            ])
+
+        # Appends the last transposed convolution layer to the decoder block
+        self.decoder.append(
             ConvTranspose1d(
-                in_channels=self.in_channels * 4,
-                out_channels=self.in_channels * 2,
+                in_channels=self.channels[1],
+                out_channels=self.channels[0],
                 kernel_size=self.kernel_size,
                 stride=self.stride,
                 padding=floor(self.kernel_size / 2)),
-            torch.nn.LeakyReLU(),
-            ConvTranspose1d(
-                in_channels=self.in_channels * 2,
-                out_channels=self.in_channels,
-                kernel_size=self.kernel_size,
-                stride=self.stride,
-                padding=floor(self.kernel_size / 2))
-        ])
+        )
 
     def forward(self, x, lens=None):
         """This function processes the input sequence by passing it through an
@@ -90,15 +109,10 @@ class AudioAutoencoder(torch.nn.Module):
 
         Returns
         ---------
-        out : torch.Tensor
+        x : torch.Tensor
           Reconstructed tensor for the audio with shape (batch, time, channel)
         """
 
-        # import pdb; pdb.set_trace()
-        # print("\nx.shape before encoder: ", x.shape)
         x = self.encoder(x)
-        # print("x.shape after encoder (c1): ", x.shape)
         x = self.decoder(x)
-        # print("x.shape after decoder: ", x.shape)
-
         return x

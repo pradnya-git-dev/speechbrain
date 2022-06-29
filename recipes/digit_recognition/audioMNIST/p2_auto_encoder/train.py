@@ -11,17 +11,11 @@ import speechbrain as sb
 from hyperpyyaml import load_hyperpyyaml
 from prepare_audioMNIST import prepare_audioMNIST
 
-
 import torchaudio
-from speechbrain.dataio.dataio import read_audio
-from IPython.display import Audio
-
-import matplotlib.pyplot as plt
-
 
 
 # Brain class for autoencoder training
-class DigitIdBrain(sb.Brain):
+class AutoEncoderBrain(sb.Brain):
     def compute_forward(self, batch, stage):
         """Runs all the computations that apply transformations to the provided
         input and perform reconstruction for audio tensors
@@ -42,52 +36,18 @@ class DigitIdBrain(sb.Brain):
 
         # Moves the batch to the appropriate device
         batch = batch.to(self.device)
-        # print("batch.shape: ", batch.shape)
-        # padded_batch, _ = sb.utils.data_utils.batch_pad_right(batch)
-        # print("padded_batch.shape: ", padded_batch.shape)
 
         ae_input, lens = batch.sig
         ae_input = ae_input.unsqueeze(-1)
         predictions = self.modules.autoencoder_model(ae_input, lens)
-        
 
         if stage == sb.Stage.TEST:
-          signal = predictions[3]
-          signal = torch.transpose(signal, 0, 1).cpu()
-          torchaudio.save("out.wav", signal, sample_rate=8000)
+            signal = predictions[1]
+            signal = torch.transpose(signal, 0, 1).cpu()
+            torchaudio.save("out.wav", signal, sample_rate=8000)
 
+        # Returns the predictions and the original input for loss computation
         return predictions, ae_input
-
-    def prepare_features(self, wavs, stage):
-        """Prepare the features for computation, including augmentation.
-
-        Arguments
-        ---------
-        wavs : tuple
-            Input signals (tensor) and their relative lengths (tensor)
-        stage : sb.Stage
-            The current stage of training
-        """
-        wavs, lens = wavs
-
-        # Add augmentation if specified. In this version of augmentation, we
-        # concatenate the original and the augment batches in a single bigger
-        # batch. This is more memory-demanding, but helps to improve the
-        # performance. Change it if you run OOM.
-        if stage == sb.Stage.TRAIN:
-            if hasattr(self.modules, "env_corrupt"):
-                wavs_noise = self.modules.env_corrupt(wavs, lens)
-                wavs = torch.cat([wavs, wavs_noise], dim=0)
-                lens = torch.cat([lens, lens])
-
-            if hasattr(self.hparams, "augmentation"):
-                wavs = self.hparams.augmentation(wavs, lens)
-
-        # Feature extraction and normalization
-        feats = self.modules.compute_features(wavs)
-        feats = self.modules.mean_var_norm(feats, lens)
-
-        return feats, lens
 
     def compute_objectives(self, cf_results, batch, stage):
         """Computes the loss given the predicted and targeted outputs.
@@ -111,11 +71,16 @@ class DigitIdBrain(sb.Brain):
         # Computes the cost function
         _, lens = batch.sig
         predictions, feats = cf_results
-        # import pdb; pdb.set_trace()
-        # print("Loss calculation: predictions.shape: ", predictions.shape)
-        # print("Loss calculation: feats.shape: ", feats.shape)
-        # predictions, feats = sb.nnet.losses.truncate(predictions, feats, allowed_len_diff=10)
-        predictions, _ = sb.utils.data_utils.pad_right_to(predictions, feats.shape)
+
+        # Performs padding as required
+        if predictions.shape[1] < feats.shape[1]:
+            predictions, _ = sb.utils.data_utils.pad_right_to(
+                predictions, feats.shape)
+        elif predictions.shape[1] > feats.shape[1]:
+            feats, _ = sb.utils.data_utils.pad_right_to(
+                feats, predictions.shape)
+
+        # Calculates the loss
         loss = sb.nnet.losses.mse_loss(predictions, feats, lens)
 
         # Appends this batch of losses to the loss metric for easy
@@ -282,7 +247,7 @@ if __name__ == "__main__":
     datasets = dataio_prep(hparams)
 
     # Initializes the Brain object to prepare for mask training
-    digit_id_brain = DigitIdBrain(
+    ae_brain = AutoEncoderBrain(
         modules=hparams["modules"],
         opt_class=hparams["opt_class"],
         hparams=hparams,
@@ -294,8 +259,8 @@ if __name__ == "__main__":
     # necessary to update the parameters of the model. Since all objects
     # with changing state are managed by the Checkpointer, training can be
     # stopped at any point, and will be resumed on next call.
-    digit_id_brain.fit(
-        epoch_counter=digit_id_brain.hparams.epoch_counter,
+    ae_brain.fit(
+        epoch_counter=ae_brain.hparams.epoch_counter,
         train_set=datasets["train"],
         valid_set=datasets["valid"],
         train_loader_kwargs=hparams["dataloader_options"],
@@ -303,7 +268,7 @@ if __name__ == "__main__":
     )
 
     # Loads the best checkpoint for evaluation
-    test_stats = digit_id_brain.evaluate(
+    test_stats = ae_brain.evaluate(
         test_set=datasets["test"],
         min_key="error",
         test_loader_kwargs=hparams["dataloader_options"],

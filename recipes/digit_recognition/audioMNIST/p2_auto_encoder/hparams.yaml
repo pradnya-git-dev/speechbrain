@@ -2,7 +2,8 @@
 # Training parameters for autoencoder
 #
 # Authors:
-#  * 
+#  * Mirco Ravanelli 2021
+#  * Pradnya Kandarkar 2022
 # #################################
 
 # Seed needs to be set at top of yaml, before objects with parameters are made
@@ -31,12 +32,9 @@ error_stats: !name:speechbrain.utils.metric_stats.MetricStats
 
 ckpt_interval_minutes: 15 # save checkpoint every N min
 
-# Feature parameters
-n_mels: 40
-
 # Training Parameters
 sample_rate: 8000
-number_of_epochs: 35
+number_of_epochs: 75
 batch_size: 16
 lr_start: 0.001
 lr_final: 0.0001
@@ -45,7 +43,10 @@ dataloader_options:
     
 # Model to be used
 autoencoder_model: !new:auto_encoder_model.AudioAutoencoder
+    num_layers: 2
     in_channels: 1
+    kernel_size: 5
+    stride: 2
 
 # The first object passed to the Brain class is this "Epoch Counter"
 # which is saved by the Checkpointer so that training can be resumed
