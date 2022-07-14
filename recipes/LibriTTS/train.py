@@ -18,6 +18,8 @@ import speechbrain as sb
 from speechbrain.utils.data_utils import scalarize
 import torchaudio
 import os
+import torchaudio
+from speechbrain.pretrained import EncoderClassifier
 
 
 class HifiGanBrain(sb.Brain):
@@ -37,9 +39,15 @@ class HifiGanBrain(sb.Brain):
         batch = batch.to(self.device)
         x, _ = batch.mel
         y, _ = batch.sig
+        s, _ = batch.spk_emb
+
+        # if stage != sb.Stage.TRAIN:
+        #   print("Mel shape: ", x.shape)
+        #   print("Audio shape: ", y.shape)
+        #   print("Speaker embeddings shape: ", s.shape)
 
         # generate sythesized waveforms
-        y_g_hat = self.modules.generator(x)[:, :, : y.size(2)]
+        y_g_hat = self.modules.generator(x, s)[:, :, : y.size(2)]
 
         # get scores and features from discriminator for real and synthesized waveforms
         scores_fake, feats_fake = self.modules.discriminator(y_g_hat.detach())
@@ -53,11 +61,12 @@ class HifiGanBrain(sb.Brain):
         batch = batch.to(self.device)
         x, _ = batch.mel
         y, _ = batch.sig
+        z, _ = batch.spk_emb
 
         # Hold on to the batch for the inference sample. This is needed because
         # the infernece sample is run from on_stage_end only, where
         # batch information is not available
-        self.last_batch = (x, y)
+        self.last_batch = (x, y, z)
 
         # Hold on to a sample (for logging)
         self._remember_sample(self.last_batch, predictions)
@@ -163,7 +172,7 @@ class HifiGanBrain(sb.Brain):
         predictions: tuple
             predictions (raw output of the Tacotron model)
         """
-        mel, sig = batch
+        mel, sig, spk_emb = batch
         y_hat, scores_fake, feats_fake, scores_real, feats_real = predictions
 
     def on_stage_end(self, stage, stage_loss, epoch):
@@ -231,12 +240,12 @@ class HifiGanBrain(sb.Brain):
         with torch.no_grad():
             if self.last_batch is None:
                 return
-            x, y = self.last_batch
+            x, y, z = self.last_batch
 
             # Preparing model for inference by removing weight norm
             inference_generator = copy.deepcopy(self.hparams.generator)
             inference_generator.remove_weight_norm()
-            sig_out = inference_generator.inference(x)
+            sig_out = inference_generator.inference(x, z)
             spec_out = self.hparams.mel_spectogram(
                 audio=sig_out.squeeze(0).cpu()
             )
@@ -289,10 +298,12 @@ def dataio_prepare(hparams):
     It also defines the data processing pipeline through user-defined functions.
     """
     segment_size = hparams["segment_size"]
+    # classifier = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
+    classifier = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")  
 
     # Define audio pipeline:
     @sb.utils.data_pipeline.takes("wav")
-    @sb.utils.data_pipeline.provides("mel", "sig")
+    @sb.utils.data_pipeline.provides("mel", "sig", "spk_emb")
     def audio_pipeline(wav):
         audio = sb.dataio.dataio.read_audio(wav)
         audio = torch.FloatTensor(audio)
@@ -308,7 +319,10 @@ def dataio_prepare(hparams):
 
         mel = hparams["mel_spectogram"](audio=audio.squeeze(0))
 
-        return mel, audio
+        signal, fs =torchaudio.load(wav)
+        spk_emb = classifier.encode_batch(audio)
+
+        return mel, audio, spk_emb
 
     datasets = {}
     for dataset in hparams["splits"]:
@@ -316,7 +330,7 @@ def dataio_prepare(hparams):
             json_path=hparams[f"{dataset}_json"],
             replacements={"data_root": hparams["data_folder"]},
             dynamic_items=[audio_pipeline],
-            output_keys=["id", "mel", "sig"],
+            output_keys=["id", "mel", "sig", "spk_emb"],
         )
 
     return datasets

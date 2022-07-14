@@ -104,7 +104,7 @@ mel_spectogram: !name:speechbrain.lobes.models.HifiGAN.mel_spectogram
   mel_scale: !ref <mel_scale>
   compression: !ref <dynamic_range_compression>
 
-generator: !new:speechbrain.lobes.models.HifiGAN.HifiganGenerator
+generator: !new:model.HifiganGenerator
   in_channels: !ref <in_channels>
   out_channels: !ref <out_channels>
   resblock_type: !ref <resblock_type>
@@ -117,7 +117,7 @@ generator: !new:speechbrain.lobes.models.HifiGAN.HifiganGenerator
   cond_channels: !ref <cond_channels>
   conv_post_bias: !ref <conv_post_bias>
 
-discriminator: !new:speechbrain.lobes.models.HifiGAN.HifiganDiscriminator
+discriminator: !new:model.HifiganDiscriminator
 
 modules:
   generator: !ref <generator>
@@ -125,9 +125,9 @@ modules:
 
 #generator loss
 stft_loss: null
-mseg_loss: !new:speechbrain.lobes.models.HifiGAN.MSEGLoss
-feat_match_loss: !new:speechbrain.lobes.models.HifiGAN.MelganFeatureLoss
-l1_spec_loss: !new:speechbrain.lobes.models.HifiGAN.L1SpecLoss
+mseg_loss: !new:model.MSEGLoss
+feat_match_loss: !new:model.MelganFeatureLoss
+l1_spec_loss: !new:model.L1SpecLoss
   sample_rate: !ref <sample_rate>
   hop_length: !ref <hop_length>
   win_length: !ref <win_length>
@@ -140,7 +140,7 @@ l1_spec_loss: !new:speechbrain.lobes.models.HifiGAN.L1SpecLoss
   power: !ref <power>
   dynamic_range_compression: !ref <dynamic_range_compression>
 
-generator_loss: !new:speechbrain.lobes.models.HifiGAN.GeneratorLoss
+generator_loss: !new:model.GeneratorLoss
   stft_loss: !ref <stft_loss>
   stft_loss_weight: 0
   mseg_loss: !ref <mseg_loss>
@@ -151,9 +151,9 @@ generator_loss: !new:speechbrain.lobes.models.HifiGAN.GeneratorLoss
   l1_spec_loss_weight: 45
 
 #discriminator loss
-msed_loss: !new:speechbrain.lobes.models.HifiGAN.MSEDLoss
+msed_loss: !new:model.MSEDLoss
 
-discriminator_loss: !new:speechbrain.lobes.models.HifiGAN.DiscriminatorLoss
+discriminator_loss: !new:model.DiscriminatorLoss
   msed_loss: !ref <msed_loss>
 
 #optimizer
