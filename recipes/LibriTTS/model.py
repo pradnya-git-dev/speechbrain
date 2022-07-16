@@ -425,10 +425,13 @@ class HifiganGenerator(torch.nn.Module):
         # s.shape = [32, 1, 1, 192]
         o = self.conv_pre(x)
         # o.shape = [32,512,33]
-        # s.shape = [32, 1, 1, 192]
+        # s.shape = [32, 1, 1, 512]
 
-        s = s.squeeze(1).squeeze(1).unsqueeze(-1)
-        o = (o + s) / 2
+        s = s.squeeze(1).squeeze(1)
+        # s.shape = [32, 512]
+        # s.shape = [32, 512, 1]
+        # o = (o + s.unsqueeze(-1)) / 2
+        # o.shape = [32, 512, 33]
 
         if hasattr(self, "cond_layer"):
             o = o + self.cond_layer(g)
@@ -436,6 +439,10 @@ class HifiganGenerator(torch.nn.Module):
             # o.shape = [32,512,33]
             o = F.leaky_relu(o, LRELU_SLOPE)
             # o.shape = [32,512,33]
+            s2 = torch.mean(torch.unsqueeze(s, 1).repeat(1, o.shape[1], 1), dim=2, keepdim=True)
+            o = (o + s2)/2
+            # o = torch.cat([o, torch.unsqueeze(s, 1).repeat(1, o.shape[1], 1)], dim=2)
+            s2.detach()
             o = self.ups[i](o)
             # o.shape = [32,256,264]
             # o.shape = [32,128,2112]
