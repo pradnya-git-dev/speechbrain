@@ -20,6 +20,7 @@ import torchaudio
 import os
 import torchaudio
 from speechbrain.pretrained import EncoderClassifier
+from speechbrain.processing.speech_augmentation import Resample
 
 
 class HifiGanBrain(sb.Brain):
@@ -299,7 +300,8 @@ def dataio_prepare(hparams):
     """
     segment_size = hparams["segment_size"]
     # classifier = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
-    classifier = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")  
+    encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")  
+    resampler = Resample(orig_freq=24000, new_freq=16000)
 
     # Define audio pipeline:
     @sb.utils.data_pipeline.takes("wav")
@@ -319,8 +321,8 @@ def dataio_prepare(hparams):
 
         mel = hparams["mel_spectogram"](audio=audio.squeeze(0))
 
-        signal, fs =torchaudio.load(wav)
-        spk_emb = classifier.encode_batch(audio)
+        resampled_audio = resampler(audio)
+        spk_emb = encoder.encode_batch(resampled_audio)
 
         return mel, audio, spk_emb
 

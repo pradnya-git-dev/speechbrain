@@ -9,7 +9,7 @@ train_log: !ref <output_folder>/train_log.txt
 progress_sample_path: !ref <output_folder>/samples
 epochs: 5
 keep_checkpoint_interval: 50
-use_tensorboard: False
+use_tensorboard: True
 
 #################################
 # Data files and pre-processing #
@@ -84,6 +84,8 @@ upsample_kernel_sizes: [16, 16, 4, 4]
 upsample_initial_channel: 512
 upsample_factors: [8, 8, 2, 2]
 
+spk_emb_size: 512
+
 inference_padding: 5
 cond_channels: 0
 conv_pre_weight_norm: True
@@ -116,6 +118,7 @@ generator: !new:model.HifiganGenerator
   inference_padding: !ref <inference_padding>
   cond_channels: !ref <cond_channels>
   conv_post_bias: !ref <conv_post_bias>
+  spk_emb_size: !ref <spk_emb_size>
 
 discriminator: !new:model.HifiganDiscriminator
 

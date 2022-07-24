@@ -36,6 +36,7 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 from speechbrain.nnet.CNN import Conv1d, ConvTranspose1d, Conv2d
+from speechbrain.nnet.linear import Linear
 from torchaudio import transforms
 
 LRELU_SLOPE = 0.1
@@ -349,6 +350,7 @@ class HifiganGenerator(torch.nn.Module):
         upsample_kernel_sizes,
         upsample_initial_channel,
         upsample_factors,
+        spk_emb_size,
         inference_padding=5,
         cond_channels=0,
         conv_post_bias=True,
@@ -410,6 +412,8 @@ class HifiganGenerator(torch.nn.Module):
                 kernel_size=1,
             )
 
+        self.linear = Linear(input_size=spk_emb_size, n_neurons=upsample_initial_channel)
+
     def forward(self, x, s, g=None):
         """
         Arguments
@@ -419,7 +423,7 @@ class HifiganGenerator(torch.nn.Module):
         g : torch.Tensor (batch, 1, time)
             global conditioning input tensor.
         """
-        # import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()
         
         # x.shape = [32, 80, 33]
         # s.shape = [32, 1, 1, 192]
@@ -428,9 +432,11 @@ class HifiganGenerator(torch.nn.Module):
         # s.shape = [32, 1, 1, 512]
 
         s = s.squeeze(1).squeeze(1)
+        s = self.linear(s)
+
         # s.shape = [32, 512]
         # s.shape = [32, 512, 1]
-        # o = (o + s.unsqueeze(-1)) / 2
+        o = (o + s.unsqueeze(-1)) / 2
         # o.shape = [32, 512, 33]
 
         if hasattr(self, "cond_layer"):
@@ -439,10 +445,10 @@ class HifiganGenerator(torch.nn.Module):
             # o.shape = [32,512,33]
             o = F.leaky_relu(o, LRELU_SLOPE)
             # o.shape = [32,512,33]
-            s2 = torch.mean(torch.unsqueeze(s, 1).repeat(1, o.shape[1], 1), dim=2, keepdim=True)
-            o = (o + s2)/2
+            # s2 = torch.mean(torch.unsqueeze(s, 1).repeat(1, o.shape[1], 1), dim=2, keepdim=True)
+            # o = (o + s2)/2
             # o = torch.cat([o, torch.unsqueeze(s, 1).repeat(1, o.shape[1], 1)], dim=2)
-            s2.detach()
+            # s2.detach()
             o = self.ups[i](o)
             # o.shape = [32,256,264]
             # o.shape = [32,128,2112]
