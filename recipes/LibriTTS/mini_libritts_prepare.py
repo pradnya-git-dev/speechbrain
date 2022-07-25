@@ -1,13 +1,16 @@
 from speechbrain.utils.data_utils import get_all_files, download_file
 from speechbrain.dataio.dataio import read_audio
+from speechbrain.processing.speech_augmentation import Resample
 import json
 import os, shutil
 import random
 import logging
+import torchaudio
+
 
 logger = logging.getLogger(__name__)
 LIBRITTS_DATASET_URL = "https://www.openslr.org/resources/60/dev-clean.tar.gz"
-SAMPLERATE = 24000
+SAMPLERATE = 16000
 
 
 def prepare_mini_librispeech(
@@ -83,16 +86,29 @@ def create_json(wav_list, json_file):
 
     # Processing all the wav files in the list
     json_dict = {}
+    resampler = Resample(orig_freq=24000, new_freq=16000)
+
     for wav_file in wav_list:
 
         # Reading the signal (to retrieve duration in seconds)
         signal = read_audio(wav_file)
-        duration = signal.shape[0] / SAMPLERATE
+        resampled_signal = resampler(signal)
+        
+
+        
 
         # Manipulate path to get relative path and uttid
         path_parts = wav_file.split(os.path.sep)
         uttid, _ = os.path.splitext(path_parts[-1])
-        relative_path = os.path.join("{data_root}", *path_parts[-5:])
+
+
+        resampled_path = os.path.join(*path_parts[-5:-1], uttid + "resampled.wav")
+        torchaudio.save(resampled_path, resampled_signal, sample_rate=16000)
+
+        duration = resampled_signal.shape[0] / SAMPLERATE
+
+
+        relative_path = os.path.join("{data_root}", resampled_path)
         original_text_path = os.path.join("{data_root}", *path_parts[-5:-1], uttid + ".original.txt")
         # with open(original_text_path, "r") as orig_f:
         #   original_text = orig_f.read()

@@ -7,7 +7,7 @@ output_folder: !ref ./results/exp0/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
 progress_sample_path: !ref <output_folder>/samples
-epochs: 5
+epochs: 65
 keep_checkpoint_interval: 50
 use_tensorboard: True
 
@@ -27,7 +27,7 @@ split_ratio: [90, 10]
 skip_prep: False
 
 segment_size: 8192
-sample_rate: 24000
+sample_rate: 16000
 hop_length: 256
 win_length: 1024
 n_mel_channels: 80
