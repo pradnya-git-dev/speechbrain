@@ -89,9 +89,10 @@ def create_json(wav_list, json_file):
     resampler = Resample(orig_freq=24000, new_freq=16000)
 
     for wav_file in wav_list:
-
+        
         # Reading the signal (to retrieve duration in seconds)
         signal = read_audio(wav_file)
+        signal = signal.unsqueeze(0)
         resampled_signal = resampler(signal)
         
 
@@ -102,13 +103,14 @@ def create_json(wav_list, json_file):
         uttid, _ = os.path.splitext(path_parts[-1])
 
 
-        resampled_path = os.path.join(*path_parts[-5:-1], uttid + "resampled.wav")
+        resampled_path = os.path.join("/", *path_parts[:-1], uttid + "_resampled.wav")
         torchaudio.save(resampled_path, resampled_signal, sample_rate=16000)
 
         duration = resampled_signal.shape[0] / SAMPLERATE
 
 
-        relative_path = os.path.join("{data_root}", resampled_path)
+        resampled_path_parts = resampled_path.split(os.path.sep)
+        relative_path = os.path.join("{data_root}", *resampled_path_parts[-5:])
         original_text_path = os.path.join("{data_root}", *path_parts[-5:-1], uttid + ".original.txt")
         # with open(original_text_path, "r") as orig_f:
         #   original_text = orig_f.read()
