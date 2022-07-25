@@ -423,7 +423,7 @@ class HifiganGenerator(torch.nn.Module):
         g : torch.Tensor (batch, 1, time)
             global conditioning input tensor.
         """
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         
         # x.shape = [32, 80, 33]
         # s.shape = [32, 1, 1, 192]
