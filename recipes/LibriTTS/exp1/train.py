@@ -304,20 +304,21 @@ def dataio_prepare(hparams):
     # resampler = Resample(orig_freq=24000, new_freq=16000)
 
     # Define audio pipeline:
-    @sb.utils.data_pipeline.takes("wav")
+    @sb.utils.data_pipeline.takes("wav", "segment")
     @sb.utils.data_pipeline.provides("mel", "sig", "spk_emb")
-    def audio_pipeline(wav):
+    def audio_pipeline(wav, segment):
         audio = sb.dataio.dataio.read_audio(wav)
         audio = torch.FloatTensor(audio)
         audio = audio.unsqueeze(0)
-        if audio.size(1) >= segment_size:
-            max_audio_start = audio.size(1) - segment_size
-            audio_start = torch.randint(0, max_audio_start, (1,))
-            audio = audio[:, audio_start : audio_start + segment_size]
-        else:
-            audio = torch.nn.functional.pad(
-                audio, (0, segment_size - audio.size(1)), "constant"
-            )
+        if segment:
+          if audio.size(1) >= segment_size:
+              max_audio_start = audio.size(1) - segment_size
+              audio_start = torch.randint(0, max_audio_start, (1,))
+              audio = audio[:, audio_start : audio_start + segment_size]
+          else:
+              audio = torch.nn.functional.pad(
+                  audio, (0, segment_size - audio.size(1)), "constant"
+              )
 
         mel = hparams["mel_spectogram"](audio=audio.squeeze(0))
 

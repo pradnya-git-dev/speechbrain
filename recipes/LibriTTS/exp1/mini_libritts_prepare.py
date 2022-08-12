@@ -134,7 +134,8 @@ def create_json(wav_list, json_file):
             "length": duration,
             "spk_id": spk_id,
             "original_text": original_text_path,
-            "normalized_text": normalized_text_path
+            "normalized_text": normalized_text_path,
+            "segment": True if "train" in json_file else False
         }
 
     # Writing the dictionary to the json file
