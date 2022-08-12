@@ -213,5 +213,4 @@ def download_mini_libritts(destination):
 
 
 if __name__ == "__main__":
-    print("Inside main")
     prepare_mini_librispeech("/content/drive/MyDrive/libritts_data", "train.json", "valid.json", "test.json")
