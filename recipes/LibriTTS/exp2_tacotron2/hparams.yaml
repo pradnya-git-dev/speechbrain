@@ -185,7 +185,7 @@ guided_attention_scheduler: !new:speechbrain.nnet.schedulers.StepScheduler
   initial_value: !ref <guided_attention_weight>
   half_life: !ref <guided_attention_weight_half_life>
 
-criterion: !new:model.Tacotron2.Loss
+criterion: !new:model.Loss
   gate_loss_weight: !ref <gate_loss_weight>
   guided_attention_weight: !ref <guided_attention_weight>
   guided_attention_sigma: !ref <guided_attention_sigma>

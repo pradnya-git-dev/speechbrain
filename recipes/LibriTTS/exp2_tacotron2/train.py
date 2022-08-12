@@ -120,7 +120,7 @@ class Tacotron2Brain(sb.Brain):
         loss: torch.Tensor
             the loss value
         """
-        inputs, targets, num_items, labels, wavs = batch
+        inputs, targets, num_items, original_texts, wavs = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         loss_stats = self.hparams.criterion(
             predictions, targets, input_lengths, output_lengths, self.last_epoch
@@ -138,7 +138,7 @@ class Tacotron2Brain(sb.Brain):
         predictions: tuple
             predictions (raw output of the Tacotron model)
         """
-        inputs, targets, num_items, labels, wavs = batch
+        inputs, targets, num_items, original_texts, wavs = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         mel_target, _ = targets
         mel_out, mel_out_postnet, gate_out, alignments = predictions
@@ -166,7 +166,7 @@ class Tacotron2Brain(sb.Brain):
                     "output_lengths": output_lengths,
                     "gate_out": gate_out,
                     "alignments": alignments,
-                    "labels": labels,
+                    "original_texts": original_texts,
                     "wavs": wavs,
                 }
             ),
@@ -192,7 +192,7 @@ class Tacotron2Brain(sb.Brain):
             gate_padded,
             output_lengths,
             len_x,
-            labels,
+            original_texts,
             wavs,
         ) = batch
         text_padded = text_padded.to(self.device, non_blocking=True).long()
@@ -207,7 +207,7 @@ class Tacotron2Brain(sb.Brain):
         x = (text_padded, input_lengths, mel_padded, max_len, output_lengths)
         y = (mel_padded, gate_padded)
         len_x = torch.sum(output_lengths)
-        return (x, y, len_x, labels, wavs)
+        return (x, y, len_x, original_texts, wavs)
 
     def _get_spectrogram_sample(self, raw):
         """Converts a raw spectrogram to one that can be saved as an image
@@ -307,11 +307,12 @@ class Tacotron2Brain(sb.Brain):
 
 def dataio_prepare(hparams):
     # Define audio pipeline:
-    @sb.utils.data_pipeline.takes("wav", "label")
+    @sb.utils.data_pipeline.takes("wav", "original_text")
     @sb.utils.data_pipeline.provides("mel_text_pair")
-    def audio_pipeline(wav, label):
+    def audio_pipeline(wav, original_text):
+
         text_seq = torch.IntTensor(
-            text_to_sequence(label, hparams["text_cleaners"])
+            text_to_sequence(original_text, hparams["text_cleaners"])
         )
 
         audio = sb.dataio.dataio.read_audio(wav)
@@ -332,7 +333,7 @@ def dataio_prepare(hparams):
             json_path=data_info[dataset],
             replacements={"data_root": hparams["data_folder"]},
             dynamic_items=[audio_pipeline],
-            output_keys=["mel_text_pair", "wav", "label"],
+            output_keys=["mel_text_pair", "wav", "original_text"],
         )
 
     return datasets
@@ -358,17 +359,16 @@ if __name__ == "__main__":
     )
 
     sys.path.append("../")
-    from ljspeech_prepare import prepare_ljspeech
+    from mini_libritts_prepare import prepare_mini_librispeech
 
     sb.utils.distributed.run_on_main(
-        prepare_ljspeech,
+        prepare_mini_librispeech,
         kwargs={
             "data_folder": hparams["data_folder"],
-            "save_folder": hparams["save_folder"],
-            "splits": hparams["splits"],
+            "save_json_train": hparams["train_json"],
+            "save_json_valid": hparams["valid_json"],
+            "save_json_test": hparams["test_json"],
             "split_ratio": hparams["split_ratio"],
-            "seed": hparams["seed"],
-            "skip_prep": hparams["skip_prep"],
         },
     )
 

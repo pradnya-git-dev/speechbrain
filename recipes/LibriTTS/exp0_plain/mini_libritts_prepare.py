@@ -106,6 +106,15 @@ def create_json(wav_list, json_file):
         path_parts = wav_file.split(os.path.sep)
         uttid, _ = os.path.splitext(path_parts[-1])
 
+        original_text_path = os.path.join("/", *path_parts[:-1], uttid + ".original.txt")
+
+        with open(original_text_path) as f:
+          original_text = f.read()
+
+        normalized_text_path = os.path.join("/", *path_parts[:-1], uttid + ".normalized.txt")
+
+        with open(normalized_text_path) as f:
+          normalized_text = f.read()
 
         resampled_path = os.path.join("/", *path_parts[:-1], uttid + "_resampled.wav")
         torchaudio.save(resampled_path, resampled_signal, sample_rate=16000)
@@ -115,15 +124,6 @@ def create_json(wav_list, json_file):
 
         resampled_path_parts = resampled_path.split(os.path.sep)
         relative_path = os.path.join("{data_root}", *resampled_path_parts[-5:])
-        original_text_path = os.path.join("{data_root}", *path_parts[-5:-1], uttid + ".original.txt")
-        # with open(original_text_path, "r") as orig_f:
-        #   original_text = orig_f.read()
-        #   orig_f.close()
-
-        normalized_text_path = os.path.join("{data_root}", *path_parts[-5:-1], uttid + ".normalized.txt")
-        # with open(normalized_text_path, "r") as norm_f:
-        #   normalized_text = norm_f.read()
-        #   norm_f.close()
 
         # Getting speaker-id from utterance-id
         spk_id = uttid.split("_")[0]
@@ -133,8 +133,8 @@ def create_json(wav_list, json_file):
             "wav": relative_path,
             "length": duration,
             "spk_id": spk_id,
-            "original_text": original_text_path,
-            "normalized_text": normalized_text_path,
+            "original_text": original_text,
+            "normalized_text": normalized_text,
             "segment": True if "train" in json_file else False
         }
 
