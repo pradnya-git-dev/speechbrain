@@ -44,15 +44,18 @@ def prepare_mini_librispeech(
     >>> prepare_mini_librispeech(data_folder, 'train.json', 'valid.json', 'test.json')
     """
 
+
     # Check if this phase is already done (if so, skip it)
     if skip(save_json_train, save_json_valid, save_json_test):
         logger.info("Preparation completed in previous run, skipping.")
         return
 
+
     # If the dataset doesn't exist yet, download it
     train_folder = os.path.join(data_folder, "LibriTTS", "dev-clean")
     if not check_folders(train_folder):
         download_mini_libritts(data_folder)
+
 
     # List files and create manifest from list
     logger.info(
@@ -60,6 +63,7 @@ def prepare_mini_librispeech(
     )
     extension = [".wav"]
     wav_list = get_all_files(train_folder, match_and=extension)
+
 
     # Random split the signal list into train, valid, and test sets.
     data_split = split_sets(wav_list, split_ratio)
@@ -106,7 +110,7 @@ def create_json(wav_list, json_file):
         resampled_path = os.path.join("/", *path_parts[:-1], uttid + "_resampled.wav")
         torchaudio.save(resampled_path, resampled_signal, sample_rate=16000)
 
-        duration = resampled_signal.shape[0] / SAMPLERATE
+        duration = resampled_signal.shape[1] / SAMPLERATE
 
 
         resampled_path_parts = resampled_path.split(os.path.sep)
@@ -130,7 +134,8 @@ def create_json(wav_list, json_file):
             "length": duration,
             "spk_id": spk_id,
             "original_text": original_text_path,
-            "normalized_text": normalized_text_path
+            "normalized_text": normalized_text_path,
+            "segment": True if "train" in json_file else False
         }
 
     # Writing the dictionary to the json file

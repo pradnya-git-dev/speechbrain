@@ -110,7 +110,7 @@ def create_json(wav_list, json_file):
         resampled_path = os.path.join("/", *path_parts[:-1], uttid + "_resampled.wav")
         torchaudio.save(resampled_path, resampled_signal, sample_rate=16000)
 
-        duration = resampled_signal.shape[0] / SAMPLERATE
+        duration = resampled_signal.shape[1] / SAMPLERATE
 
 
         resampled_path_parts = resampled_path.split(os.path.sep)
