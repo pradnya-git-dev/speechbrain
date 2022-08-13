@@ -41,7 +41,7 @@ progress_batch_sample_size: 3
 #################################
 # Data files and pre-processing #
 #################################
-data_folder: /content/drive/MyDrive/libritts_data
+data_folder: /content/libritts_data
 
 train_json: train.json
 valid_json: valid.json
@@ -77,7 +77,7 @@ dynamic_range_compression: True
 ################################
 learning_rate: 0.001
 weight_decay: 0.000006
-batch_size: 64 #minimum 2
+batch_size: 16 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 50.0
