@@ -55,12 +55,12 @@ class Tacotron2Brain(sb.Brain):
         the model output
         """
         effective_batch = self.batch_to_device(batch)
-        inputs, y, num_items, _, _ = effective_batch
+        inputs, y, num_items, _, _, spk_embs = effective_batch
 
         _, input_lengths, _, _, _ = inputs
 
         max_input_length = input_lengths.max().item()
-        return self.modules.model(inputs, alignments_dim=max_input_length)
+        return self.modules.model(inputs, spk_embs, alignments_dim=max_input_length)
 
     def fit_batch(self, batch):
         """Fits a single batch and applies annealing
@@ -120,7 +120,7 @@ class Tacotron2Brain(sb.Brain):
         loss: torch.Tensor
             the loss value
         """
-        inputs, targets, num_items, original_texts, wavs = batch
+        inputs, targets, num_items, original_texts, wavs, spk_embs = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         loss_stats = self.hparams.criterion(
             predictions, targets, input_lengths, output_lengths, self.last_epoch
@@ -138,7 +138,7 @@ class Tacotron2Brain(sb.Brain):
         predictions: tuple
             predictions (raw output of the Tacotron model)
         """
-        inputs, targets, num_items, original_texts, wavs = batch
+        inputs, targets, num_items, original_texts, wavs, spk_embs = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         mel_target, _ = targets
         mel_out, mel_out_postnet, gate_out, alignments = predictions
@@ -168,6 +168,7 @@ class Tacotron2Brain(sb.Brain):
                     "alignments": alignments,
                     "original_texts": original_texts,
                     "wavs": wavs,
+                    "spk_embs": spk_embs
                 }
             ),
         )
@@ -194,6 +195,7 @@ class Tacotron2Brain(sb.Brain):
             len_x,
             original_texts,
             wavs,
+            spk_embs
         ) = batch
         text_padded = text_padded.to(self.device, non_blocking=True).long()
         input_lengths = input_lengths.to(self.device, non_blocking=True).long()
@@ -207,7 +209,8 @@ class Tacotron2Brain(sb.Brain):
         x = (text_padded, input_lengths, mel_padded, max_len, output_lengths)
         y = (mel_padded, gate_padded)
         len_x = torch.sum(output_lengths)
-        return (x, y, len_x, original_texts, wavs)
+        spk_embs = spk_embs.to(self.device, non_blocking=True).float()
+        return (x, y, len_x, original_texts, wavs, spk_embs)
 
     def _get_spectrogram_sample(self, raw):
         """Converts a raw spectrogram to one that can be saved as an image
@@ -295,10 +298,10 @@ class Tacotron2Brain(sb.Brain):
         samples and can be useful because"""
         if self.last_batch is None:
             return
-        inputs, _, _, _, _ = self.last_batch
+        inputs, _, _, _, _, spk_embs = self.last_batch
         text_padded, input_lengths, _, _, _ = inputs
         mel_out, _, _ = self.hparams.model.infer(
-            text_padded[:1], input_lengths[:1]
+            text_padded[:1], spk_embs, input_lengths[:1]
         )
         self.hparams.progress_sample_logger.remember(
             inference_mel_out=self._get_spectrogram_sample(mel_out)

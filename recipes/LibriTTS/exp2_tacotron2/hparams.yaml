@@ -41,7 +41,7 @@ progress_batch_sample_size: 3
 #################################
 # Data files and pre-processing #
 #################################
-data_folder: /content/libritts_data
+data_folder: /content/drive/MyDrive/libritts_data
 
 train_json: train.json
 valid_json: valid.json
@@ -180,6 +180,7 @@ model: !new:model.Tacotron2
   postnet_kernel_size: !ref <postnet_kernel_size>
   postnet_n_convolutions: !ref <postnet_n_convolutions>
   decoder_no_early_stopping: !ref <decoder_no_early_stopping>
+  spk_emb_size: 512
 
 guided_attention_scheduler: !new:speechbrain.nnet.schedulers.StepScheduler
   initial_value: !ref <guided_attention_weight>
