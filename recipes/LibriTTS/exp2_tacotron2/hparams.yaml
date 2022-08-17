@@ -180,7 +180,7 @@ model: !new:model.Tacotron2
   postnet_kernel_size: !ref <postnet_kernel_size>
   postnet_n_convolutions: !ref <postnet_n_convolutions>
   decoder_no_early_stopping: !ref <decoder_no_early_stopping>
-  spk_emb_size: 192
+  spk_emb_size: 512
 
 guided_attention_scheduler: !new:speechbrain.nnet.schedulers.StepScheduler
   initial_value: !ref <guided_attention_weight>

@@ -1833,8 +1833,8 @@ class TextMelCollate:
 
     def __init__(self, n_frames_per_step=1):
         self.n_frames_per_step = n_frames_per_step
-        self.epk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb") 
-
+        # self.epk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb") 
+        self.epk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")
 
     # TODO: Make this more intuitive, use the pipeline
     def __call__(self, batch):
