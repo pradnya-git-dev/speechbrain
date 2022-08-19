@@ -28,6 +28,7 @@ from speechbrain.dataio.batch import PaddedBatch, PaddedData
 from speechbrain.utils.data_pipeline import DataPipeline
 from speechbrain.utils.callchains import lengths_arg_exists
 from speechbrain.utils.superpowers import import_from_path
+from speechbrain.utils.text_to_sequence import text_to_sequence
 
 logger = logging.getLogger(__name__)
 
@@ -353,7 +354,7 @@ class Pretrained(torch.nn.Module):
         return cls(hparams["modules"], hparams, **kwargs)
 
 
-class Tacotron2(Pretrained):
+class Tacotron2MS(Pretrained):
     """
     A ready-to-use wrapper for Tacotron2 (text -> mel_spec).
     Arguments
@@ -381,7 +382,7 @@ class Tacotron2(Pretrained):
     >>> waveforms = hifi_gan.decode_batch(mel_output)
     """
 
-    HPARAMS_NEEDED = ["model", "text_to_sequence"]
+    HPARAMS_NEEDED = ["model", "text_cleaners"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -393,7 +394,7 @@ class Tacotron2(Pretrained):
     def text_to_seq(self, txt):
         """Encodes raw text into a tensor with a customer text-to-equence fuction
         """
-        sequence = self.hparams.text_to_sequence(txt, self.text_cleaners)
+        sequence = text_to_sequence(txt, self.text_cleaners)
         return sequence, len(sequence)
 
     def encode_batch(self, texts, spk_embs):
@@ -437,4 +438,6 @@ class Tacotron2(Pretrained):
 
     def forward(self, texts, spk_embs):
         "Encodes the input texts."
+
+        # import pdb; pdb.set_trace()
         return self.encode_batch(texts, spk_embs)

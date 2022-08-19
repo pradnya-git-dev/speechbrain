@@ -2,6 +2,27 @@
 # The cleaners to be used (applicable to nvidia only)
 text_cleaners: ['english_cleaners']
 
+################################
+# Audio Parameters             #
+################################
+sample_rate: 16000
+hop_length: 256
+win_length: 1024
+n_mel_channels: 80
+n_fft: 1024
+mel_fmin: 0.0
+mel_fmax: 8000.0
+mel_normalized: null
+power: 1
+norm: "slaney"
+mel_scale: "slaney"
+dynamic_range_compression: True
+
+################################
+# Optimization Hyperparameters #
+################################
+mask_padding: True
+
 
 ################################
 # Model Parameters and model   #
