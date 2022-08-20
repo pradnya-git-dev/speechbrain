@@ -14,7 +14,7 @@ use_tensorboard: True
 #################################
 # Data files and pre-processing #
 #################################
-data_folder: /content/drive/MyDrive/libritts_data
+data_folder: /content/libritts_data
 train_json: train.json
 valid_json: valid.json
 test_json: test.json
@@ -27,7 +27,7 @@ split_ratio: [90, 10]
 skip_prep: False
 
 # segment_size: 8192
-segment_size: 4096
+segment_size: 8192
 sample_rate: 16000
 hop_length: 256
 win_length: 1024
