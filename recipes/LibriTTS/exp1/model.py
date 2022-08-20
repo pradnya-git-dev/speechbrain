@@ -418,6 +418,7 @@ class HifiganGenerator(torch.nn.Module):
             )
 
         self.spk_emb_pre = Linear(input_size=spk_emb_size, n_neurons=upsample_initial_channel)
+        self.spk_emb_mel = Linear(input_size=spk_emb_size, n_neurons=in_channels)
 
     def forward(self, x, s, g=None):
         """
@@ -430,10 +431,23 @@ class HifiganGenerator(torch.nn.Module):
         """
 
         # import pdb; pdb.set_trace()
+
+        # x.shape = torch.Size([32, 80, 33])
+
+        s = s.squeeze(1).squeeze(1)
+        s_mel = self.spk_emb_mel(s)
+        s_mel = torch.unsqueeze(s_mel, -1).repeat(1, 1, x.shape[2])
+        x = (x + s_mel)/2
+        s_mel.detach()
+
+        # x.shape = torch.Size([32, 80, 33])
+        # s_mel.shape = torch.Size([32, 80, 33])
+        
+
         o = self.conv_pre(x)
 
         # o.shape = torch.Size([32, 512, 17])
-        s = s.squeeze(1).squeeze(1)
+        
         s_pre = self.spk_emb_pre(s)
 
         # s.shape = torch.Size([32, 512])
@@ -474,6 +488,14 @@ class HifiganGenerator(torch.nn.Module):
             o = z_sum / self.num_kernels
           
         o = F.leaky_relu(o)
+        # o.shape = torch.Size([32, 32, 8448])
+        s_post = self.ups_spk_emb[-1](s)
+        # s_post.shape = torch.Size([32, 32])
+        s_post = torch.unsqueeze(s_post, -1).repeat(1, 1, o.shape[2])
+        # s_post.shape = torch.Size([32, 32, 8448])
+        o = (o + s_post)/2
+        s_post.detach()
+
         o = self.conv_post(o)
         # o.shape = [32, 1, 8448]
         o = torch.tanh(o)
