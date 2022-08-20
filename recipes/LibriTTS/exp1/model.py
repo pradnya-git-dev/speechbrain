@@ -359,6 +359,7 @@ class HifiganGenerator(torch.nn.Module):
         self.inference_padding = inference_padding
         self.num_kernels = len(resblock_kernel_sizes)
         self.num_upsamples = len(upsample_factors)
+        self.spk_emb_upsample_resize = list()
         # initial upsampling layers
         self.conv_pre = Conv1d(
             in_channels=in_channels,
@@ -371,14 +372,15 @@ class HifiganGenerator(torch.nn.Module):
         )
         resblock = ResBlock1 if resblock_type == "1" else ResBlock2
         # upsampling layers
+        self.ups_spk_emb = nn.ModuleList()
         self.ups = nn.ModuleList()
         for i, (u, k) in enumerate(
             zip(upsample_factors, upsample_kernel_sizes)
         ):
             self.ups.append(
                 ConvTranspose1d(
-                    in_channels=(upsample_initial_channel + spk_emb_size) // (2 ** i),
-                    out_channels=(upsample_initial_channel + spk_emb_size) // (2 ** (i + 1)),
+                    in_channels=(upsample_initial_channel) // (2 ** i),
+                    out_channels=(upsample_initial_channel) // (2 ** (i + 1)),
                     kernel_size=k,
                     stride=u,
                     padding=(k - u) // 2,
@@ -386,10 +388,13 @@ class HifiganGenerator(torch.nn.Module):
                     weight_norm=True,
                 )
             )
+            self.ups_spk_emb.append(
+              Linear(input_size=spk_emb_size, n_neurons=(upsample_initial_channel) // (2 ** (i + 1)))
+            )
         # MRF blocks
         self.resblocks = nn.ModuleList()
         for i in range(len(self.ups)):
-            ch = (upsample_initial_channel + spk_emb_size) // (2 ** (i + 1))
+            ch = (upsample_initial_channel) // (2 ** (i + 1))
             for _, (k, d) in enumerate(
                 zip(resblock_kernel_sizes, resblock_dilation_sizes)
             ):
@@ -408,11 +413,11 @@ class HifiganGenerator(torch.nn.Module):
         if cond_channels > 0:
             self.cond_layer = Conv1d(
                 in_channels=cond_channels,
-                out_channels=upsample_initial_channel + spk_emb_size,
+                out_channels=upsample_initial_channel,
                 kernel_size=1,
             )
 
-        self.linear = Linear(input_size=spk_emb_size, n_neurons=upsample_initial_channel)
+        self.spk_emb_pre = Linear(input_size=spk_emb_size, n_neurons=upsample_initial_channel)
 
     def forward(self, x, s, g=None):
         """
@@ -424,10 +429,19 @@ class HifiganGenerator(torch.nn.Module):
             global conditioning input tensor.
         """
 
+        # import pdb; pdb.set_trace()
         o = self.conv_pre(x)
+
+        # o.shape = torch.Size([32, 512, 17])
         s = s.squeeze(1).squeeze(1)
-        s = torch.unsqueeze(s, -1).repeat(1, 1, o.shape[2])
-        o = torch.cat([o, s], dim=1)
+        s_pre = self.spk_emb_pre(s)
+
+        # s.shape = torch.Size([32, 512])
+        s_pre = torch.unsqueeze(s_pre, -1).repeat(1, 1, o.shape[2])
+        # s.shape = torch.Size([32, 512, 17])
+        o = (o + s_pre)/2
+        # o.shape = torch.Size([32, 512, 17])
+        s_pre.detach()
         
         if hasattr(self, "cond_layer"):
             o = o + self.cond_layer(g)
@@ -435,6 +449,16 @@ class HifiganGenerator(torch.nn.Module):
             o = F.leaky_relu(o, LRELU_SLOPE)
 
             o = self.ups[i](o)
+            # o.shape = torch.Size([32, 256, 136])
+            s_ups = self.ups_spk_emb[i](s)
+            # s.shape = torch.Size([32, 512])
+            # s_ups.shape = torch.Size([32, 256])
+            s_ups = torch.unsqueeze(s_ups, -1).repeat(1, 1, o.shape[2])
+            # s_ups.shape = torch.Size([32, 256, 136])
+            o = (o + s_ups)/2
+            # o.shape = torch.Size([32, 256, 136])
+            s_ups.detach()
+
             # o.shape = [32,256,264]
             # o.shape = [32,128,2112]
             # o.shape = [32,64,4224]
