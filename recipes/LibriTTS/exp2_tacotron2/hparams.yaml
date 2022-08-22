@@ -41,7 +41,7 @@ progress_batch_sample_size: 3
 #################################
 # Data files and pre-processing #
 #################################
-data_folder: /content/drive/MyDrive/libritts_data
+data_folder: /content/libritts_data
 
 train_json: train.json
 valid_json: valid.json

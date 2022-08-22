@@ -382,13 +382,11 @@ class Tacotron2MS(Pretrained):
     >>> waveforms = hifi_gan.decode_batch(mel_output)
     """
 
-    HPARAMS_NEEDED = ["model", "text_cleaners"]
+    HPARAMS_NEEDED = ["model"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.text_cleaners = getattr(
-            self.hparams, "text_cleaners", ["english_cleaners"]
-        )
+        self.text_cleaners = ["english_cleaners"]
         self.infer = self.hparams.model.infer
 
     def text_to_seq(self, txt):
