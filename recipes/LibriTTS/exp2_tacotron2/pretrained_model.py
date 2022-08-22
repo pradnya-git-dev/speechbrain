@@ -439,3 +439,78 @@ class Tacotron2MS(Pretrained):
 
         # import pdb; pdb.set_trace()
         return self.encode_batch(texts, spk_embs)
+
+class MSHIFIGAN(Pretrained):
+    """
+    A ready-to-use wrapper for HiFiGAN (mel_spec -> waveform).
+    Arguments
+    ---------
+    hparams
+        Hyperparameters (from HyperPyYAML)
+    Example
+    -------
+    >>> tmpdir_vocoder = getfixture('tmpdir') / "vocoder"
+    >>> hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir=tmpdir_vocoder)
+    >>> mel_specs = torch.rand(2, 80,298)
+    >>> waveforms = hifi_gan.decode_batch(mel_specs)
+    >>> # You can use the vocoder coupled with a TTS system
+    >>>	# Intialize TTS (tacotron2)
+    >>> tmpdir_tts = getfixture('tmpdir') / "tts"
+    >>>	tacotron2 = Tacotron2.from_hparams(source="speechbrain/tts-tacotron2-ljspeech", savedir=tmpdir_tts)
+    >>>	# Running the TTS
+    >>>	mel_output, mel_length, alignment = tacotron2.encode_text("Mary had a little lamb")
+    >>>	# Running Vocoder (spectrogram-to-waveform)
+    >>>	waveforms = hifi_gan.decode_batch(mel_output)
+    """
+
+    HPARAMS_NEEDED = ["generator"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.infer = self.hparams.generator.inference
+        self.first_call = True
+
+    def decode_batch(self, spectrogram, spk_emb):
+        """Computes waveforms from a batch of mel-spectrograms
+        Arguments
+        ---------
+        spectrogram: torch.tensor
+            Batch of mel-spectrograms [batch, mels, time]
+        Returns
+        -------
+        waveforms: torch.tensor
+            Batch of mel-waveforms [batch, 1, time]
+        """
+        # Prepare for inference by removing the weight norm
+        if self.first_call:
+            self.hparams.generator.remove_weight_norm()
+            self.first_call = False
+        with torch.no_grad():
+            waveform = self.infer(spectrogram.to(self.device), spk_emb.to(self.device))
+        return waveform
+
+    def decode_spectrogram(self, spectrogram, spk_emb):
+        """Computes waveforms from a single mel-spectrogram
+        Arguments
+        ---------
+        spectrogram: torch.tensor
+            mel-spectrogram [mels, time]
+        Returns
+        -------
+        waveform: torch.tensor
+            waveform [1, time]
+        audio can be saved by:
+        >>> waveform = torch.rand(1, 666666)
+        >>> sample_rate = 22050
+        >>> torchaudio.save(str(getfixture('tmpdir') / "test.wav"), waveform, sample_rate)
+        """
+        if self.first_call:
+            self.hparams.generator.remove_weight_norm()
+            self.first_call = False
+        with torch.no_grad():
+            waveform = self.infer(spectrogram.unsqueeze(0).to(self.device), spk_emb.to(self.device))
+        return waveform.squeeze(0)
+
+    def forward(self, spectrogram, spk_emb):
+        "Decodes the input spectrograms"
+        return self.decode_batch(spectrogram, spk_emb)
