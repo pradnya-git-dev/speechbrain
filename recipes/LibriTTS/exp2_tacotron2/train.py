@@ -301,7 +301,7 @@ class Tacotron2Brain(sb.Brain):
         inputs, _, _, _, _, spk_embs = self.last_batch
         text_padded, input_lengths, _, _, _ = inputs
         mel_out, _, _ = self.hparams.model.infer(
-            text_padded[:1], spk_embs, input_lengths[:1]
+            text_padded[:1], spk_embs[:1], input_lengths[:1]
         )
         self.hparams.progress_sample_logger.remember(
             inference_mel_out=self._get_spectrogram_sample(mel_out)
