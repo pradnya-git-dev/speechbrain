@@ -355,10 +355,10 @@ if __name__ == "__main__":
     )
 
     sys.path.append("../../")
-    from mini_libritts_prepare import prepare_mini_librispeech
+    from libritts_prepare import prepare_libritts
 
     sb.utils.distributed.run_on_main(
-        prepare_mini_librispeech,
+        prepare_libritts,
         kwargs={
             "data_folder": hparams["data_folder"],
             "save_json_train": hparams["train_json"],

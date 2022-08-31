@@ -14,7 +14,7 @@ use_tensorboard: True
 #################################
 # Data files and pre-processing #
 #################################
-data_folder: /content/libritts_data
+data_folder: /content/libritts_dev_clean_resampled
 train_json: train.json
 valid_json: valid.json
 test_json: test.json
@@ -50,7 +50,7 @@ weight_decay: 0.9999
 adam_b1: 0.8
 adam_b2: 0.99
 grad_clip_thresh: 1.0
-batch_size: 32 #minimum 2
+batch_size: 64 #minimum 2
 
 train_dataloader_opts:
   batch_size: !ref <batch_size>
