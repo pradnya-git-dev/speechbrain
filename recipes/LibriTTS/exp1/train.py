@@ -300,7 +300,7 @@ def dataio_prepare(hparams):
     """
     segment_size = hparams["segment_size"]
     # encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
-    encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")  
+    encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")
     # resampler = Resample(orig_freq=24000, new_freq=16000)
 
     # Define audio pipeline:
@@ -404,3 +404,4 @@ if __name__ == "__main__":
             datasets["test"],
             test_loader_kwargs=hparams["test_dataloader_opts"],
         )
+
