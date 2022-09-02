@@ -223,4 +223,4 @@ def download_mini_libritts(destination):
 
 
 if __name__ == "__main__":
-    prepare_libritts("/content/libritts_dev_clean_resampled", "train.json", "valid.json", "test.json")
+    prepare_libritts("/workspace/libritts_data/libritts_dev_clean_resampled", "train.json", "valid.json", "test.json")
