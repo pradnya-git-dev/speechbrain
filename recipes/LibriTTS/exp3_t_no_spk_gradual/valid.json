@@ -1,0 +1,186 @@
+{
+  "84_121550_000194_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121550/84_121550_000194_000000_resampled.wav",
+    "length": 8.1600625,
+    "spk_id": "84",
+    "original_text": "When I was near unto the blessed shore, \"Asperges me,\" I heard so sweetly sung, Remember it I cannot, much less write it.",
+    "normalized_text": "When I was near unto the blessed shore, \"Asperges me,\" I heard so sweetly sung, Remember it I cannot, much less write it.",
+    "segment": false
+  },
+  "84_121550_000114_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121550/84_121550_000114_000000_resampled.wav",
+    "length": 7.8500625,
+    "spk_id": "84",
+    "original_text": "Motionless halted, the veracious people, That came at first between it and the Griffin, Turned themselves to the car, as to their peace.",
+    "normalized_text": "Motionless halted, the veracious people, That came at first between it and the Griffin, Turned themselves to the car, as to their peace.",
+    "segment": false
+  },
+  "84_121550_000161_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121550/84_121550_000161_000000_resampled.wav",
+    "length": 1.94,
+    "spk_id": "84",
+    "original_text": "Purgatorio: Canto XXXI",
+    "normalized_text": "Purgatorio: Canto thirty one",
+    "segment": false
+  },
+  "84_121550_000115_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121550/84_121550_000115_000000_resampled.wav",
+    "length": 7.87,
+    "spk_id": "84",
+    "original_text": "And one of them, as if by Heaven commissioned, Singing, \"Veni, sponsa, de Libano\" Shouted three times, and all the others after.",
+    "normalized_text": "And one of them, as if by Heaven commissioned, Singing, \"Veni, sponsa, de Libano\" Shouted three times, and all the others after.",
+    "segment": false
+  },
+  "84_121123_000021_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121123/84_121123_000021_000000_resampled.wav",
+    "length": 5.55,
+    "spk_id": "84",
+    "original_text": "\"Oh, you rave, sir,\" exclaimed Villefort, in vain endeavoring to escape the net in which he was taken.",
+    "normalized_text": "\"Oh, you rave, sir,\" exclaimed Villefort, in vain endeavoring to escape the net in which he was taken.",
+    "segment": false
+  },
+  "84_121550_000036_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121550/84_121550_000036_000000_resampled.wav",
+    "length": 7.37,
+    "spk_id": "84",
+    "original_text": "\"The water,\" said I, \"and the forest's sound, Are combating within me my new faith In something which I heard opposed to this.\"",
+    "normalized_text": "\"The water,\" said I, \"and the forest's sound, Are combating within me my new faith In something which I heard opposed to this.\"",
+    "segment": false
+  },
+  "84_121550_000294_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121550/84_121550_000294_000000_resampled.wav",
+    "length": 7.5498125,
+    "spk_id": "84",
+    "original_text": "But wherefore so beyond my power of sight Soars your desirable discourse, that aye The more I strive, so much the more I lose it?\"",
+    "normalized_text": "But wherefore so beyond my power of sight Soars your desirable discourse, that aye The more I strive, so much the more I lose it?\"",
+    "segment": false
+  },
+  "84_121123_000049_000002": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121123/84_121123_000049_000002_resampled.wav",
+    "length": 1.0,
+    "spk_id": "84",
+    "original_text": "Do you not, father?\"",
+    "normalized_text": "Do you not, father?\"",
+    "segment": false
+  },
+  "84_121550_000056_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121550/84_121550_000056_000000_resampled.wav",
+    "length": 7.63,
+    "spk_id": "84",
+    "original_text": "Then backward did I turn me wholly round Unto my Poets, and saw that with a smile They had been listening to these closing words;",
+    "normalized_text": "Then backward did I turn me wholly round Unto my Poets, and saw that with a smile They had been listening to these closing words;",
+    "segment": false
+  },
+  "84_121550_000276_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121550/84_121550_000276_000000_resampled.wav",
+    "length": 8.329875,
+    "spk_id": "84",
+    "original_text": "It me befell, that without perfect sound Began I: \"My necessity, Madonna, You know, and that which thereunto is good.\"",
+    "normalized_text": "It me befell, that without perfect sound Began I: \"My necessity, Madonna, You know, and that which thereunto is good.\"",
+    "segment": false
+  },
+  "84_121123_000020_000002": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121123/84_121123_000020_000002_resampled.wav",
+    "length": 9.96,
+    "spk_id": "84",
+    "original_text": "\"And I say that murders are committed here,\" said Morrel, whose voice, though lower in tone, lost none of its terrible distinctness: \"I tell you that this is the fourth victim within the last four months.",
+    "normalized_text": "\"And I say that murders are committed here,\" said Morrel, whose voice, though lower in tone, lost none of its terrible distinctness: \"I tell you that this is the fourth victim within the last four months.",
+    "segment": false
+  },
+  "84_121550_000089_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121550/84_121550_000089_000000_resampled.wav",
+    "length": 8.64,
+    "spk_id": "84",
+    "original_text": "Even as in heaven star followeth after star, There came close after them four animals, Incoronate each one with verdant leaf.",
+    "normalized_text": "Even as in heaven star followeth after star, There came close after them four animals, Incoronate each one with verdant leaf.",
+    "segment": false
+  },
+  "84_121550_000293_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121550/84_121550_000293_000000_resampled.wav",
+    "length": 8.26,
+    "spk_id": "84",
+    "original_text": "And I: \"As by a signet is the wax Which does not change the figure stamped upon it, My brain is now imprinted by yourself.",
+    "normalized_text": "And I: \"As by a signet is the wax Which does not change the figure stamped upon it, My brain is now imprinted by yourself.",
+    "segment": false
+  },
+  "84_121550_000281_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121550/84_121550_000281_000000_resampled.wav",
+    "length": 8.129875,
+    "spk_id": "84",
+    "original_text": "Within which a Five-hundred, Ten, and Five, One sent from God, shall slay the thievish woman And that same giant who is sinning with her.",
+    "normalized_text": "Within which a Five hundred, Ten, and Five, One sent from God, shall slay the thievish woman And that same giant who is sinning with her.",
+    "segment": false
+  },
+  "84_121550_000177_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121550/84_121550_000177_000000_resampled.wav",
+    "length": 8.330125,
+    "spk_id": "84",
+    "original_text": "Cast down the seed of weeping and attend; So shalt thou hear, how in an opposite way My buried flesh should have directed thee.",
+    "normalized_text": "Cast down the seed of weeping and attend; So shalt thou hear, how in an opposite way My buried flesh should have directed thee.",
+    "segment": false
+  },
+  "84_121550_000196_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121550/84_121550_000196_000000_resampled.wav",
+    "length": 7.24,
+    "spk_id": "84",
+    "original_text": "Then forth she drew me, and all dripping brought Into the dance of the four beautiful, And each one with her arm did cover me.",
+    "normalized_text": "Then forth she drew me, and all dripping brought Into the dance of the four beautiful, And each one with her arm did cover me.",
+    "segment": false
+  },
+  "84_121123_000008_000004": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121123/84_121123_000008_000004_resampled.wav",
+    "length": 5.38,
+    "spk_id": "84",
+    "original_text": "\"Go!--do you hear?\" said Villefort, while d'Avrigny advanced to lead Morrel out.",
+    "normalized_text": "\"Go!--do you hear?\" said Villefort, while d'Avrigny advanced to lead Morrel out.",
+    "segment": false
+  },
+  "84_121550_000078_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121550/84_121550_000078_000000_resampled.wav",
+    "length": 8.45,
+    "spk_id": "84",
+    "original_text": "Then back I turned my face to those high things, Which moved themselves towards us so sedately, They had been distanced by new-wedded brides.",
+    "normalized_text": "Then back I turned my face to those high things, Which moved themselves towards us so sedately, They had been distanced by new wedded brides.",
+    "segment": false
+  },
+  "84_121550_000286_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121550/84_121550_000286_000000_resampled.wav",
+    "length": 6.7900625,
+    "spk_id": "84",
+    "original_text": "Whoever pillages or shatters it, With blasphemy of deed offendeth God, Who made it holy for his use alone.",
+    "normalized_text": "Whoever pillages or shatters it, With blasphemy of deed offendeth God, Who made it holy for his use alone.",
+    "segment": false
+  },
+  "84_121550_000147_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121550/84_121550_000147_000000_resampled.wav",
+    "length": 7.9300625,
+    "spk_id": "84",
+    "original_text": "Therefore my answer is with greater care, That he may hear me who is weeping yonder, So that the sin and dole be of one measure.",
+    "normalized_text": "Therefore my answer is with greater care, That he may hear me who is weeping yonder, So that the sin and dole be of one measure.",
+    "segment": false
+  },
+  "84_121550_000091_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121550/84_121550_000091_000000_resampled.wav",
+    "length": 7.56,
+    "spk_id": "84",
+    "original_text": "Reader! to trace their forms no more I waste My rhymes; for other spendings press me so, That I in this cannot be prodigal.",
+    "normalized_text": "Reader! to trace their forms no more I waste My rhymes; for other spendings press me so, That I in this cannot be prodigal.",
+    "segment": false
+  },
+  "84_121123_000062_000003": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121123/84_121123_000062_000003_resampled.wav",
+    "length": 2.8900625,
+    "spk_id": "84",
+    "original_text": "For some temperaments work is a remedy for all afflictions.",
+    "normalized_text": "For some temperaments work is a remedy for all afflictions.",
+    "segment": false
+  },
+  "84_121123_000062_000000": {
+    "wav": "{data_root}/LibriTTS/dev-clean/84/121123/84_121123_000062_000000_resampled.wav",
+    "length": 1.33,
+    "spk_id": "84",
+    "original_text": "\"I only wish to be alone.",
+    "normalized_text": "\"I only wish to be alone.",
+    "segment": false
+  }
+}
