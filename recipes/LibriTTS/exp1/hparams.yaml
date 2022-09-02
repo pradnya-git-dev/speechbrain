@@ -14,7 +14,7 @@ use_tensorboard: True
 #################################
 # Data files and pre-processing #
 #################################
-data_folder: /content/libritts_dev_clean_resampled
+data_folder: /workspace/libritts_data/libritts_dev_clean_resampled
 train_json: train.json
 valid_json: valid.json
 test_json: test.json
