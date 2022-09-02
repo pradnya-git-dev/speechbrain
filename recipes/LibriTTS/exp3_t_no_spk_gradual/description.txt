@@ -1,2 +1,4 @@
 This experiment trains Tacotron2 model (without speaker embeddings) with the multispeaker dataset (libritts) gradually.
-Current speaker #84.
+Current speaker #
+84
+174
