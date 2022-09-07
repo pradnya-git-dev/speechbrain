@@ -9,7 +9,7 @@ import torchaudio
 
 
 logger = logging.getLogger(__name__)
-LIBRITTS_DATASET_URL = "https://www.openslr.org/resources/60/dev-clean.tar.gz"
+LIBRITTS_DATASET_URL = "https://www.openslr.org/resources/60/train-clean-100.tar.gz"
 SAMPLERATE = 16000
 
 
@@ -217,7 +217,7 @@ def download_mini_libritts(destination):
     destination : str
         Place to put dataset.
     """
-    train_archive = os.path.join(destination, "dev-clean.tar.gz")
+    train_archive = os.path.join(destination, "train-clean-100.tar.gz")
     download_file(LIBRITTS_DATASET_URL, train_archive)
     shutil.unpack_archive(train_archive, destination)
 
