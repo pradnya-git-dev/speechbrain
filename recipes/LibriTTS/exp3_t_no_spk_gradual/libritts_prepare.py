@@ -50,6 +50,7 @@ def prepare_libritts(
 
     # If the dataset doesn't exist yet, download it
     train_folder = os.path.join(data_folder, "LibriTTS", "train-clean-100")
+    # train_folder = os.path.join(data_folder, "LibriTTS", "dev-clean")
     resample_audio = False
     if not check_folders(data_folder):
         download_mini_libritts(data_folder)
@@ -107,6 +108,8 @@ def create_json(wav_list, json_file, resample_audio=False):
 
         with open(original_text_path) as f:
             original_text = f.read()
+            if original_text.__contains__("{") or original_text.__contains__("}"):
+              continue
 
         normalized_text_path = os.path.join("/", *path_parts[:-1], uttid + ".normalized.txt")
 

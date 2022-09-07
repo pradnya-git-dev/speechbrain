@@ -408,20 +408,25 @@ class Tacotron2Brain(sb.Brain):
 
 def dataio_prepare(hparams):
     # Define audio pipeline:
-    @sb.utils.data_pipeline.takes("wav", "original_text")
+
+    # import pdb; pdb.set_trace()
+    @sb.utils.data_pipeline.takes("wav", "normalized_text")
     @sb.utils.data_pipeline.provides("mel_text_pair")
-    def audio_pipeline(wav, original_text):
+    def audio_pipeline(wav, normalized_text):
 
-        text_seq = torch.IntTensor(
-            text_to_sequence(original_text, hparams["text_cleaners"])
-        )
+        try:
+          text_seq = torch.IntTensor(
+              text_to_sequence(normalized_text, hparams["text_cleaners"])
+          )
 
-        audio = sb.dataio.dataio.read_audio(wav)
-        mel = hparams["mel_spectogram"](audio=audio)
+          audio = sb.dataio.dataio.read_audio(wav)
+          mel = hparams["mel_spectogram"](audio=audio)
 
-        len_text = len(text_seq)
+          len_text = len(text_seq)
 
-        return text_seq, mel, len_text
+          return text_seq, mel, len_text
+        except Exception as ex:
+          print("EXCEPTION: ", ex)
 
     datasets = {}
     data_info = {
@@ -429,13 +434,17 @@ def dataio_prepare(hparams):
         "valid": hparams["valid_json"],
         "test": hparams["test_json"],
     }
-    for dataset in hparams["splits"]:
-        datasets[dataset] = sb.dataio.dataset.DynamicItemDataset.from_json(
-            json_path=data_info[dataset],
-            replacements={"data_root": hparams["data_folder"]},
-            dynamic_items=[audio_pipeline],
-            output_keys=["mel_text_pair", "wav", "original_text"],
-        )
+    try:
+
+      for dataset in hparams["splits"]:
+          datasets[dataset] = sb.dataio.dataset.DynamicItemDataset.from_json(
+              json_path=data_info[dataset],
+              replacements={"data_root": hparams["data_folder"]},
+              dynamic_items=[audio_pipeline],
+              output_keys=["mel_text_pair", "wav", "original_text"],
+          )
+    except Exception as ex:
+      print("EXCEPTION: ", ex)
 
     return datasets
 
