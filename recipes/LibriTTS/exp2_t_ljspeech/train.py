@@ -274,12 +274,31 @@ class Tacotron2Brain(sb.Brain):
             The currently-starting epoch. This is passed
             `None` during the test stage.
         """
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
 
-        if stage == sb.Stage.TRAIN:
+        if stage == sb.Stage.TRAIN and (self.hparams.epoch_counter.current % 10 == 0):
           # self.last_batch = batch_to_device (x, y, len_x, labels, wavs)
           # self.last_preds = (mel_out, mel_out_postnet, gate_out, alignments)
+
           print("TRAIN - finished an epoch")
+
+          train_sample_path = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current))
+          if not os.path.exists(train_sample_path):
+              os.makedirs(train_sample_path)
+
+          _, _, _, labels, wavs = self.last_batch
+          train_sample_label = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "train_input_text.txt")
+          with open(train_sample_label, 'w') as f:
+            f.write(labels[0])
+
+          train_input_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "train_input_audio.wav")
+          torchaudio.save(train_input_audio, sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0), 22050)
+
+          _, mel_out_postnet, _, _ = self.last_preds
+          waveform_ss = self.vocoder.decode_batch(mel_out_postnet[0])
+          train_sample_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "train_output_audio.wav")
+          torchaudio.save(train_sample_audio, waveform_ss.squeeze(1), 22050)
+
 
         # Store the train loss until the validation stage.
 
@@ -339,7 +358,7 @@ class Tacotron2Brain(sb.Brain):
         # import pdb; pdb.set_trace()
         if self.last_batch is None:
             return
-        inputs, _, _, labels, _ = self.last_batch
+        inputs, _, _, labels, wavs = self.last_batch
         text_padded, input_lengths, _, _, _ = inputs
         mel_out, _, _ = self.hparams.model.infer(
             text_padded[:1], input_lengths[:1]
@@ -354,12 +373,15 @@ class Tacotron2Brain(sb.Brain):
           if not os.path.exists(inf_sample_path):
               os.makedirs(inf_sample_path)
 
-          inf_sample_label = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_label.txt")
+          inf_sample_label = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_input_text.txt")
           with open(inf_sample_label, 'w') as f:
             f.write(labels[0])
 
+          inf_input_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_input_audio.wav")
+          torchaudio.save(inf_input_audio, sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0), 22050)
+
           waveform_ss = self.vocoder.decode_batch(mel_out)
-          inf_sample_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_audio.wav")
+          inf_sample_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_output_audio.wav")
           torchaudio.save(inf_sample_audio, waveform_ss.squeeze(1), 22050)
 
 

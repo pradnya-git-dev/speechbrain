@@ -78,6 +78,7 @@ def prepare_ljspeech(
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
 
+
     # Setting ouput files
     meta_csv = os.path.join(data_folder, METADATA_CSV)
     wavs_folder = os.path.join(data_folder, WAVS)
@@ -241,8 +242,8 @@ def prepare_json(seg_lst, json_file, wavs_folder, csv_reader):
     None
     """
     json_dict = {}
-    seg_lst = seg_lst[:int(len(seg_lst)/10)]
-    print("PREPARE JSON: ", json_file, len(seg_lst))
+    # seg_lst = seg_lst[:int(len(seg_lst)/50)]
+    # print("PREPARE JSON: ", json_file, len(seg_lst))
     for index in seg_lst:
         id = list(csv_reader)[index][0]
         wav = os.path.join(wavs_folder, f"{id}.wav")
