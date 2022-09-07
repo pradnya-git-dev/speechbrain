@@ -241,6 +241,8 @@ def prepare_json(seg_lst, json_file, wavs_folder, csv_reader):
     None
     """
     json_dict = {}
+    seg_lst = seg_lst[:int(len(seg_lst)/10)]
+    print("PREPARE JSON: ", json_file, len(seg_lst))
     for index in seg_lst:
         id = list(csv_reader)[index][0]
         wav = os.path.join(wavs_folder, f"{id}.wav")
