@@ -258,22 +258,41 @@ class Tacotron2Brain(sb.Brain):
             return
 
 
-          train_sample_path = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current))
-          if not os.path.exists(train_sample_path):
-              os.makedirs(train_sample_path)
+          # train_sample_path = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current))
+          # if not os.path.exists(train_sample_path):
+          #     os.makedirs(train_sample_path)
 
-          _, _, _, original_texts, wavs, _ = self.last_batch
+          _, targets, _, original_texts, wavs, _ = self.last_batch
+
+          # Extra lines
+          _, mel_out_postnet, _, _ = self.last_preds
+          waveform_ss = self.vocoder.decode_batch(mel_out_postnet[0])
+          """
           train_sample_text = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "train_input_text.txt")
           with open(train_sample_text, 'w') as f:
             f.write(original_texts[0])
 
           train_input_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "train_input_audio.wav")
-          torchaudio.save(train_input_audio, sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0), 16000)
+          torchaudio.save(train_input_audio, sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0), self.hparams.sample_rate)
 
           _, mel_out_postnet, _, _ = self.last_preds
           waveform_ss = self.vocoder.decode_batch(mel_out_postnet[0])
           train_sample_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "train_output_audio.wav")
-          torchaudio.save(train_sample_audio, waveform_ss.squeeze(1), 16000)
+          torchaudio.save(train_sample_audio, waveform_ss.squeeze(1), self.hparams.sample_rate)
+          """
+
+          if self.hparams.use_tensorboard:
+              self.tensorboard_logger.log_audio(
+                  f"{stage}/train_audio_target", sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0), self.hparams.sample_rate
+              )
+              self.tensorboard_logger.log_audio(
+                  f"{stage}/train_audio_pred",
+                  waveform_ss.squeeze(1),
+                  self.hparams.sample_rate,
+              )
+              self.tensorboard_logger.log_figure(f"{stage}/train_mel_target", targets[0][0])
+              self.tensorboard_logger.log_figure(f"{stage}/train_mel_pred", mel_out_postnet[0])
+
 
         # Store the train loss until the validation stage.
 
@@ -289,6 +308,14 @@ class Tacotron2Brain(sb.Brain):
                 train_stats=self.last_loss_stats[sb.Stage.TRAIN],
                 valid_stats=self.last_loss_stats[sb.Stage.VALID],
             )
+
+            # The tensorboard_logger writes a summary to stdout and to the logfile.
+            if self.hparams.use_tensorboard:
+                self.tensorboard_logger.log_stats(
+                    stats_meta={"Epoch": epoch, "lr": lr},
+                    train_stats=self.last_loss_stats[sb.Stage.TRAIN],
+                    valid_stats=self.last_loss_stats[sb.Stage.VALID],
+                )
 
             # Save the current checkpoint and delete previous checkpoints.
             epoch_metadata = {
@@ -322,6 +349,11 @@ class Tacotron2Brain(sb.Brain):
                 {"Epoch loaded": self.hparams.epoch_counter.current},
                 test_stats=self.last_loss_stats[sb.Stage.TEST],
             )
+            if self.hparams.use_tensorboard:
+                self.tensorboard_logger.log_stats(
+                    {"Epoch loaded": self.hparams.epoch_counter.current},
+                    test_stats=self.last_loss_stats[sb.Stage.TEST],
+                )
             if self.hparams.progress_samples:
                 self.run_inference_sample(sb.Stage.TEST)
                 self.hparams.progress_sample_logger.save("test")
@@ -331,7 +363,7 @@ class Tacotron2Brain(sb.Brain):
         samples and can be useful because"""
         if self.last_batch is None:
             return
-        inputs, _, _, original_texts, wavs, spk_embs = self.last_batch
+        inputs, targets, _, original_texts, wavs, spk_embs = self.last_batch
         text_padded, input_lengths, _, _, _ = inputs
         mel_out, _, _ = self.hparams.model.infer(
             text_padded[:1], spk_embs[:1], input_lengths[:1]
@@ -343,7 +375,9 @@ class Tacotron2Brain(sb.Brain):
         print("INFERENCE - inference_mel_out.shape: ", self._get_spectrogram_sample(mel_out).shape)
 
         if stage == sb.Stage.VALID:
-          inf_sample_path = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current))
+          waveform_ss = self.vocoder.decode_batch(mel_out) # Extra Line
+          # inf_sample_path = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current))
+          """
           if not os.path.exists(inf_sample_path):
               os.makedirs(inf_sample_path)
 
@@ -352,11 +386,24 @@ class Tacotron2Brain(sb.Brain):
             f.write(original_texts[0])
 
           inf_input_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_input_audio.wav")
-          torchaudio.save(inf_input_audio, sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0), 16000)
+          torchaudio.save(inf_input_audio, sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0), self.hparams.sample_rate)
 
           waveform_ss = self.vocoder.decode_batch(mel_out)
           inf_sample_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_output_audio.wav")
-          torchaudio.save(inf_sample_audio, waveform_ss.squeeze(1), 16000)
+          torchaudio.save(inf_sample_audio, waveform_ss.squeeze(1), self.hparams.sample_rate)
+          """
+
+          if self.hparams.use_tensorboard:
+              self.tensorboard_logger.log_audio(
+                  f"{stage}/inf_audio_target", sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0), self.hparams.sample_rate
+              )
+              self.tensorboard_logger.log_audio(
+                  f"{stage}/inf_audio_pred",
+                  waveform_ss.squeeze(1),
+                  self.hparams.sample_rate,
+              )
+              self.tensorboard_logger.log_figure(f"{stage}/inf_mel_target", targets[0][0])
+              self.tensorboard_logger.log_figure(f"{stage}/inf_mel_pred", mel_out)
 
 
 def dataio_prepare(hparams):
@@ -436,6 +483,11 @@ if __name__ == "__main__":
         run_opts=run_opts,
         checkpointer=hparams["checkpointer"],
     )
+
+    if hparams["use_tensorboard"]:
+        tacotron2_brain.tensorboard_logger = sb.utils.train_logger.TensorboardLogger(
+            save_dir=hparams["output_folder"] + "/tensorboard"
+        )
 
     # Training
     tacotron2_brain.fit(

@@ -7,18 +7,17 @@ import random
 import logging
 import torchaudio
 
-
 logger = logging.getLogger(__name__)
 LIBRITTS_DATASET_URL = "https://www.openslr.org/resources/60/train-clean-100.tar.gz"
 SAMPLERATE = 16000
 
 
 def prepare_libritts(
-    data_folder,
-    save_json_train,
-    save_json_valid,
-    save_json_test,
-    split_ratio=[80, 10, 10],
+        data_folder,
+        save_json_train,
+        save_json_valid,
+        save_json_test,
+        split_ratio=[80, 10, 10],
 ):
     """
     Prepares the json files for the Mini Librispeech dataset.
@@ -44,20 +43,17 @@ def prepare_libritts(
     >>> prepare_mini_librispeech(data_folder, 'train.json', 'valid.json', 'test.json')
     """
 
-
     # Check if this phase is already done (if so, skip it)
     if skip(save_json_train, save_json_valid, save_json_test):
         logger.info("Preparation completed in previous run, skipping.")
         return
 
-
     # If the dataset doesn't exist yet, download it
-    train_folder = os.path.join(data_folder, "LibriTTS", "dev-clean")
+    train_folder = os.path.join(data_folder, "LibriTTS", "train-clean-100")
     resample_audio = False
     if not check_folders(data_folder):
         download_mini_libritts(data_folder)
         resample_audio = True
-
 
     # List files and create manifest from list
     logger.info(
@@ -65,7 +61,6 @@ def prepare_libritts(
     )
     extension = [".wav"]
     wav_list = get_all_files(train_folder, match_and=extension)
-
 
     # Random split the signal list into train, valid, and test sets.
     data_split = split_sets(wav_list, split_ratio)
@@ -95,44 +90,42 @@ def create_json(wav_list, json_file, resample_audio=False):
     resampler = Resample(orig_freq=24000, new_freq=16000)
 
     for wav_file in wav_list:
-        
+
         # Reading the signal (to retrieve duration in seconds)
         signal = read_audio(wav_file)
         duration = signal.shape[0] / SAMPLERATE
-        
+
         # Manipulate path to get relative path and uttid
         path_parts = wav_file.split(os.path.sep)
         uttid, _ = os.path.splitext(path_parts[-1])
         if not resample_audio:
-          uttid = "_".join(uttid.split("_")[:-1])
+            uttid = "_".join(uttid.split("_")[:-1])
 
         relative_path = os.path.join("{data_root}", *path_parts[-5:])
 
         original_text_path = os.path.join("/", *path_parts[:-1], uttid + ".original.txt")
 
         with open(original_text_path) as f:
-          original_text = f.read()
+            original_text = f.read()
 
         normalized_text_path = os.path.join("/", *path_parts[:-1], uttid + ".normalized.txt")
 
         with open(normalized_text_path) as f:
-          normalized_text = f.read()
+            normalized_text = f.read()
 
         if resample_audio:
-          signal = signal.unsqueeze(0)
-          resampled_signal = resampler(signal)
+            signal = signal.unsqueeze(0)
+            resampled_signal = resampler(signal)
 
-          resampled_path = os.path.join("/", *path_parts[:-1], uttid + "_resampled.wav")
-          torchaudio.save(resampled_path, resampled_signal, sample_rate=16000)
+            resampled_path = os.path.join("/", *path_parts[:-1], uttid + "_resampled.wav")
+            torchaudio.save(resampled_path, resampled_signal, sample_rate=16000)
 
-          duration = resampled_signal.shape[1] / SAMPLERATE
+            duration = resampled_signal.shape[1] / SAMPLERATE
 
+            resampled_path_parts = resampled_path.split(os.path.sep)
+            relative_path = os.path.join("{data_root}", *resampled_path_parts[-5:])
 
-          resampled_path_parts = resampled_path.split(os.path.sep)
-          relative_path = os.path.join("{data_root}", *resampled_path_parts[-5:])
-
-          os.unlink(wav_file)
-
+            os.unlink(wav_file)
 
         # Getting speaker-id from utterance-id
         spk_id = uttid.split("_")[0]
@@ -223,4 +216,5 @@ def download_mini_libritts(destination):
 
 
 if __name__ == "__main__":
-    prepare_libritts("/workspace/libritts_data/libritts_dev_clean_resampled", "train.json", "valid.json", "test.json")
+    prepare_libritts("/content/libritts_train_clean_100_resampled",
+                     "train.json", "valid.json", "test.json")
