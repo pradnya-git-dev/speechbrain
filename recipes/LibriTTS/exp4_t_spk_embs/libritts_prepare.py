@@ -8,7 +8,7 @@ import logging
 import torchaudio
 
 logger = logging.getLogger(__name__)
-LIBRITTS_DATASET_URL = "https://www.openslr.org/resources/60/train-clean-100.tar.gz"
+LIBRITTS_DATASET_URL = "https://www.openslr.org/resources/60/dev-clean.tar.gz"
 SAMPLERATE = 16000
 
 
