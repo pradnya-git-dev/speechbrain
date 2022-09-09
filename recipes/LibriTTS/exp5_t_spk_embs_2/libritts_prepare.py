@@ -62,7 +62,7 @@ def prepare_libritts(
     )
     extension = [".wav"]
 
-    speaker_counter = 2
+    speaker_counter = 1
 
     wav_list = list()
     for speaker_folder in os.listdir(train_folder):
