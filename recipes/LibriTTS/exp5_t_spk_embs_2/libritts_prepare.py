@@ -61,7 +61,22 @@ def prepare_libritts(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
     )
     extension = [".wav"]
-    wav_list = get_all_files(train_folder, match_and=extension)
+
+    speaker_counter = 1
+
+    wav_list = list()
+    for speaker_folder in os.listdir(train_folder):
+      speaker_folder_path = os.path.join(train_folder, speaker_folder)
+      if os.path.isdir(speaker_folder_path):
+          wav_list.extend(get_all_files(speaker_folder_path, match_and=extension))
+          logger.info(f"Using data for speaker: {speaker_folder}")
+          speaker_counter = speaker_counter - 1
+          if speaker_counter == 0:
+            break
+
+
+    # wav_list = get_all_files(train_folder, match_and=extension)
+    logger.info(f"Total number of samples: {len(wav_list)}")
 
     # Random split the signal list into train, valid, and test sets.
     data_split = split_sets(wav_list, split_ratio)
@@ -219,5 +234,5 @@ def download_mini_libritts(destination):
 
 
 if __name__ == "__main__":
-    prepare_libritts("/content/libritts_train_clean_100_resampled",
+    prepare_libritts("/content/libritts_dev_clean_resampled",
                      "train.json", "valid.json", "test.json")
