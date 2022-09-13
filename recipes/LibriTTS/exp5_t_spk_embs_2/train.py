@@ -436,7 +436,7 @@ def dataio_prepare(hparams):
         "test": hparams["test_json"],
     }
     try:
-      import pdb; pdb.set_trace()
+      # import pdb; pdb.set_trace()
       print(hparams["splits"])
       for dataset in hparams["splits"]:
           datasets[dataset] = sb.dataio.dataset.DynamicItemDataset.from_json(
