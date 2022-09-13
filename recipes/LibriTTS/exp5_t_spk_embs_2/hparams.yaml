@@ -233,3 +233,12 @@ progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
   batch_sample_size: !ref <progress_batch_sample_size>
   formats:
     raw_batch: raw
+
+
+# If you do not want to use the pretrained separator you can simply delete pretrained_separator field.
+pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
+    collect_in: !ref <save_folder>
+    loadables:
+        model: !ref <model>
+    paths:
+        model: speechbrain/tts-tacotron2-ljspeech/model.ckpt

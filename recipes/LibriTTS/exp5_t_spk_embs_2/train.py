@@ -27,6 +27,7 @@ from speechbrain.utils.data_utils import scalarize
 import os
 from speechbrain.pretrained import HIFIGAN
 import torchaudio
+from speechbrain.utils.distributed import run_on_main
 
 logger = logging.getLogger(__name__)
 
@@ -484,6 +485,11 @@ if __name__ == "__main__":
 
     datasets = dataio_prepare(hparams)
 
+    # Load pretrained model if pretrained_separator is present in the yaml
+    if "pretrained_separator" in hparams:
+        run_on_main(hparams["pretrained_separator"].collect_files)
+        hparams["pretrained_separator"].load_collected()
+
     # Brain class initialization
     tacotron2_brain = Tacotron2Brain(
         modules=hparams["modules"],
@@ -492,6 +498,12 @@ if __name__ == "__main__":
         run_opts=run_opts,
         checkpointer=hparams["checkpointer"],
     )
+
+    # re-initialize the parameters if we don't use a pretrained model
+    if "pretrained_separator" not in hparams:
+        for module in tacotron2_brain.modules.values():
+            tacotron2_brain.reset_layer_recursively(module)
+
 
     if hparams["use_tensorboard"]:
         tacotron2_brain.tensorboard_logger = sb.utils.train_logger.TensorboardLogger(
