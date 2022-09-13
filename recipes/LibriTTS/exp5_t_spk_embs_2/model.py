@@ -1519,14 +1519,14 @@ class Tacotron2(nn.Module):
         )
 
         # mel_outputs.shape = torch.Size([16, 80, 1068])
-        spk_embs_postnet = self.spk_emb_post_decoder(spk_embs)
+        # spk_embs_postnet = self.spk_emb_post_decoder(spk_embs)
         # spk_embs_postnet.shape = torch.Size([16, 80])
 
-        spk_embs_postnet = torch.unsqueeze(spk_embs_postnet, -1).repeat(1, 1, mel_outputs.shape[2])
+        # spk_embs_postnet = torch.unsqueeze(spk_embs_postnet, -1).repeat(1, 1, mel_outputs.shape[2])
         # spk_embs_postnet.shape = torch.Size([16, 80, 1068])
-        mel_outputs = (mel_outputs + spk_embs_postnet) / 2
+        # mel_outputs = (mel_outputs + spk_embs_postnet) / 2
         # mel_outputs.shape = torch.Size([16, 80, 1068])
-        spk_embs_postnet.detach()
+        # spk_embs_postnet.detach()
 
         mel_outputs_postnet = self.postnet(mel_outputs)
         mel_outputs_postnet = mel_outputs + mel_outputs_postnet
@@ -1582,14 +1582,14 @@ class Tacotron2(nn.Module):
         )
 
         # mel_outputs.shape = torch.Size([16, 80, 1068])
-        spk_embs_postnet = self.spk_emb_post_decoder(spk_embs)
+        # spk_embs_postnet = self.spk_emb_post_decoder(spk_embs)
         # spk_embs_postnet.shape = torch.Size([16, 80])
 
-        spk_embs_postnet = torch.unsqueeze(spk_embs_postnet, -1).repeat(1, 1, mel_outputs.shape[2])
+        # spk_embs_postnet = torch.unsqueeze(spk_embs_postnet, -1).repeat(1, 1, mel_outputs.shape[2])
         # spk_embs_postnet.shape = torch.Size([16, 80, 1068])
-        mel_outputs = (mel_outputs + spk_embs_postnet) / 2
+        # mel_outputs = (mel_outputs + spk_embs_postnet) / 2
         # mel_outputs.shape = torch.Size([16, 80, 1068])
-        spk_embs_postnet.detach()
+        # spk_embs_postnet.detach()
 
         mel_outputs_postnet = self.postnet(mel_outputs)
         mel_outputs_postnet = mel_outputs + mel_outputs_postnet

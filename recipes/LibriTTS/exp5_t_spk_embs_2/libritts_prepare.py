@@ -68,11 +68,13 @@ def prepare_libritts(
     for speaker_folder in os.listdir(train_folder):
       speaker_folder_path = os.path.join(train_folder, speaker_folder)
       if os.path.isdir(speaker_folder_path):
-          wav_list.extend(get_all_files(speaker_folder_path, match_and=extension))
-          logger.info(f"Using data for speaker: {speaker_folder}")
-          speaker_counter = speaker_counter - 1
-          if speaker_counter == 0:
-            break
+          speaker_samples = get_all_files(speaker_folder_path, match_and=extension)
+          if len(speaker_samples) > 100:
+            wav_list.extend(speaker_samples)
+            logger.info(f"Using data for speaker: {speaker_folder}")
+            speaker_counter = speaker_counter - 1
+            if speaker_counter == 0:
+              break
 
 
     # wav_list = get_all_files(train_folder, match_and=extension)
