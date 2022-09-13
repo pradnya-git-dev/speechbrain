@@ -427,7 +427,7 @@ def dataio_prepare(hparams):
 
           return text_seq, mel, len_text
         except Exception as ex:
-          print("EXCEPTION: ", ex)
+          print("EXCEPTION 1: ", ex)
 
     datasets = {}
     data_info = {
@@ -436,7 +436,8 @@ def dataio_prepare(hparams):
         "test": hparams["test_json"],
     }
     try:
-
+      import pdb; pdb.set_trace()
+      print(hparams["splits"])
       for dataset in hparams["splits"]:
           datasets[dataset] = sb.dataio.dataset.DynamicItemDataset.from_json(
               json_path=data_info[dataset],
@@ -445,7 +446,7 @@ def dataio_prepare(hparams):
               output_keys=["mel_text_pair", "wav", "original_text"],
           )
     except Exception as ex:
-      print("EXCEPTION: ", ex)
+      print("EXCEPTION 2: ", ex)
 
     return datasets
 
@@ -483,11 +484,15 @@ if __name__ == "__main__":
         },
     )
 
+
+    # import pdb; pdb.set_trace()
+
     datasets = dataio_prepare(hparams)
+
 
     # Load pretrained model if pretrained_separator is present in the yaml
     if "pretrained_separator" in hparams:
-        run_on_main(hparams["pretrained_separator"].collect_files)
+        hparams["pretrained_separator"].collect_files()
         hparams["pretrained_separator"].load_collected()
 
     # Brain class initialization

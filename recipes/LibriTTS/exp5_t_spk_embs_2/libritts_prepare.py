@@ -82,8 +82,12 @@ def prepare_libritts(
     data_split = split_sets(wav_list, split_ratio)
     # Creating json files
     create_json(data_split["train"], save_json_train, resample_audio)
-    create_json(data_split["valid"], save_json_valid, resample_audio)
+    if len(data_split["valid"]) == 0:
+      create_json(data_split["test"], save_json_valid, resample_audio)
+    else:
+      create_json(data_split["valid"], save_json_valid, resample_audio)
     create_json(data_split["test"], save_json_test, resample_audio)
+
 
 
 def create_json(wav_list, json_file, resample_audio=False):
