@@ -241,4 +241,4 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
     loadables:
         model: !ref <model>
     paths:
-        model: /content/drive/MyDrive/tacotron2/model.ckpt
+        model: speechbrain/tts-tacotron2-ljspeech/model.ckpt
