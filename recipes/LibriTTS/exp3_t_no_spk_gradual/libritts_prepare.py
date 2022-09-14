@@ -8,7 +8,7 @@ import logging
 import torchaudio
 
 logger = logging.getLogger(__name__)
-LIBRITTS_DATASET_URL = "https://www.openslr.org/resources/60/train-clean-100.tar.gz"
+LIBRITTS_DATASET_URL = "https://www.openslr.org/resources/60/dev-clean.tar.gz"
 SAMPLERATE = 16000
 
 
@@ -49,7 +49,7 @@ def prepare_libritts(
         return
 
     # If the dataset doesn't exist yet, download it
-    train_folder = os.path.join(data_folder, "LibriTTS", "train-clean-100")
+    train_folder = os.path.join(data_folder, "LibriTTS", LIBRITTS_DATASET_URL.split(os.path.sep)[-1].split(".")[0])
     # train_folder = os.path.join(data_folder, "LibriTTS", "dev-clean")
     resample_audio = False
     if not check_folders(data_folder):
@@ -61,14 +61,35 @@ def prepare_libritts(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
     )
     extension = [".wav"]
-    wav_list = get_all_files(train_folder, match_and=extension)
+
+    speaker_counter = 1
+
+    wav_list = list()
+    for speaker_folder in os.listdir(train_folder):
+      speaker_folder_path = os.path.join(train_folder, speaker_folder)
+      if os.path.isdir(speaker_folder_path):
+          speaker_samples = get_all_files(speaker_folder_path, match_and=extension)
+          if len(speaker_samples) > 100:
+            wav_list.extend(speaker_samples)
+            logger.info(f"Using data for speaker: {speaker_folder}")
+            speaker_counter = speaker_counter - 1
+            if speaker_counter == 0:
+              break
+
+
+    # wav_list = get_all_files(train_folder, match_and=extension)
+    logger.info(f"Total number of samples: {len(wav_list)}")
 
     # Random split the signal list into train, valid, and test sets.
     data_split = split_sets(wav_list, split_ratio)
     # Creating json files
     create_json(data_split["train"], save_json_train, resample_audio)
-    create_json(data_split["valid"], save_json_valid, resample_audio)
+    if len(data_split["valid"]) == 0:
+      create_json(data_split["test"], save_json_valid, resample_audio)
+    else:
+      create_json(data_split["valid"], save_json_valid, resample_audio)
     create_json(data_split["test"], save_json_test, resample_audio)
+
 
 
 def create_json(wav_list, json_file, resample_audio=False):
@@ -213,11 +234,11 @@ def download_mini_libritts(destination):
     destination : str
         Place to put dataset.
     """
-    train_archive = os.path.join(destination, "train-clean-100.tar.gz")
+    train_archive = os.path.join(destination, LIBRITTS_DATASET_URL.split(os.path.sep)[-1])
     download_file(LIBRITTS_DATASET_URL, train_archive)
     shutil.unpack_archive(train_archive, destination)
 
 
 if __name__ == "__main__":
-    prepare_libritts("/content/libritts_train_clean_100_resampled",
+    prepare_libritts("/content/libritts_dev_clean_resampled",
                      "train.json", "valid.json", "test.json")
