@@ -34,7 +34,6 @@ logger = logging.getLogger(__name__)
 class Tacotron2Brain(sb.Brain):
     """The Brain implementation for Tacotron2"""
 
-    
     def on_fit_start(self):
         """Gets called at the beginning of ``fit()``, on multiple processes
         if ``distributed_count > 0`` and backend is ddp and initializes statistics"""
@@ -43,6 +42,7 @@ class Tacotron2Brain(sb.Brain):
         self.last_batch = None
         self.last_preds = None
         self.vocoder = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir="tmpdir_vocoder")
+        
         self.last_loss_stats = {}
         return super().on_fit_start()
 
@@ -60,40 +60,13 @@ class Tacotron2Brain(sb.Brain):
         -------
         the model output
         """
-        # import pdb; pdb.set_trace()
-
         effective_batch = self.batch_to_device(batch)
-        inputs, y, num_items, _, _ = effective_batch
+        inputs, y, num_items, _, _, spk_embs = effective_batch
 
         _, input_lengths, _, _, _ = inputs
 
         max_input_length = input_lengths.max().item()
-        result =  self.modules.model(inputs, alignments_dim=max_input_length)
-        # Pass mel_output_postnet (result[1], tensor of shape torch.Size([64, 80, 839])) through the vocoder and save sample
-        # labels = batch[6], list of len = 64
-
-        # last spectrogram = result[1][-1].shape
-        # last label = batch[6][-1]
-        # save_epoch_num = self.hparams.epoch_counter.current
-        # samples dir = self.hparams.progress_sample_path
-
-        """
-        train_sample_path = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current))
-        if not os.path.exists(train_sample_path):
-            os.makedirs(train_sample_path)
-
-        train_sample_label = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "label.txt")
-        with open(train_sample_label, 'w') as f:
-          f.write(batch[6][-1])
-
-        vocoder = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir="tmpdir_vocoder")
-        waveform_ss = vocoder.decode_batch(result[1][-1])
-        train_sample_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "audio.wav")
-        torchaudio.save(train_sample_audio, waveform_ss.squeeze(1), 22050)
-        """
-
-
-        return result
+        return self.modules.model(inputs, spk_embs, alignments_dim=max_input_length)
 
     def fit_batch(self, batch):
         """Fits a single batch and applies annealing
@@ -154,7 +127,7 @@ class Tacotron2Brain(sb.Brain):
         loss: torch.Tensor
             the loss value
         """
-        inputs, targets, num_items, labels, wavs = batch
+        inputs, targets, num_items, labels, wavs, spk_embs = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         loss_stats = self.hparams.criterion(
             predictions, targets, input_lengths, output_lengths, self.last_epoch
@@ -172,9 +145,7 @@ class Tacotron2Brain(sb.Brain):
         predictions: tuple
             predictions (raw output of the Tacotron model)
         """
-        # import pdb; pdb.set_trace()
-
-        inputs, targets, num_items, labels, wavs = batch
+        inputs, targets, num_items, labels, wavs, spk_embs = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         mel_target, _ = targets
         mel_out, mel_out_postnet, gate_out, alignments = predictions
@@ -204,6 +175,7 @@ class Tacotron2Brain(sb.Brain):
                     "alignments": alignments,
                     "labels": labels,
                     "wavs": wavs,
+                    "spk_embs": spk_embs
                 }
             ),
         )
@@ -230,6 +202,7 @@ class Tacotron2Brain(sb.Brain):
             len_x,
             labels,
             wavs,
+            spk_embs
         ) = batch
         text_padded = text_padded.to(self.device, non_blocking=True).long()
         input_lengths = input_lengths.to(self.device, non_blocking=True).long()
@@ -243,7 +216,8 @@ class Tacotron2Brain(sb.Brain):
         x = (text_padded, input_lengths, mel_padded, max_len, output_lengths)
         y = (mel_padded, gate_padded)
         len_x = torch.sum(output_lengths)
-        return (x, y, len_x, labels, wavs)
+        spk_embs = spk_embs.to(self.device, non_blocking=True).float()
+        return (x, y, len_x, labels, wavs, spk_embs)
 
     def _get_spectrogram_sample(self, raw):
         """Converts a raw spectrogram to one that can be saved as an image
@@ -274,12 +248,12 @@ class Tacotron2Brain(sb.Brain):
             The currently-starting epoch. This is passed
             `None` during the test stage.
         """
+
         # import pdb; pdb.set_trace()
 
         if stage == sb.Stage.TRAIN and (self.hparams.epoch_counter.current % 10 == 0):
-          # self.last_batch = batch_to_device (x, y, len_x, labels, wavs)
+          # self.last_batch = batch_to_device (x, y, len_x, original_texts, wavs, spk_embs)
           # self.last_preds = (mel_out, mel_out_postnet, gate_out, alignments)
-
           if self.last_batch is None:
             return
 
@@ -288,7 +262,7 @@ class Tacotron2Brain(sb.Brain):
           # if not os.path.exists(train_sample_path):
           #     os.makedirs(train_sample_path)
 
-          _, targets, _, original_texts, wavs = self.last_batch
+          _, targets, _, labels, wavs, _ = self.last_batch
 
           # Extra lines
           _, mel_out_postnet, _, _ = self.last_preds
@@ -335,6 +309,14 @@ class Tacotron2Brain(sb.Brain):
                 valid_stats=self.last_loss_stats[sb.Stage.VALID],
             )
 
+            # The tensorboard_logger writes a summary to stdout and to the logfile.
+            if self.hparams.use_tensorboard:
+                self.tensorboard_logger.log_stats(
+                    stats_meta={"Epoch": epoch, "lr": lr},
+                    train_stats=self.last_loss_stats[sb.Stage.TRAIN],
+                    valid_stats=self.last_loss_stats[sb.Stage.VALID],
+                )
+
             # Save the current checkpoint and delete previous checkpoints.
             epoch_metadata = {
                 **{"epoch": epoch},
@@ -367,6 +349,11 @@ class Tacotron2Brain(sb.Brain):
                 {"Epoch loaded": self.hparams.epoch_counter.current},
                 test_stats=self.last_loss_stats[sb.Stage.TEST],
             )
+            if self.hparams.use_tensorboard:
+                self.tensorboard_logger.log_stats(
+                    {"Epoch loaded": self.hparams.epoch_counter.current},
+                    test_stats=self.last_loss_stats[sb.Stage.TEST],
+                )
             if self.hparams.progress_samples:
                 self.run_inference_sample(sb.Stage.TEST)
                 self.hparams.progress_sample_logger.save("test")
@@ -374,22 +361,37 @@ class Tacotron2Brain(sb.Brain):
     def run_inference_sample(self, stage):
         """Produces a sample in inference mode. This is called when producing
         samples and can be useful because"""
-
-        # import pdb; pdb.set_trace()
         if self.last_batch is None:
             return
-        inputs, targets, _, labels, wavs = self.last_batch
+        inputs, targets, _, labels, wavs, spk_embs = self.last_batch
         text_padded, input_lengths, _, _, _ = inputs
         mel_out, _, _ = self.hparams.model.infer(
-            text_padded[:1], input_lengths[:1]
+            text_padded[:1], spk_embs[:1], input_lengths[:1]
         )
         self.hparams.progress_sample_logger.remember(
             inference_mel_out=self._get_spectrogram_sample(mel_out)
         )
 
+        print("INFERENCE - inference_mel_out.shape: ", self._get_spectrogram_sample(mel_out).shape)
 
         if stage == sb.Stage.VALID:
           waveform_ss = self.vocoder.decode_batch(mel_out) # Extra Line
+          # inf_sample_path = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current))
+          """
+          if not os.path.exists(inf_sample_path):
+              os.makedirs(inf_sample_path)
+
+          inf_sample_text = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_input_text.txt")
+          with open(inf_sample_text, 'w') as f:
+            f.write(original_texts[0])
+
+          inf_input_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_input_audio.wav")
+          torchaudio.save(inf_input_audio, sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0), self.hparams.sample_rate)
+
+          waveform_ss = self.vocoder.decode_batch(mel_out)
+          inf_sample_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_output_audio.wav")
+          torchaudio.save(inf_sample_audio, waveform_ss.squeeze(1), self.hparams.sample_rate)
+          """
 
           if self.hparams.use_tensorboard:
               self.tensorboard_logger.log_audio(
@@ -406,9 +408,12 @@ class Tacotron2Brain(sb.Brain):
 
 def dataio_prepare(hparams):
     # Define audio pipeline:
+
+    # import pdb; pdb.set_trace()
     @sb.utils.data_pipeline.takes("wav", "label")
     @sb.utils.data_pipeline.provides("mel_text_pair")
     def audio_pipeline(wav, label):
+
         text_seq = torch.IntTensor(
             text_to_sequence(label, hparams["text_cleaners"])
         )
@@ -426,6 +431,7 @@ def dataio_prepare(hparams):
         "valid": hparams["valid_json"],
         "test": hparams["test_json"],
     }
+
     for dataset in hparams["splits"]:
         datasets[dataset] = sb.dataio.dataset.DynamicItemDataset.from_json(
             json_path=data_info[dataset],

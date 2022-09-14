@@ -89,17 +89,17 @@ train_dataloader_opts:
   batch_size: !ref <batch_size>
   drop_last: False  #True #False
   num_workers: 8
-  collate_fn: !new:speechbrain.lobes.models.Tacotron2.TextMelCollate
+  collate_fn: !new:model.TextMelCollate
 
 valid_dataloader_opts:
   batch_size: !ref <batch_size>
   num_workers: 8
-  collate_fn: !new:speechbrain.lobes.models.Tacotron2.TextMelCollate
+  collate_fn: !new:model.TextMelCollate
 
 test_dataloader_opts:
   batch_size: !ref <batch_size>
   num_workers: 8
-  collate_fn: !new:speechbrain.lobes.models.Tacotron2.TextMelCollate
+  collate_fn: !new:model.TextMelCollate
 
 ################################
 # Model Parameters and model   #
@@ -136,7 +136,7 @@ postnet_embedding_dim: 512
 postnet_kernel_size: 5
 postnet_n_convolutions: 5
 
-mel_spectogram: !name:speechbrain.lobes.models.Tacotron2.mel_spectogram
+mel_spectogram: !name:model.mel_spectogram
   sample_rate: !ref <sample_rate>
   hop_length: !ref <hop_length>
   win_length: !ref <win_length>
@@ -151,7 +151,7 @@ mel_spectogram: !name:speechbrain.lobes.models.Tacotron2.mel_spectogram
   compression: !ref <dynamic_range_compression>
 
 #model
-model: !new:speechbrain.lobes.models.Tacotron2.Tacotron2
+model: !new:model.Tacotron2
   mask_padding: !ref <mask_padding>
   n_mel_channels: !ref <n_mel_channels>
   # symbols
@@ -180,12 +180,13 @@ model: !new:speechbrain.lobes.models.Tacotron2.Tacotron2
   postnet_kernel_size: !ref <postnet_kernel_size>
   postnet_n_convolutions: !ref <postnet_n_convolutions>
   decoder_no_early_stopping: !ref <decoder_no_early_stopping>
+  spk_emb_size: 512
 
 guided_attention_scheduler: !new:speechbrain.nnet.schedulers.StepScheduler
   initial_value: !ref <guided_attention_weight>
   half_life: !ref <guided_attention_weight_half_life>
 
-criterion: !new:speechbrain.lobes.models.Tacotron2.Loss
+criterion: !new:model.Loss
   gate_loss_weight: !ref <gate_loss_weight>
   guided_attention_weight: !ref <guided_attention_weight>
   guided_attention_sigma: !ref <guided_attention_sigma>
@@ -225,7 +226,7 @@ checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
     counter: !ref <epoch_counter>
     scheduler: !ref <lr_annealing>
 
-#infer: !name:speechbrain.lobes.models.Tacotron2.infer
+#infer: !name:model.infer
 
 progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
   output_path: !ref <progress_sample_path>
