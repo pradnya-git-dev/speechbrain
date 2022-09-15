@@ -148,8 +148,6 @@ def create_json(wav_list, json_file, resample_audio=False):
             "segment": True if "train" in json_file else False
         }
 
-        print("Total {len(spk_ids)} speakers: ", spk_ids)
-
     # Writing the dictionary to the json file
     with open(json_file, mode="w") as json_f:
         json.dump(json_dict, json_f, indent=2)
