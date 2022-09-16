@@ -1899,7 +1899,7 @@ class TextMelCollate:
             spk_emb = spk_emb.squeeze()
             # print("speaker embedding shape: ", spk_emb.shape)
             spk_embs_list.append(spk_emb)
-            spk_embs = torch.stack((spk_embs_list))
+        spk_embs = torch.stack((spk_embs_list))
 
         # count number of items - characters in text
         len_x = [x[2] for x in batch]
