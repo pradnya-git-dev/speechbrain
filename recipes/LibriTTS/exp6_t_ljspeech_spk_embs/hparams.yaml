@@ -240,4 +240,4 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
     loadables:
         model: !ref <model>
     paths:
-        model: /content/drive/MyDrive/tacotron2/model.ckpt
+        model: /workspace/mstts_output/exp6_t_ljspeech_spk_embs/save/CKPT+2022-09-15+18-20-47+00/model.ckpt
