@@ -1,1 +1,2 @@
-This experiment is to try and add speaker embeddings to the Tacotron2 model in as many places as possible.
+Experiment #4:
+- Average the x-vector embeddings with the encoder outputs directly
