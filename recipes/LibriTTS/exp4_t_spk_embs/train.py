@@ -410,13 +410,13 @@ def dataio_prepare(hparams):
     # Define audio pipeline:
 
     # import pdb; pdb.set_trace()
-    @sb.utils.data_pipeline.takes("wav", "normalized_text")
+    @sb.utils.data_pipeline.takes("wav", "original_text")
     @sb.utils.data_pipeline.provides("mel_text_pair")
-    def audio_pipeline(wav, normalized_text):
+    def audio_pipeline(wav, original_text):
 
         try:
           text_seq = torch.IntTensor(
-              text_to_sequence(normalized_text, hparams["text_cleaners"])
+              text_to_sequence(original_text, hparams["text_cleaners"])
           )
 
           audio = sb.dataio.dataio.read_audio(wav)
@@ -484,6 +484,11 @@ if __name__ == "__main__":
 
     datasets = dataio_prepare(hparams)
 
+    # Load pretrained model if pretrained_separator is present in the yaml
+    if "pretrained_separator" in hparams:
+        hparams["pretrained_separator"].collect_files()
+        hparams["pretrained_separator"].load_collected()
+
     # Brain class initialization
     tacotron2_brain = Tacotron2Brain(
         modules=hparams["modules"],
@@ -492,6 +497,11 @@ if __name__ == "__main__":
         run_opts=run_opts,
         checkpointer=hparams["checkpointer"],
     )
+
+    # re-initialize the parameters if we don't use a pretrained model
+    if "pretrained_separator" not in hparams:
+        for module in tacotron2_brain.modules.values():
+            tacotron2_brain.reset_layer_recursively(module)
 
     if hparams["use_tensorboard"]:
         tacotron2_brain.tensorboard_logger = sb.utils.train_logger.TensorboardLogger(
