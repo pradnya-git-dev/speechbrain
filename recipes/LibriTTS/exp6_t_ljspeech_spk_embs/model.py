@@ -1881,14 +1881,14 @@ class TextMelCollate:
         gate_padded = torch.FloatTensor(len(batch), max_target_len)
         gate_padded.zero_()
         output_lengths = torch.LongTensor(len(batch))
-        labels, wavs, spk_embs_list = [], [], []
+        original_texts, wavs, spk_embs_list = [], [], []
         for i in range(len(ids_sorted_decreasing)):
             idx = ids_sorted_decreasing[i]
             mel = batch[idx][1]
             mel_padded[i, :, : mel.size(1)] = mel
             gate_padded[i, mel.size(1) - 1 :] = 1
             output_lengths[i] = mel.size(1)
-            labels.append(raw_batch[idx]["label"])
+            original_texts.append(raw_batch[idx]["original_text"])
             wavs.append(raw_batch[idx]["wav"])
 
             audio = sb.dataio.dataio.read_audio(raw_batch[idx]["wav"])
@@ -1911,7 +1911,7 @@ class TextMelCollate:
             gate_padded,
             output_lengths,
             len_x,
-            labels,
+            original_texts,
             wavs,
             spk_embs
         )
