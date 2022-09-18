@@ -1510,6 +1510,7 @@ class Tacotron2(nn.Module):
 
         # encoder_outputs= torch.cat([encoder_outputs, spk_embs], dim=2)
         encoder_outputs = (encoder_outputs + spk_embs_enc) / 2
+        spk_embs_enc.detach()
 
         # encoder_outputs.shape = torch.Size([16, 254, 512])
 
