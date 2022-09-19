@@ -9,7 +9,7 @@ import torchaudio
 
 logger = logging.getLogger(__name__)
 LIBRITTS_DATASET_URL = "https://www.openslr.org/resources/60/dev-clean.tar.gz"
-SAMPLERATE = 16000
+SAMPLERATE = 22050
 
 
 def prepare_libritts(
@@ -88,7 +88,7 @@ def create_json(wav_list, json_file, resample_audio=False):
 
     # Processing all the wav files in the list
     json_dict = {}
-    resampler = Resample(orig_freq=24000, new_freq=16000)
+    resampler = Resample(orig_freq=24000, new_freq=SAMPLERATE)
 
     for wav_file in wav_list:
 
@@ -121,7 +121,7 @@ def create_json(wav_list, json_file, resample_audio=False):
             resampled_signal = resampler(signal)
 
             resampled_path = os.path.join("/", *path_parts[:-1], uttid + "_resampled.wav")
-            torchaudio.save(resampled_path, resampled_signal, sample_rate=16000)
+            torchaudio.save(resampled_path, resampled_signal, sample_rate=SAMPLERATE)
 
             duration = resampled_signal.shape[1] / SAMPLERATE
 
