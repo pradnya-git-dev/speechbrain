@@ -47,8 +47,8 @@ train_json: train.json
 valid_json: valid.json
 test_json: test.json
 
-splits: ["train", "valid"]
-split_ratio: [90, 10]
+splits: ["train", "valid", "test"]
+split_ratio: [80, 10, 10]
 
 skip_prep: False
 
