@@ -1,7 +1,7 @@
 ################################
 # Audio Parameters             #
 ################################
-sample_rate: 16000
+sample_rate: 22050
 hop_length: 256
 win_length: 1024
 n_mel_channels: 80
@@ -13,6 +13,9 @@ power: 1
 norm: "slaney"
 mel_scale: "slaney"
 dynamic_range_compression: True
+
+spk_emb_size: 512
+spk_count: 10
 
 ################################
 # Optimization Hyperparameters #
@@ -99,7 +102,7 @@ model: !new:model.Tacotron2
   postnet_kernel_size: !ref <postnet_kernel_size>
   postnet_n_convolutions: !ref <postnet_n_convolutions>
   decoder_no_early_stopping: !ref <decoder_no_early_stopping>
-  spk_emb_size: 512
+  spk_emb_size: !ref <spk_emb_size>
 
 
 modules:
