@@ -7,7 +7,7 @@ output_folder: !ref ./results/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
 progress_sample_path: !ref <output_folder>/samples
-epochs: 800
+epochs: 100
 keep_checkpoint_interval: 50
 use_tensorboard: True
 
@@ -28,7 +28,7 @@ skip_prep: False
 
 # segment_size: 8192
 segment_size: 8192
-sample_rate: 16000
+sample_rate: 22050
 hop_length: 256
 win_length: 1024
 n_mel_channels: 80
@@ -42,6 +42,8 @@ norm: "slaney"
 mel_scale: "slaney"
 dynamic_range_compression: True
 
+spk_emb_size: 512
+
 ################################
 # Optimization Hyperparameters #
 ################################
@@ -50,20 +52,20 @@ weight_decay: 0.9999
 adam_b1: 0.8
 adam_b2: 0.99
 grad_clip_thresh: 1.0
-batch_size: 64 #minimum 2
+batch_size: 16 #minimum 2
 
 train_dataloader_opts:
   batch_size: !ref <batch_size>
   drop_last: False
-  num_workers: 8
+  num_workers: 0
 
 valid_dataloader_opts:
   batch_size: 1
-  num_workers: 8
+  num_workers: 0
 
 test_dataloader_opts:
   batch_size: 1
-  num_workers: 8
+  num_workers: 0
 ################################
 # Model Parameters and model   #
 ################################
@@ -84,8 +86,6 @@ resblock_kernel_sizes: [3, 7, 11]
 upsample_kernel_sizes: [16, 16, 4, 4]
 upsample_initial_channel: 512
 upsample_factors: [8, 8, 2, 2]
-
-spk_emb_size: 512
 
 inference_padding: 5
 cond_channels: 0

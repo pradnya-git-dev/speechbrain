@@ -20,6 +20,7 @@ import torchaudio
 import os
 import torchaudio
 from speechbrain.pretrained import EncoderClassifier
+from speechbrain.pretrained import Tacotron2
 from speechbrain.processing.speech_augmentation import Resample
 
 
@@ -291,7 +292,7 @@ class HifiGanBrain(sb.Brain):
             os.makedirs(target_path)
         file_name = f"{name}.wav"
         effective_file_name = os.path.join(target_path, file_name)
-        torchaudio.save(effective_file_name, data.cpu(), 16000)
+        torchaudio.save(effective_file_name, data.cpu(), self.hparams.sample_rate)
 
 
 def dataio_prepare(hparams):
@@ -311,16 +312,21 @@ def dataio_prepare(hparams):
         audio = torch.FloatTensor(audio)
         audio = audio.unsqueeze(0)
         if segment:
-          if audio.size(1) >= segment_size:
-              max_audio_start = audio.size(1) - segment_size
-              audio_start = torch.randint(0, max_audio_start, (1,))
-              audio = audio[:, audio_start : audio_start + segment_size]
-          else:
-              audio = torch.nn.functional.pad(
+            if audio.size(1) >= segment_size:
+                max_audio_start = audio.size(1) - segment_size
+                audio_start = torch.randint(0, max_audio_start, (1,))
+                audio = audio[:, audio_start : audio_start + segment_size]
+            else:
+                audio = torch.nn.functional.pad(
                   audio, (0, segment_size - audio.size(1)), "constant"
-              )
+                )
 
+        # ToDo: Check the shape for mel
         mel = hparams["mel_spectogram"](audio=audio.squeeze(0))
+
+        # tacotron2 = Tacotron2.from_hparams(source="speechbrain/tts-tacotron2-ljspeech", savedir="tmpdir_tts")
+        # mel_output_ss, mel_length_ss, alignment_ss = tacotron2.encode_text(original_text)
+        # mel = mel_output_ss
 
         # resampled_audio = resampler(audio)
         spk_emb = encoder.encode_batch(audio)

@@ -1,3 +1,3 @@
-ovhai_hifigan_exp0:
+Experiment #0:
 Model: HiFiGAN model without injecting speaker embeddings
-Dataset: LibriTTS dataset - resampled to 16000 Hz 
+Dataset: LibriTTS dataset - resampled to 22050 Hz

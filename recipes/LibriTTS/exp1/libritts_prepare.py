@@ -8,8 +8,8 @@ import logging
 import torchaudio
 
 logger = logging.getLogger(__name__)
-LIBRITTS_DATASET_URL = "https://www.openslr.org/resources/60/train-clean-100.tar.gz"
-SAMPLERATE = 16000
+LIBRITTS_DATASET_URL = "https://www.openslr.org/resources/60/dev-clean.tar.gz"
+SAMPLERATE = 22050
 
 
 def prepare_libritts(
@@ -88,7 +88,7 @@ def create_json(wav_list, json_file, resample_audio=False):
 
     # Processing all the wav files in the list
     json_dict = {}
-    resampler = Resample(orig_freq=24000, new_freq=16000)
+    resampler = Resample(orig_freq=24000, new_freq=SAMPLERATE)
 
     for wav_file in wav_list:
 
@@ -121,7 +121,7 @@ def create_json(wav_list, json_file, resample_audio=False):
             resampled_signal = resampler(signal)
 
             resampled_path = os.path.join("/", *path_parts[:-1], uttid + "_resampled.wav")
-            torchaudio.save(resampled_path, resampled_signal, sample_rate=16000)
+            torchaudio.save(resampled_path, resampled_signal, sample_rate=SAMPLERATE)
 
             duration = resampled_signal.shape[1] / SAMPLERATE
 
@@ -219,5 +219,5 @@ def download_mini_libritts(destination):
 
 
 if __name__ == "__main__":
-    prepare_libritts("/content/libritts_train_clean_100_resampled",
+    prepare_libritts("/workspace/libritts_data/libritts_dev_clean_resampled",
                      "train.json", "valid.json", "test.json")
