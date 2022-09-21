@@ -320,9 +320,9 @@ def dataio_prepare(hparams):
               input_audio_start = torch.randint(0, max_audio_start, (1,))
               input_audio = input_audio[:, input_audio_start : input_audio_start + segment_size]
 
-              max_audio_start = output_audio.size(1) - segment_size
-              output_audio_start = torch.randint(0, max_audio_start, (1,))
-              output_audio = output_audio[:, output_audio_start : output_audio_start + segment_size]
+              # max_audio_start = output_audio.size(1) - segment_size
+              # output_audio_start = torch.randint(0, max_audio_start, (1,))
+              output_audio = output_audio[:, input_audio_start : input_audio_start + segment_size]
           else:
               input_audio = torch.nn.functional.pad(
                   input_audio, (0, segment_size - input_audio.size(1)), "constant"
