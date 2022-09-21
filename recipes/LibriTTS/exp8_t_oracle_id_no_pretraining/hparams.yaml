@@ -72,12 +72,15 @@ norm: "slaney"
 mel_scale: "slaney"
 dynamic_range_compression: True
 
+spk_emb_size: 512
+spk_count: 10
+
 ################################
 # Optimization Hyperparameters #
 ################################
 learning_rate: 0.00001
 weight_decay: 0.000006
-batch_size: 16 #minimum 2
+batch_size: 8 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 50.0
@@ -85,21 +88,28 @@ guided_attention_weight_half_life: 10.
 guided_attention_hard_stop: 50
 gate_loss_weight: 1.0
 
+
 train_dataloader_opts:
   batch_size: !ref <batch_size>
   drop_last: False  #True #False
   num_workers: 0
   collate_fn: !new:model.TextMelCollate
+    spk_emb_size: 512
+    spk_count: 10
 
 valid_dataloader_opts:
   batch_size: !ref <batch_size>
   num_workers: 0
   collate_fn: !new:model.TextMelCollate
+    spk_emb_size: !ref <spk_emb_size>
+    spk_count: !ref <spk_count>
 
 test_dataloader_opts:
   batch_size: !ref <batch_size>
   num_workers: 0
   collate_fn: !new:model.TextMelCollate
+    spk_emb_size: !ref <spk_emb_size>
+    spk_count: !ref <spk_count>
 
 ################################
 # Model Parameters and model   #
@@ -180,7 +190,7 @@ model: !new:model.Tacotron2
   postnet_kernel_size: !ref <postnet_kernel_size>
   postnet_n_convolutions: !ref <postnet_n_convolutions>
   decoder_no_early_stopping: !ref <decoder_no_early_stopping>
-  spk_emb_size: 512
+  spk_emb_size: !ref <spk_emb_size>
 
 guided_attention_scheduler: !new:speechbrain.nnet.schedulers.StepScheduler
   initial_value: !ref <guided_attention_weight>
@@ -233,12 +243,3 @@ progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
   batch_sample_size: !ref <progress_batch_sample_size>
   formats:
     raw_batch: raw
-
-
-# If you do not want to use the pretrained separator you can simply delete pretrained_separator field.
-pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
-    collect_in: !ref <save_folder>
-    loadables:
-        model: !ref <model>
-    paths:
-        model: speechbrain/tts-tacotron2-ljspeech/model.ckpt

@@ -1,7 +1,7 @@
-Experiment #7:
+Experiment #8:
 - Model: 
--- Using a pretrained Tacotron2 model
--- Fine-tuning the Tacotron2 model from the scratch on the libritts dataset
+-- No pretraining
+-- Training the Tacotron2 model from the scratch on the libritts dataset
 - Dataset:
 -- A subset of libritts_dev_clean
 -- 10 random speakers with more than 100 audio samples selected using the libritts_prepare script
