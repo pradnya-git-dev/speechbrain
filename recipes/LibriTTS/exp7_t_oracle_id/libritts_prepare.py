@@ -61,7 +61,7 @@ def prepare_libritts(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
     )
     extension = [".wav"]
-    speaker_counter = 10
+    speaker_counter = 1
 
     wav_list = list()
 
@@ -108,7 +108,7 @@ def create_json(wav_list, json_file, resample_audio=False):
     json_dict = {}
     resampler = Resample(orig_freq=24000, new_freq=SAMPLERATE)
     spk_ids = dict()
-    speaker_counter = 10
+    speaker_counter = 0
 
     for wav_file in wav_list:
 
