@@ -80,7 +80,7 @@ spk_count: 10
 ################################
 learning_rate: 0.00001
 weight_decay: 0.000006
-batch_size: 8 #minimum 2
+batch_size: 16 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 50.0

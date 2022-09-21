@@ -1406,9 +1406,6 @@ class Tacotron2(nn.Module):
             postnet_kernel_size,
             postnet_n_convolutions,
         )
-
-        # self.spk_emb_pre_encoder = Linear(input_size=spk_emb_size, n_neurons=encoder_embedding_dim)
-        # self.spk_emb_post_decoder = Linear(input_size=spk_emb_size, n_neurons=n_mel_channels)
         
         """
         self.conv_spk_post_decoder = Conv1d(
@@ -1559,8 +1556,7 @@ class Tacotron2(nn.Module):
         alignments: torch.Tensor
             sequence of attention weights
         """
-
-        print("Using this infer: ")
+        
         embedded_inputs = self.embedding(inputs).transpose(1, 2)
         encoder_outputs = self.encoder.infer(embedded_inputs, input_lengths)
 
@@ -1833,11 +1829,9 @@ class TextMelCollate:
         )
     """
 
-    def __init__(self, n_frames_per_step=1):
+    def __init__(self, spk_count, spk_emb_size, n_frames_per_step=1):
         self.n_frames_per_step = n_frames_per_step
-        # self.spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb") 
-        self.spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")
-        self.spk_oracle = nn.Embedding(500, 512)
+        self.spk_oracle = nn.Embedding(spk_count, spk_emb_size)
 
     # TODO: Make this more intuitive, use the pipeline
     def __call__(self, batch):
@@ -1892,16 +1886,6 @@ class TextMelCollate:
             output_lengths[i] = mel.size(1)
             original_texts.append(raw_batch[idx]["original_text"])
             wavs.append(raw_batch[idx]["wav"])
-
-            audio = sb.dataio.dataio.read_audio(raw_batch[idx]["wav"])
-            audio = torch.FloatTensor(audio)
-            audio = audio.unsqueeze(0)
-
-            # spk_emb = self.spk_emb_encoder.encode_batch(audio)
-            # spk_emb = spk_emb.squeeze()
-            # print("speaker embedding shape: ", spk_emb.shape)
-            # spk_embs_list.append(spk_emb)
-            # spk_embs = torch.stack((spk_embs_list))
 
             spk_id_t = torch.LongTensor([raw_batch[idx]["spk_id"]])
             spk_id_emb = self.spk_oracle(spk_id_t)

@@ -263,28 +263,28 @@ class Tacotron2Brain(sb.Brain):
             return
 
 
-          # train_sample_path = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current))
-          # if not os.path.exists(train_sample_path):
-          #     os.makedirs(train_sample_path)
+          train_sample_path = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current))
+          if not os.path.exists(train_sample_path):
+              os.makedirs(train_sample_path)
 
           _, targets, _, original_texts, wavs, _ = self.last_batch
 
           # Extra lines
           _, mel_out_postnet, _, _ = self.last_preds
           waveform_ss = self.vocoder.decode_batch(mel_out_postnet[0])
-          """
+          
           train_sample_text = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "train_input_text.txt")
-          with open(train_sample_text, 'w') as f:
+          with open(train_sample_text, "w") as f:
             f.write(original_texts[0])
 
           train_input_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "train_input_audio.wav")
           torchaudio.save(train_input_audio, sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0), self.hparams.sample_rate)
 
-          _, mel_out_postnet, _, _ = self.last_preds
-          waveform_ss = self.vocoder.decode_batch(mel_out_postnet[0])
+          # _, mel_out_postnet, _, _ = self.last_preds
+          # waveform_ss = self.vocoder.decode_batch(mel_out_postnet[0])
           train_sample_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "train_output_audio.wav")
           torchaudio.save(train_sample_audio, waveform_ss.squeeze(1), self.hparams.sample_rate)
-          """
+          
 
           if self.hparams.use_tensorboard:
               self.tensorboard_logger.log_audio(
@@ -380,23 +380,24 @@ class Tacotron2Brain(sb.Brain):
         print("INFERENCE - inference_mel_out.shape: ", self._get_spectrogram_sample(mel_out).shape)
 
         if stage == sb.Stage.VALID:
-          waveform_ss = self.vocoder.decode_batch(mel_out) # Extra Line
-          # inf_sample_path = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current))
-          """
-          if not os.path.exists(inf_sample_path):
-              os.makedirs(inf_sample_path)
-
-          inf_sample_text = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_input_text.txt")
-          with open(inf_sample_text, 'w') as f:
-            f.write(original_texts[0])
-
-          inf_input_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_input_audio.wav")
-          torchaudio.save(inf_input_audio, sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0), self.hparams.sample_rate)
-
           waveform_ss = self.vocoder.decode_batch(mel_out)
-          inf_sample_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_output_audio.wav")
-          torchaudio.save(inf_sample_audio, waveform_ss.squeeze(1), self.hparams.sample_rate)
-          """
+          if self.hparams.epoch_counter.current % 10 == 0:
+            inf_sample_path = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current))
+            
+            if not os.path.exists(inf_sample_path):
+                os.makedirs(inf_sample_path)
+
+            inf_sample_text = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_input_text.txt")
+            with open(inf_sample_text, 'w') as f:
+              f.write(original_texts[0])
+
+            inf_input_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_input_audio.wav")
+            torchaudio.save(inf_input_audio, sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0), self.hparams.sample_rate)
+
+            # waveform_ss = self.vocoder.decode_batch(mel_out)
+            inf_sample_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_output_audio.wav")
+            torchaudio.save(inf_sample_audio, waveform_ss.squeeze(1), self.hparams.sample_rate)
+            
 
           if self.hparams.use_tensorboard:
               self.tensorboard_logger.log_audio(
