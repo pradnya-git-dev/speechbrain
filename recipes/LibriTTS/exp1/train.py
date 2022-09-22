@@ -20,6 +20,7 @@ import torchaudio
 import os
 import torchaudio
 from speechbrain.pretrained import EncoderClassifier
+from speechbrain.pretrained import Tacotron2
 from speechbrain.processing.speech_augmentation import Resample
 
 
@@ -300,13 +301,13 @@ def dataio_prepare(hparams):
     """
     segment_size = hparams["segment_size"]
     # encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
-    encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")
+    encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")  
     # resampler = Resample(orig_freq=24000, new_freq=16000)
 
     # Define audio pipeline:
-    @sb.utils.data_pipeline.takes("input_wav", "output_wav", "segment", "original_text")
+    @sb.utils.data_pipeline.takes("input_wav", "output_wav", "segment")
     @sb.utils.data_pipeline.provides("mel", "sig", "spk_emb")
-    def audio_pipeline(input_wav, output_wav, segment, original_text):
+    def audio_pipeline(input_wav, output_wav, segment):
         input_audio = sb.dataio.dataio.read_audio(input_wav)
         input_audio = torch.FloatTensor(input_audio)
         input_audio = input_audio.unsqueeze(0)
@@ -314,33 +315,42 @@ def dataio_prepare(hparams):
         output_audio = sb.dataio.dataio.read_audio(output_wav)
         output_audio = torch.FloatTensor(output_audio)
         output_audio = output_audio.unsqueeze(0)
+
+        if input_audio.size(1) < output_audio.size(1):
+          output_audio = output_audio[:,  : input_audio.size(1)]
+        else:
+          input_audio = input_audio[:,  : output_audio.size(1)]
+          
         if segment:
-          if input_audio.size(1) >= segment_size:
-              max_audio_start = input_audio.size(1) - segment_size
-              input_audio_start = torch.randint(0, max_audio_start, (1,))
-              input_audio = input_audio[:, input_audio_start : input_audio_start + segment_size]
+            if input_audio.size(1) >= segment_size:
+                max_audio_start = input_audio.size(1) - segment_size
+                audio_start = torch.randint(0, max_audio_start, (1,))
+                input_audio = input_audio[:, audio_start : audio_start + segment_size]
 
-              # max_audio_start = output_audio.size(1) - segment_size
-              # output_audio_start = torch.randint(0, max_audio_start, (1,))
-              output_audio = output_audio[:, input_audio_start : input_audio_start + segment_size]
-          else:
-              input_audio = torch.nn.functional.pad(
+                output_audio = output_audio[:, audio_start : audio_start + segment_size]
+            else:
+                input_audio = torch.nn.functional.pad(
                   input_audio, (0, segment_size - input_audio.size(1)), "constant"
-              )
+                )
 
-              output_audio = torch.nn.functional.pad(
+                output_audio = torch.nn.functional.pad(
                   output_audio, (0, segment_size - output_audio.size(1)), "constant"
-              )
-
-        # import pdb; pdb.set_trace()
+                )
 
         # ToDo: Check the shape for mel
+        # print("input_audio.shape: ", input_audio.shape)
+        # print("output_audio.shape: ", output_audio.shape)
+        # if output_audio.shape[1] == 0:
+        #   print(output_wav)
         mel = hparams["mel_spectogram"](audio=input_audio.squeeze(0))
 
+        # tacotron2 = Tacotron2.from_hparams(source="speechbrain/tts-tacotron2-ljspeech", savedir="tmpdir_tts")
+        # mel_output_ss, mel_length_ss, alignment_ss = tacotron2.encode_text(original_text)
+        # mel = mel_output_ss
+
         # resampled_audio = resampler(audio)
-
-
         spk_emb = encoder.encode_batch(output_audio)
+        spk_emb = spk_emb.squeeze()
 
         return mel, output_audio, spk_emb
 
@@ -421,4 +431,3 @@ if __name__ == "__main__":
             datasets["test"],
             test_loader_kwargs=hparams["test_dataloader_opts"],
         )
-

@@ -434,7 +434,7 @@ class HifiganGenerator(torch.nn.Module):
 
         # x.shape = torch.Size([32, 80, 33])
 
-        s = s.squeeze(1).squeeze(1)
+        # s = s.squeeze(1).squeeze(1)
         s_mel = self.spk_emb_mel(s)
         s_mel = torch.unsqueeze(s_mel, -1).repeat(1, 1, x.shape[2])
         x = (x + s_mel)/2
