@@ -435,10 +435,10 @@ class HifiganGenerator(torch.nn.Module):
         # x.shape = torch.Size([32, 80, 33])
 
         # s = s.squeeze(1).squeeze(1)
-        s_mel = self.spk_emb_mel(s)
-        s_mel = torch.unsqueeze(s_mel, -1).repeat(1, 1, x.shape[2])
-        x = (x + s_mel)/2
-        s_mel.detach()
+        # s_mel = self.spk_emb_mel(s)
+        # s_mel = torch.unsqueeze(s_mel, -1).repeat(1, 1, x.shape[2])
+        # x = (x + s_mel)/2
+        # s_mel.detach()
 
         # x.shape = torch.Size([32, 80, 33])
         # s_mel.shape = torch.Size([32, 80, 33])
@@ -455,7 +455,7 @@ class HifiganGenerator(torch.nn.Module):
         # s.shape = torch.Size([32, 512, 17])
         o = (o + s_pre)/2
         # o.shape = torch.Size([32, 512, 17])
-        s_pre.detach()
+        # s_pre.detach()
         
         if hasattr(self, "cond_layer"):
             o = o + self.cond_layer(g)
@@ -464,14 +464,14 @@ class HifiganGenerator(torch.nn.Module):
 
             o = self.ups[i](o)
             # o.shape = torch.Size([32, 256, 136])
-            s_ups = self.ups_spk_emb[i](s)
+            # s_ups = self.ups_spk_emb[i](s)
             # s.shape = torch.Size([32, 512])
             # s_ups.shape = torch.Size([32, 256])
-            s_ups = torch.unsqueeze(s_ups, -1).repeat(1, 1, o.shape[2])
+            # s_ups = torch.unsqueeze(s_ups, -1).repeat(1, 1, o.shape[2])
             # s_ups.shape = torch.Size([32, 256, 136])
-            o = (o + s_ups)/2
+            # o = (o + s_ups)/2
             # o.shape = torch.Size([32, 256, 136])
-            s_ups.detach()
+            # s_ups.detach()
 
             # o.shape = [32,256,264]
             # o.shape = [32,128,2112]
@@ -489,12 +489,12 @@ class HifiganGenerator(torch.nn.Module):
           
         o = F.leaky_relu(o)
         # o.shape = torch.Size([32, 32, 8448])
-        s_post = self.ups_spk_emb[-1](s)
+        # s_post = self.ups_spk_emb[-1](s)
         # s_post.shape = torch.Size([32, 32])
-        s_post = torch.unsqueeze(s_post, -1).repeat(1, 1, o.shape[2])
+        # s_post = torch.unsqueeze(s_post, -1).repeat(1, 1, o.shape[2])
         # s_post.shape = torch.Size([32, 32, 8448])
-        o = (o + s_post)/2
-        s_post.detach()
+        # o = (o + s_post)/2
+        # s_post.detach()
 
         o = self.conv_post(o)
         # o.shape = [32, 1, 8448]

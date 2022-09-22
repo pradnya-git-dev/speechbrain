@@ -344,8 +344,8 @@ def dataio_prepare(hparams):
                 )
 
         
-        torchaudio.save("input_audio.wav", input_audio, 22050)
-        torchaudio.save("output_audio.wav", output_audio, 22050)
+        # torchaudio.save("input_audio.wav", input_audio, 22050)
+        # torchaudio.save("output_audio.wav", output_audio, 22050)
         mel = hparams["mel_spectogram"](audio=input_audio.squeeze(0))
 
         return mel, output_audio, spk_emb
