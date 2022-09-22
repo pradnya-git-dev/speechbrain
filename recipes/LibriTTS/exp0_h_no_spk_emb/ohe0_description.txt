@@ -1,0 +1,3 @@
+Experiment #0:
+Model: HiFiGAN model without injecting speaker embeddings
+Dataset: LibriTTS dataset - resampled to 22050 Hz
