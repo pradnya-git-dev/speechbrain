@@ -63,9 +63,9 @@ def prepare_libritts(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
     )
     extension = [".wav"]
-    # wav_list = get_all_files(train_folder, match_and=extension)
+    wav_list = get_all_files(train_folder, match_and=extension)
     
-    
+    """
     speaker_counter = 1
 
     wav_list = list()
@@ -83,7 +83,7 @@ def prepare_libritts(
 
 
     logger.info(f"Total number of samples: {len(wav_list)}")
-    
+    """
 
     # Random split the signal list into train, valid, and test sets.
     data_split = split_sets(wav_list, split_ratio)

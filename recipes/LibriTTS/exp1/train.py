@@ -302,7 +302,7 @@ def dataio_prepare(hparams):
     segment_size = hparams["segment_size"]
     # encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
     encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")  
-    # resampler = Resample(orig_freq=24000, new_freq=16000)
+    resampler = Resample(orig_freq=24000, new_freq=16000)
 
     # Define audio pipeline:
     @sb.utils.data_pipeline.takes("input_wav", "output_wav", "segment")
@@ -315,6 +315,11 @@ def dataio_prepare(hparams):
         output_audio = sb.dataio.dataio.read_audio(output_wav)
         output_audio = torch.FloatTensor(output_audio)
         output_audio = output_audio.unsqueeze(0)
+
+        # import pdb; pdb.set_trace()
+        resampled_audio_16 = resampler(output_audio)
+        spk_emb = encoder.encode_batch(resampled_audio_16)
+        spk_emb = spk_emb.squeeze()
 
         if input_audio.size(1) < output_audio.size(1):
           output_audio = output_audio[:,  : input_audio.size(1)]
@@ -347,10 +352,6 @@ def dataio_prepare(hparams):
         # tacotron2 = Tacotron2.from_hparams(source="speechbrain/tts-tacotron2-ljspeech", savedir="tmpdir_tts")
         # mel_output_ss, mel_length_ss, alignment_ss = tacotron2.encode_text(original_text)
         # mel = mel_output_ss
-
-        # resampled_audio = resampler(audio)
-        spk_emb = encoder.encode_batch(output_audio)
-        spk_emb = spk_emb.squeeze()
 
         return mel, output_audio, spk_emb
 
