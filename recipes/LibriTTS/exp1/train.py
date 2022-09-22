@@ -328,8 +328,9 @@ def dataio_prepare(hparams):
           
         if segment:
             if input_audio.size(1) >= segment_size:
-                max_audio_start = input_audio.size(1) - segment_size
-                audio_start = torch.randint(0, max_audio_start, (1,))
+                # import pdb; pdb.set_trace()
+                # max_audio_start = input_audio.size(1) - segment_size
+                audio_start = torch.zeros(1, dtype=torch.int32)
                 input_audio = input_audio[:, audio_start : audio_start + segment_size]
 
                 output_audio = output_audio[:, audio_start : audio_start + segment_size]
@@ -342,16 +343,10 @@ def dataio_prepare(hparams):
                   output_audio, (0, segment_size - output_audio.size(1)), "constant"
                 )
 
-        # ToDo: Check the shape for mel
-        # print("input_audio.shape: ", input_audio.shape)
-        # print("output_audio.shape: ", output_audio.shape)
-        # if output_audio.shape[1] == 0:
-        #   print(output_wav)
+        
+        torchaudio.save("input_audio.wav", input_audio, 22050)
+        torchaudio.save("output_audio.wav", output_audio, 22050)
         mel = hparams["mel_spectogram"](audio=input_audio.squeeze(0))
-
-        # tacotron2 = Tacotron2.from_hparams(source="speechbrain/tts-tacotron2-ljspeech", savedir="tmpdir_tts")
-        # mel_output_ss, mel_length_ss, alignment_ss = tacotron2.encode_text(original_text)
-        # mel = mel_output_ss
 
         return mel, output_audio, spk_emb
 
