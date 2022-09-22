@@ -14,7 +14,7 @@ use_tensorboard: True
 #################################
 # Data files and pre-processing #
 #################################
-data_folder: /content/libritts_dev_clean_resampled
+data_folder: /workspace/libritts_data/libritts_dev_clean_resampled
 train_json: train.json
 valid_json: valid.json
 test_json: test.json
@@ -42,6 +42,8 @@ norm: "slaney"
 mel_scale: "slaney"
 dynamic_range_compression: True
 
+spk_emb_size: 512
+
 ################################
 # Optimization Hyperparameters #
 ################################
@@ -55,15 +57,15 @@ batch_size: 16 #minimum 2
 train_dataloader_opts:
   batch_size: !ref <batch_size>
   drop_last: False
-  num_workers: 8
+  num_workers: 0
 
 valid_dataloader_opts:
   batch_size: 1
-  num_workers: 8
+  num_workers: 0
 
 test_dataloader_opts:
   batch_size: 1
-  num_workers: 8
+  num_workers: 0
 ################################
 # Model Parameters and model   #
 ################################
@@ -84,8 +86,6 @@ resblock_kernel_sizes: [3, 7, 11]
 upsample_kernel_sizes: [16, 16, 4, 4]
 upsample_initial_channel: 512
 upsample_factors: [8, 8, 2, 2]
-
-spk_emb_size: 512
 
 inference_padding: 5
 cond_channels: 0

@@ -302,36 +302,53 @@ def dataio_prepare(hparams):
     segment_size = hparams["segment_size"]
     # encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
     encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")  
-    # resampler = Resample(orig_freq=24000, new_freq=16000)
+    resampler = Resample(orig_freq=22050, new_freq=16000)
 
     # Define audio pipeline:
-    @sb.utils.data_pipeline.takes("wav", "segment")
+    @sb.utils.data_pipeline.takes("input_wav", "output_wav", "segment")
     @sb.utils.data_pipeline.provides("mel", "sig", "spk_emb")
-    def audio_pipeline(wav, segment):
-        audio = sb.dataio.dataio.read_audio(wav)
-        audio = torch.FloatTensor(audio)
-        audio = audio.unsqueeze(0)
+    def audio_pipeline(input_wav, output_wav, segment):
+        input_audio = sb.dataio.dataio.read_audio(input_wav)
+        input_audio = torch.FloatTensor(input_audio)
+        input_audio = input_audio.unsqueeze(0)
+
+        output_audio = sb.dataio.dataio.read_audio(output_wav)
+        output_audio = torch.FloatTensor(output_audio)
+        output_audio = output_audio.unsqueeze(0)
+
+        # import pdb; pdb.set_trace()
+        resampled_audio_16 = resampler(output_audio)
+        spk_emb = encoder.encode_batch(resampled_audio_16)
+        spk_emb = spk_emb.squeeze()
+
+        if input_audio.size(1) < output_audio.size(1):
+          output_audio = output_audio[:,  : input_audio.size(1)]
+        else:
+          input_audio = input_audio[:,  : output_audio.size(1)]
+          
         if segment:
-            if audio.size(1) >= segment_size:
-                max_audio_start = audio.size(1) - segment_size
-                audio_start = torch.randint(0, max_audio_start, (1,))
-                audio = audio[:, audio_start : audio_start + segment_size]
+            if input_audio.size(1) >= segment_size:
+                # import pdb; pdb.set_trace()
+                # max_audio_start = input_audio.size(1) - segment_size
+                audio_start = torch.zeros(1, dtype=torch.int32)
+                input_audio = input_audio[:, audio_start : audio_start + segment_size]
+
+                output_audio = output_audio[:, audio_start : audio_start + segment_size]
             else:
-                audio = torch.nn.functional.pad(
-                  audio, (0, segment_size - audio.size(1)), "constant"
+                input_audio = torch.nn.functional.pad(
+                  input_audio, (0, segment_size - input_audio.size(1)), "constant"
                 )
 
-        # ToDo: Check the shape for mel
-        mel = hparams["mel_spectogram"](audio=audio.squeeze(0))
+                output_audio = torch.nn.functional.pad(
+                  output_audio, (0, segment_size - output_audio.size(1)), "constant"
+                )
 
-        # tacotron2 = Tacotron2.from_hparams(source="speechbrain/tts-tacotron2-ljspeech", savedir="tmpdir_tts")
-        # mel_output_ss, mel_length_ss, alignment_ss = tacotron2.encode_text(original_text)
-        # mel = mel_output_ss
+        
+        torchaudio.save("input_audio.wav", input_audio, 22050)
+        torchaudio.save("output_audio.wav", output_audio, 22050)
+        mel = hparams["mel_spectogram"](audio=input_audio.squeeze(0))
 
-        # resampled_audio = resampler(audio)
-        spk_emb = encoder.encode_batch(audio)
-
-        return mel, audio, spk_emb
+        return mel, output_audio, spk_emb
 
     datasets = {}
     for dataset in hparams["splits"]:

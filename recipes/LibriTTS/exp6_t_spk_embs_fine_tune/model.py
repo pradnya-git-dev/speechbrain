@@ -48,6 +48,7 @@ import speechbrain as sb
 from speechbrain.pretrained import EncoderClassifier
 from speechbrain.nnet.linear import Linear
 from speechbrain.nnet.CNN import Conv1d
+from speechbrain.processing.speech_augmentation import Resample
 
 
 class LinearNorm(torch.nn.Module):
@@ -1510,7 +1511,6 @@ class Tacotron2(nn.Module):
 
         # encoder_outputs= torch.cat([encoder_outputs, spk_embs], dim=2)
         encoder_outputs = (encoder_outputs + spk_embs_enc) / 2
-        spk_embs_enc.detach()
 
         # encoder_outputs.shape = torch.Size([16, 254, 512])
 
@@ -1573,7 +1573,6 @@ class Tacotron2(nn.Module):
 
         # encoder_outputs= torch.cat([encoder_outputs, spk_embs], dim=2)
         encoder_outputs = (encoder_outputs + spk_embs_enc) / 2
-        spk_embs_enc.detach()
 
         # encoder_outputs.shape = torch.Size([16, 254, 512])
 
@@ -1832,10 +1831,14 @@ class TextMelCollate:
         )
     """
 
-    def __init__(self, n_frames_per_step=1):
+    def __init__(self,
+      dataset_sample_rate,
+      spk_emb_sample_rate,
+      n_frames_per_step=1):
         self.n_frames_per_step = n_frames_per_step
         # self.epk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb") 
-        self.epk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")
+        self.spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")
+        self.resampler = Resample(orig_freq=dataset_sample_rate, new_freq=spk_emb_sample_rate)
 
     # TODO: Make this more intuitive, use the pipeline
     def __call__(self, batch):
@@ -1895,7 +1898,9 @@ class TextMelCollate:
             audio = torch.FloatTensor(audio)
             audio = audio.unsqueeze(0)
 
-            spk_emb = self.epk_emb_encoder.encode_batch(audio)
+            # import pdb; pdb.set_trace()
+            resampled_audio_16 = self.resampler(audio)
+            spk_emb = self.spk_emb_encoder.encode_batch(resampled_audio_16)
             spk_emb = spk_emb.squeeze()
             # print("speaker embedding shape: ", spk_emb.shape)
             spk_embs_list.append(spk_emb)

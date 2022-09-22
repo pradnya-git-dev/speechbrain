@@ -1,6 +1,8 @@
 from speechbrain.utils.data_utils import get_all_files, download_file
 from speechbrain.dataio.dataio import read_audio
 from speechbrain.processing.speech_augmentation import Resample
+from speechbrain.pretrained import Tacotron2
+from speechbrain.pretrained import HIFIGAN
 import json
 import os, shutil
 import random
@@ -62,6 +64,26 @@ def prepare_libritts(
     )
     extension = [".wav"]
     wav_list = get_all_files(train_folder, match_and=extension)
+    
+    """
+    speaker_counter = 1
+
+    wav_list = list()
+
+    for speaker_folder in os.listdir(train_folder):
+      speaker_folder_path = os.path.join(train_folder, speaker_folder)
+      if os.path.isdir(speaker_folder_path):
+          speaker_samples = get_all_files(speaker_folder_path, match_and=extension)
+          if len(speaker_samples) > 100:
+            wav_list.extend(speaker_samples)
+            logger.info(f"Using data for speaker: {speaker_folder}")
+            speaker_counter = speaker_counter - 1
+            if speaker_counter == 0:
+              break
+
+
+    logger.info(f"Total number of samples: {len(wav_list)}")
+    """
 
     # Random split the signal list into train, valid, and test sets.
     data_split = split_sets(wav_list, split_ratio)
@@ -89,6 +111,9 @@ def create_json(wav_list, json_file, resample_audio=False):
     # Processing all the wav files in the list
     json_dict = {}
     resampler = Resample(orig_freq=24000, new_freq=SAMPLERATE)
+    tacotron2 = Tacotron2.from_hparams(source="speechbrain/tts-tacotron2-ljspeech", savedir="tmpdir_tts")
+    hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir="tmpdir_vocoder")
+
 
     for wav_file in wav_list:
 
@@ -96,13 +121,20 @@ def create_json(wav_list, json_file, resample_audio=False):
         signal = read_audio(wav_file)
         duration = signal.shape[0] / SAMPLERATE
 
+        # import pdb; pdb.set_trace()
         # Manipulate path to get relative path and uttid
         path_parts = wav_file.split(os.path.sep)
         uttid, _ = os.path.splitext(path_parts[-1])
         if not resample_audio:
+            if uttid.__contains__("synthesized"):
+              continue
             uttid = "_".join(uttid.split("_")[:-1])
 
         relative_path = os.path.join("{data_root}", *path_parts[-5:])
+        
+        synth_speech_path = os.path.join("/", *path_parts[:-1], uttid + "_synthesized.wav")
+        synth_speech_path_parts = synth_speech_path.split(os.path.sep)
+        synth_speech_path = os.path.join("{data_root}", *synth_speech_path_parts[-5:])
 
         original_text_path = os.path.join("/", *path_parts[:-1], uttid + ".original.txt")
 
@@ -130,12 +162,21 @@ def create_json(wav_list, json_file, resample_audio=False):
 
             os.unlink(wav_file)
 
+            mel_output_ss, mel_length_ss, alignment_ss = tacotron2.encode_text(original_text)
+            waveform_ss = hifi_gan.decode_batch(mel_output_ss)
+            synth_speech_path = os.path.join("/", *path_parts[:-1], uttid + "_synthesized.wav")
+            synth_speech_path_parts = synth_speech_path.split(os.path.sep)
+            synth_speech_path = os.path.join("{data_root}", *synth_speech_path_parts[-5:])
+
+            torchaudio.save(synth_speech_path, waveform_ss.squeeze(1), SAMPLERATE)
+
         # Getting speaker-id from utterance-id
         spk_id = uttid.split("_")[0]
 
         # Create entry for this utterance
         json_dict[uttid] = {
-            "wav": relative_path,
+            "output_wav": relative_path,
+            "input_wav": synth_speech_path,
             "length": duration,
             "spk_id": spk_id,
             "original_text": original_text,
@@ -219,5 +260,5 @@ def download_mini_libritts(destination):
 
 
 if __name__ == "__main__":
-    prepare_libritts("/workspace/libritts_data/libritts_dev_clean_resampled",
+    prepare_libritts("/content/libritts_dev_clean_rs",
                      "train.json", "valid.json", "test.json")

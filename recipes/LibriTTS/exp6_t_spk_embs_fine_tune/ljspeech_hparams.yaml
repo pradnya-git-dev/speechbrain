@@ -15,7 +15,7 @@ __set_seed: !apply:torch.manual_seed [!ref <seed>]
 output_folder: !ref ./results/tacotron2/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
-epochs: 200
+epochs: 100
 keep_checkpoint_interval: 50
 use_tensorboard: True
 
@@ -72,12 +72,15 @@ norm: "slaney"
 mel_scale: "slaney"
 dynamic_range_compression: True
 
+spk_emb_size: 512
+spk_emb_sample_rate: 16000
+
 ################################
 # Optimization Hyperparameters #
 ################################
-learning_rate: 0.00001
+learning_rate: 0.001
 weight_decay: 0.000006
-batch_size: 16 #minimum 2
+batch_size: 32 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 75.0
@@ -88,18 +91,24 @@ gate_loss_weight: 1.0
 train_dataloader_opts:
   batch_size: !ref <batch_size>
   drop_last: False  #True #False
-  num_workers: 2
+  num_workers: 0
   collate_fn: !new:model.TextMelCollate
+    dataset_sample_rate: !ref <sample_rate>
+    spk_emb_sample_rate: !ref <spk_emb_sample_rate>
 
 valid_dataloader_opts:
   batch_size: !ref <batch_size>
-  num_workers: 2
+  num_workers: 0
   collate_fn: !new:model.TextMelCollate
+    dataset_sample_rate: !ref <sample_rate>
+    spk_emb_sample_rate: !ref <spk_emb_sample_rate>
 
 test_dataloader_opts:
   batch_size: !ref <batch_size>
-  num_workers: 2
+  num_workers: 0
   collate_fn: !new:model.TextMelCollate
+    dataset_sample_rate: !ref <sample_rate>
+    spk_emb_sample_rate: !ref <spk_emb_sample_rate>
 
 ################################
 # Model Parameters and model   #
@@ -180,7 +189,7 @@ model: !new:model.Tacotron2
   postnet_kernel_size: !ref <postnet_kernel_size>
   postnet_n_convolutions: !ref <postnet_n_convolutions>
   decoder_no_early_stopping: !ref <decoder_no_early_stopping>
-  spk_emb_size: 512
+  spk_emb_size: !ref <spk_emb_size>
 
 guided_attention_scheduler: !new:speechbrain.nnet.schedulers.StepScheduler
   initial_value: !ref <guided_attention_weight>
@@ -211,12 +220,12 @@ train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
 #annealing_function
 lr_annealing: !new:speechbrain.nnet.schedulers.IntervalScheduler
   intervals:
-    - steps: 200
-      lr: 0.000005
-    - steps: 400
-      lr: 0.000003
-    - steps: 600
-      lr: 0.000001
+    - steps: 6000
+      lr: 0.0005
+    - steps: 8000
+      lr: 0.0003
+    - steps: 10000
+      lr: 0.0001
 
 #checkpointer
 checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
@@ -233,11 +242,3 @@ progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
   batch_sample_size: !ref <progress_batch_sample_size>
   formats:
     raw_batch: raw
-
-# If you do not want to use the pretrained separator you can simply delete pretrained_separator field.
-pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
-    collect_in: !ref <save_folder>
-    loadables:
-        model: !ref <model>
-    paths:
-        model: /workspace/mstts_output/exp6_t_ljspeech_spk_embs/save/CKPT+2022-09-15+18-20-47+00/model.ckpt
