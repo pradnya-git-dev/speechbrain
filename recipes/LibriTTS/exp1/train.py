@@ -302,7 +302,7 @@ def dataio_prepare(hparams):
     segment_size = hparams["segment_size"]
     # encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
     encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")  
-    resampler = Resample(orig_freq=24000, new_freq=16000)
+    resampler = Resample(orig_freq=22050, new_freq=16000)
 
     # Define audio pipeline:
     @sb.utils.data_pipeline.takes("input_wav", "output_wav", "segment")
