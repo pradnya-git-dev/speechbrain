@@ -1406,6 +1406,9 @@ class Tacotron2(nn.Module):
             postnet_kernel_size,
             postnet_n_convolutions,
         )
+
+        self.spk_emb_pre_decoder = Linear(input_size=spk_emb_size, n_neurons=encoder_embedding_dim)
+        self.spk_emb_post_decoder = Linear(input_size=spk_emb_size, n_neurons=n_mel_channels)
         
         """
         self.conv_spk_post_decoder = Conv1d(
@@ -1499,15 +1502,14 @@ class Tacotron2(nn.Module):
 
         # encoder_outputs.shape = torch.Size([16, 254, 512])
         
-        # spk_embs_enc = self.spk_emb_pre_encoder(spk_embs)
+        spk_embs_enc = self.spk_emb_pre_decoder(spk_embs)
         # spk_embs_enc.shape = torch.Size([16, 512])
-        spk_embs = torch.unsqueeze(spk_embs, 1).repeat(1, encoder_outputs.shape[1], 1)
+        spk_embs_enc = torch.unsqueeze(spk_embs_enc, 1).repeat(1, encoder_outputs.shape[1], 1)
 
         # spk_embs_enc.shape = torch.Size([16, 254, 512])
 
         # encoder_outputs= torch.cat([encoder_outputs, spk_embs], dim=2)
-        encoder_outputs = (encoder_outputs + spk_embs) / 2
-        # spk_embs_enc.detach()
+        encoder_outputs = (encoder_outputs + spk_embs_enc) / 2
 
         # encoder_outputs.shape = torch.Size([16, 254, 512])
 
@@ -1562,15 +1564,14 @@ class Tacotron2(nn.Module):
 
         # encoder_outputs.shape = torch.Size([16, 254, 512])
         
-        # spk_embs_enc = self.spk_emb_pre_encoder(spk_embs)
+        spk_embs_enc = self.spk_emb_pre_decoder(spk_embs)
         # spk_embs_enc.shape = torch.Size([16, 512])
-        spk_embs = torch.unsqueeze(spk_embs, 1).repeat(1, encoder_outputs.shape[1], 1)
+        spk_embs_enc = torch.unsqueeze(spk_embs_enc, 1).repeat(1, encoder_outputs.shape[1], 1)
 
         # spk_embs_enc.shape = torch.Size([16, 254, 512])
 
         # encoder_outputs= torch.cat([encoder_outputs, spk_embs], dim=2)
-        encoder_outputs = (encoder_outputs + spk_embs) / 2
-        # spk_embs_enc.detach()
+        encoder_outputs = (encoder_outputs + spk_embs_enc) / 2
 
         # encoder_outputs.shape = torch.Size([16, 254, 512])
 
@@ -1887,9 +1888,12 @@ class TextMelCollate:
             original_texts.append(raw_batch[idx]["original_text"])
             wavs.append(raw_batch[idx]["wav"])
 
+            # import pdb; pdb.set_trace()
+            
             spk_id_t = torch.LongTensor([raw_batch[idx]["spk_id"]])
             spk_id_emb = self.spk_oracle(spk_id_t)
             spk_ids.append(spk_id_emb.squeeze())
+            
             
         spk_embs = torch.stack((spk_ids))
         

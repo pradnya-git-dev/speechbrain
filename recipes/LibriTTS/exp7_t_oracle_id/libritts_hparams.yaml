@@ -73,14 +73,14 @@ mel_scale: "slaney"
 dynamic_range_compression: True
 
 spk_emb_size: 512
-spk_count: 10
+spk_count: 41
 
 ################################
 # Optimization Hyperparameters #
 ################################
-learning_rate: 0.00001
+learning_rate: 0.0001
 weight_decay: 0.000006
-batch_size: 16 #minimum 2
+batch_size: 64 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 50.0
@@ -220,12 +220,12 @@ train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
 #annealing_function
 lr_annealing: !new:speechbrain.nnet.schedulers.IntervalScheduler
   intervals:
-    - steps: 4000
-      lr: 0.000005
     - steps: 6000
-      lr: 0.000003
+      lr: 0.00005
+    - steps: 8000
+      lr: 0.00003
     - steps: 10000
-      lr: 0.000001
+      lr: 0.00001
 
 #checkpointer
 checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer

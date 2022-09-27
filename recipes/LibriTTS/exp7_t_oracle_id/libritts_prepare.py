@@ -61,7 +61,10 @@ def prepare_libritts(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
     )
     extension = [".wav"]
-    speaker_counter = 1
+    wav_list = get_all_files(train_folder, match_and=extension)
+
+    """
+    speaker_counter = 40
 
     wav_list = list()
 
@@ -75,9 +78,9 @@ def prepare_libritts(
             speaker_counter = speaker_counter - 1
             if speaker_counter == 0:
               break
+    """
 
-
-    # wav_list = get_all_files(train_folder, match_and=extension)
+    
     logger.info(f"Total number of samples: {len(wav_list)}")
 
 
@@ -108,7 +111,7 @@ def create_json(wav_list, json_file, resample_audio=False):
     json_dict = {}
     resampler = Resample(orig_freq=24000, new_freq=SAMPLERATE)
     spk_ids = dict()
-    speaker_counter = 0
+    speaker_counter = 1
 
     for wav_file in wav_list:
 

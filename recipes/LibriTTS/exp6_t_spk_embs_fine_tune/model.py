@@ -1408,7 +1408,7 @@ class Tacotron2(nn.Module):
             postnet_n_convolutions,
         )
 
-        self.spk_emb_pre_encoder = Linear(input_size=spk_emb_size, n_neurons=encoder_embedding_dim)
+        self.spk_emb_pre_decoder = Linear(input_size=spk_emb_size, n_neurons=encoder_embedding_dim)
         self.spk_emb_post_decoder = Linear(input_size=spk_emb_size, n_neurons=n_mel_channels)
         
         """
@@ -1503,7 +1503,7 @@ class Tacotron2(nn.Module):
 
         # encoder_outputs.shape = torch.Size([16, 254, 512])
         
-        spk_embs_enc = self.spk_emb_pre_encoder(spk_embs)
+        spk_embs_enc = self.spk_emb_pre_decoder(spk_embs)
         # spk_embs_enc.shape = torch.Size([16, 512])
         spk_embs_enc = torch.unsqueeze(spk_embs_enc, 1).repeat(1, encoder_outputs.shape[1], 1)
 
@@ -1565,7 +1565,7 @@ class Tacotron2(nn.Module):
 
         # encoder_outputs.shape = torch.Size([16, 254, 512])
         
-        spk_embs_enc = self.spk_emb_pre_encoder(spk_embs)
+        spk_embs_enc = self.spk_emb_pre_decoder(spk_embs)
         # spk_embs_enc.shape = torch.Size([16, 512])
         spk_embs_enc = torch.unsqueeze(spk_embs_enc, 1).repeat(1, encoder_outputs.shape[1], 1)
 
