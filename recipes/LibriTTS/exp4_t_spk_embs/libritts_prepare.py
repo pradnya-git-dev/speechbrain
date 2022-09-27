@@ -216,8 +216,3 @@ def download_mini_libritts(destination):
     train_archive = os.path.join(destination, LIBRITTS_DATASET_URL.split(os.path.sep)[-1])
     download_file(LIBRITTS_DATASET_URL, train_archive)
     shutil.unpack_archive(train_archive, destination)
-
-
-if __name__ == "__main__":
-    prepare_libritts("/Users/pradnyakandarkar/Documents/Projects/Summer2022/TTS/ovhai_exps/datasets/content/libritts_dev_clean_resampled",
-                     "train.json", "valid.json", "test.json")
