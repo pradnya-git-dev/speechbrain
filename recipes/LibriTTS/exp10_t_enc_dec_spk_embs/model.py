@@ -1486,9 +1486,6 @@ class Tacotron2(nn.Module):
         output_legnths: torch.Tensor
             length of the output without padding
         """
-
-        # import pdb; pdb.set_trace()
-
         inputs, input_lengths, targets, max_len, output_lengths = inputs
         input_lengths, output_lengths = input_lengths.data, output_lengths.data
 
@@ -1498,41 +1495,15 @@ class Tacotron2(nn.Module):
 
         spk_embs_enc = torch.unsqueeze(spk_embs, -1).repeat(1, 1, embedded_inputs.shape[2])
         embedded_inputs = (embedded_inputs + spk_embs_enc) / 2
-        # embedded_inputs = torch.Size([16, 512, 212])
-        
-
-        # embedded_inputs.shape = torch.Size([16, 512, 254])
-        # spk_embs = torch.unsqueeze(spk_embs, -1).repeat(1, 1, embedded_inputs.shape[2])
-        # embedded_inputs = c = torch.cat([embedded_inputs, spk_embs], dim=1)
 
         encoder_outputs = self.encoder(embedded_inputs, input_lengths)
 
-        # encoder_outputs.shape = torch.Size([16, 254, 512])
-        
-        
-        # spk_embs_enc.shape = torch.Size([16, 512])
         spk_embs_dec = torch.unsqueeze(spk_embs, 1).repeat(1, encoder_outputs.shape[1], 1)
-
-        # spk_embs_enc.shape = torch.Size([16, 254, 512])
-
-        # encoder_outputs= torch.cat([encoder_outputs, spk_embs], dim=2)
         encoder_outputs = (encoder_outputs + spk_embs_dec) / 2
-
-        # encoder_outputs.shape = torch.Size([16, 254, 512])
 
         mel_outputs, gate_outputs, alignments = self.decoder(
             encoder_outputs, targets, memory_lengths=input_lengths
         )
-
-        # mel_outputs.shape = torch.Size([16, 80, 1068])
-        # spk_embs_postnet = self.spk_emb_post_decoder(spk_embs)
-        # spk_embs_postnet.shape = torch.Size([16, 80])
-
-        # spk_embs_postnet = torch.unsqueeze(spk_embs_postnet, -1).repeat(1, 1, mel_outputs.shape[2])
-        # spk_embs_postnet.shape = torch.Size([16, 80, 1068])
-        # mel_outputs = (mel_outputs + spk_embs_postnet) / 2
-        # mel_outputs.shape = torch.Size([16, 80, 1068])
-        # spk_embs_postnet.detach()
 
         mel_outputs_postnet = self.postnet(mel_outputs)
         mel_outputs_postnet = mel_outputs + mel_outputs_postnet
@@ -1567,43 +1538,20 @@ class Tacotron2(nn.Module):
         """
 
         embedded_inputs = self.embedding(inputs).transpose(1, 2)
+
         spk_embs = self.spk_emb_pre_encoder(spk_embs)
 
         spk_embs_enc = torch.unsqueeze(spk_embs, -1).repeat(1, 1, embedded_inputs.shape[2])
         embedded_inputs = (embedded_inputs + spk_embs_enc) / 2
-        # embedded_inputs = torch.Size([16, 512, 212])
-        
 
-        # embedded_inputs.shape = torch.Size([16, 512, 254])
-        # spk_embs = torch.unsqueeze(spk_embs, -1).repeat(1, 1, embedded_inputs.shape[2])
-        # embedded_inputs = c = torch.cat([embedded_inputs, spk_embs], dim=1)
+        encoder_outputs = self.encoder.infer(embedded_inputs, input_lengths)
 
-        encoder_outputs = self.encoder(embedded_inputs, input_lengths)
-
-        # encoder_outputs.shape = torch.Size([16, 254, 512])
-        
-        
-        # spk_embs_enc.shape = torch.Size([16, 512])
         spk_embs_dec = torch.unsqueeze(spk_embs, 1).repeat(1, encoder_outputs.shape[1], 1)
-
-        # spk_embs_enc.shape = torch.Size([16, 254, 512])
-
-        # encoder_outputs= torch.cat([encoder_outputs, spk_embs], dim=2)
         encoder_outputs = (encoder_outputs + spk_embs_dec) / 2
 
         mel_outputs, gate_outputs, alignments, mel_lengths = self.decoder.infer(
             encoder_outputs, input_lengths
         )
-
-        # mel_outputs.shape = torch.Size([16, 80, 1068])
-        # spk_embs_postnet = self.spk_emb_post_decoder(spk_embs)
-        # spk_embs_postnet.shape = torch.Size([16, 80])
-
-        # spk_embs_postnet = torch.unsqueeze(spk_embs_postnet, -1).repeat(1, 1, mel_outputs.shape[2])
-        # spk_embs_postnet.shape = torch.Size([16, 80, 1068])
-        # mel_outputs = (mel_outputs + spk_embs_postnet) / 2
-        # mel_outputs.shape = torch.Size([16, 80, 1068])
-        # spk_embs_postnet.detach()
 
         mel_outputs_postnet = self.postnet(mel_outputs)
         mel_outputs_postnet = mel_outputs + mel_outputs_postnet
