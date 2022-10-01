@@ -109,8 +109,12 @@ def create_json(wav_list, json_file, resample_audio=False):
     # Processing all the wav files in the list
     json_dict = {}
     resampler = Resample(orig_freq=24000, new_freq=SAMPLERATE)
+    spk_emb_resampler = Resample(orig_freq=24000, new_freq=16000)
 
     for wav_file in wav_list:
+
+        if wav_file.__contains__("_resampled_16.wav"):
+          continue
 
         # Reading the signal (to retrieve duration in seconds)
         signal = read_audio(wav_file)
@@ -123,6 +127,9 @@ def create_json(wav_list, json_file, resample_audio=False):
             uttid = "_".join(uttid.split("_")[:-1])
 
         relative_path = os.path.join("{data_root}", *path_parts[-5:])
+        resampled_16_path = os.path.join("/", *path_parts[:-1], uttid + "_resampled_16.wav")
+        resampled_16_path_parts = resampled_16_path.split(os.path.sep)
+        resampled_16_path = os.path.join("{data_root}", *resampled_16_path_parts[-5:])
 
         original_text_path = os.path.join("/", *path_parts[:-1], uttid + ".original.txt")
 
@@ -145,8 +152,15 @@ def create_json(wav_list, json_file, resample_audio=False):
 
             duration = resampled_signal.shape[1] / SAMPLERATE
 
+            resampled_16 = spk_emb_resampler(signal)
+            resampled_16_path = os.path.join("/", *path_parts[:-1], uttid + "_resampled_16.wav")
+            torchaudio.save(resampled_16_path, resampled_16, sample_rate=16000)
+
             resampled_path_parts = resampled_path.split(os.path.sep)
             relative_path = os.path.join("{data_root}", *resampled_path_parts[-5:])
+
+            resampled_16_path_parts = resampled_16_path.split(os.path.sep)
+            resampled_16_path = os.path.join("{data_root}", *resampled_16_path_parts[-5:])
 
             os.unlink(wav_file)
 
@@ -156,6 +170,7 @@ def create_json(wav_list, json_file, resample_audio=False):
         # Create entry for this utterance
         json_dict[uttid] = {
             "wav": relative_path,
+            "spk_emb_wav": resampled_16_path,
             "length": duration,
             "spk_id": spk_id,
             "original_text": original_text,
