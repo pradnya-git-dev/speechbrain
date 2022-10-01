@@ -81,7 +81,6 @@ def prepare_libritts(
 
 
     """
-    logger.info(f"Total number of samples: {len(wav_list)}")
 
     # Random split the signal list into train, valid, and test sets.
     data_split = split_sets(wav_list, split_ratio)
