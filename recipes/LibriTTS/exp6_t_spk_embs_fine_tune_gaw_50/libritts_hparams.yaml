@@ -15,7 +15,7 @@ __set_seed: !apply:torch.manual_seed [!ref <seed>]
 output_folder: !ref ./results/tacotron2/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
-epochs: 200
+epochs: 100
 keep_checkpoint_interval: 50
 use_tensorboard: True
 
@@ -87,7 +87,7 @@ weight_decay: 0.000006
 batch_size: 16 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
-guided_attention_weight: 75.0
+guided_attention_weight: 50.0
 guided_attention_weight_half_life: 10.
 guided_attention_hard_stop: 50
 gate_loss_weight: 1.0
