@@ -112,6 +112,9 @@ def create_json(wav_list, json_file, resample_audio=False):
 
     for wav_file in wav_list:
 
+        if wav_file.__contains__("_resampled_16.wav"):
+          continue
+
         # Reading the signal (to retrieve duration in seconds)
         signal = read_audio(wav_file)
         duration = signal.shape[0] / SAMPLERATE
