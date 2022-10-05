@@ -15,9 +15,6 @@ from speechbrain.dataio.dataio import (
     load_pkl,
     save_pkl,
 )
-from speechbrain.dataio.dataio import read_audio
-from speechbrain.processing.speech_augmentation import Resample
-import torchaudio
 
 logger = logging.getLogger(__name__)
 OPT_FILE = "opt_ljspeech_prepare.pkl"
@@ -26,7 +23,7 @@ TRAIN_JSON = "train.json"
 VALID_JSON = "valid.json"
 TEST_JSON = "test.json"
 WAVS = "wavs"
-SAMPLERATE = 16000
+
 
 def prepare_ljspeech(
     data_folder,
@@ -245,24 +242,14 @@ def prepare_json(seg_lst, json_file, wavs_folder, csv_reader):
     None
     """
     json_dict = {}
-    resampler_16 = Resample(orig_freq=22050, new_freq=SAMPLERATE)
     # seg_lst = seg_lst[:int(len(seg_lst)/50)]
     # print("PREPARE JSON: ", json_file, len(seg_lst))
     for index in seg_lst:
-
         id = list(csv_reader)[index][0]
         wav = os.path.join(wavs_folder, f"{id}.wav")
-
-        signal = read_audio(wav)
-        signal = signal.unsqueeze(0)
-        resampled_16_signal = resampler_16(signal)
-
-        resampled_16_path = os.path.join(wavs_folder, f"{id}_resampled_16.wav")
-        torchaudio.save(resampled_16_path, resampled_16_signal, sample_rate=SAMPLERATE)
-
         label = list(csv_reader)[index][2]
         json_dict[id] = {
-            "wav": resampled_16_path,
+            "wav": wav,
             "original_text": label,
             "segment": True if "train" in json_file else False,
         }
