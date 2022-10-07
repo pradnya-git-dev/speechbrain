@@ -441,7 +441,7 @@ def dataio_prepare(hparams):
               json_path=data_info[dataset],
               replacements={"data_root": hparams["data_folder"]},
               dynamic_items=[audio_pipeline],
-              output_keys=["mel_text_pair", "wav", "spk_emb_wav", "original_text"],
+              output_keys=["mel_text_pair", "wav", "original_text"],
           )
     except Exception as ex:
       print("EXCEPTION: ", ex)
