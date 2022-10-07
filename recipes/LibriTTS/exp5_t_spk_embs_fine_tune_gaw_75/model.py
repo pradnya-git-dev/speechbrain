@@ -1851,14 +1851,13 @@ class TextMelCollate:
             original_texts.append(raw_batch[idx]["original_text"])
             wavs.append(raw_batch[idx]["wav"])
 
-            audio = sb.dataio.dataio.read_audio(raw_batch[idx]["spk_emb_wav"])
+            audio = sb.dataio.dataio.read_audio(raw_batch[idx]["wav"])
             audio = torch.FloatTensor(audio)
             audio = audio.unsqueeze(0)
 
-            # import pdb; pdb.set_trace()
-            spk_emb = self.spk_emb_encoder.encode_batch(audio)
+            resampled_audio_16 = self.resampler(audio)
+            spk_emb = self.spk_emb_encoder.encode_batch(resampled_audio_16)
             spk_emb = spk_emb.squeeze()
-            # print("speaker embedding shape: ", spk_emb.shape)
             spk_embs_list.append(spk_emb)
         spk_embs = torch.stack((spk_embs_list))
 

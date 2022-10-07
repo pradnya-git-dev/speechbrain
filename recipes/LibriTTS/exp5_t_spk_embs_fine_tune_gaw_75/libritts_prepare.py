@@ -81,6 +81,7 @@ def prepare_libritts(
 
 
     """
+    logger.info(f"Total number of samples: {len(wav_list)}")
 
     # Random split the signal list into train, valid, and test sets.
     data_split = split_sets(wav_list, split_ratio)
@@ -108,12 +109,8 @@ def create_json(wav_list, json_file, resample_audio=False):
     # Processing all the wav files in the list
     json_dict = {}
     resampler = Resample(orig_freq=24000, new_freq=SAMPLERATE)
-    spk_emb_resampler = Resample(orig_freq=24000, new_freq=16000)
 
     for wav_file in wav_list:
-
-        if wav_file.__contains__("_resampled_16.wav"):
-          continue
 
         # Reading the signal (to retrieve duration in seconds)
         signal = read_audio(wav_file)
@@ -122,46 +119,35 @@ def create_json(wav_list, json_file, resample_audio=False):
         # Manipulate path to get relative path and uttid
         path_parts = wav_file.split(os.path.sep)
         uttid, _ = os.path.splitext(path_parts[-1])
-        if not resample_audio:
-            uttid = "_".join(uttid.split("_")[:-1])
 
         relative_path = os.path.join("{data_root}", *path_parts[-5:])
-        resampled_16_path = os.path.join("/", *path_parts[:-1], uttid + "_resampled_16.wav")
-        resampled_16_path_parts = resampled_16_path.split(os.path.sep)
-        resampled_16_path = os.path.join("{data_root}", *resampled_16_path_parts[-5:])
 
         original_text_path = os.path.join("/", *path_parts[:-1], uttid + ".original.txt")
 
         with open(original_text_path) as f:
             original_text = f.read()
-            if original_text.__contains__("{") or original_text.__contains__("}"):
-              continue
+            if original_text.__contains__("{"):
+              original_text.replace("{", "\{")
+              print("THIS ONE: ", original_text)
+            if original_text.__contains__("}"):
+              original_text.replace("}", "\}")
 
         normalized_text_path = os.path.join("/", *path_parts[:-1], uttid + ".normalized.txt")
 
         with open(normalized_text_path) as f:
             normalized_text = f.read()
+            if normalized_text.__contains__("{"):
+              normalized_text.replace("{", "\{")
+            if normalized_text.__contains__("}"):
+              normalized_text.replace("}", "\}")
 
         if resample_audio:
             signal = signal.unsqueeze(0)
             resampled_signal = resampler(signal)
 
-            resampled_path = os.path.join("/", *path_parts[:-1], uttid + "_resampled.wav")
-            torchaudio.save(resampled_path, resampled_signal, sample_rate=SAMPLERATE)
+            torchaudio.save(wav_file, resampled_signal, sample_rate=SAMPLERATE)
 
             duration = resampled_signal.shape[1] / SAMPLERATE
-
-            resampled_16 = spk_emb_resampler(signal)
-            resampled_16_path = os.path.join("/", *path_parts[:-1], uttid + "_resampled_16.wav")
-            torchaudio.save(resampled_16_path, resampled_16, sample_rate=16000)
-
-            resampled_path_parts = resampled_path.split(os.path.sep)
-            relative_path = os.path.join("{data_root}", *resampled_path_parts[-5:])
-
-            resampled_16_path_parts = resampled_16_path.split(os.path.sep)
-            resampled_16_path = os.path.join("{data_root}", *resampled_16_path_parts[-5:])
-
-            os.unlink(wav_file)
 
         # Getting speaker-id from utterance-id
         spk_id = uttid.split("_")[0]
@@ -169,7 +155,6 @@ def create_json(wav_list, json_file, resample_audio=False):
         # Create entry for this utterance
         json_dict[uttid] = {
             "wav": relative_path,
-            "spk_emb_wav": resampled_16_path,
             "length": duration,
             "spk_id": spk_id,
             "original_text": original_text,
