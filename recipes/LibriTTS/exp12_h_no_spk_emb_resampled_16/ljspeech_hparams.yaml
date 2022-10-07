@@ -7,7 +7,7 @@ output_folder: !ref ./results/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
 progress_sample_path: !ref <output_folder>/samples
-epochs: 100
+epochs: 500
 keep_checkpoint_interval: 50
 use_tensorboard: True
 
