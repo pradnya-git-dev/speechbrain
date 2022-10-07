@@ -9,7 +9,7 @@ import torchaudio
 
 logger = logging.getLogger(__name__)
 LIBRITTS_DATASET_URL = "https://www.openslr.org/resources/60/dev-clean.tar.gz"
-SAMPLERATE = 22050
+SAMPLERATE = 16000
 
 
 def prepare_libritts(
@@ -112,9 +112,6 @@ def create_json(wav_list, json_file, resample_audio=False):
 
     for wav_file in wav_list:
 
-        if wav_file.__contains__("_resampled_16.wav"):
-          continue
-
         # Reading the signal (to retrieve duration in seconds)
         signal = read_audio(wav_file)
         duration = signal.shape[0] / SAMPLERATE
@@ -122,8 +119,6 @@ def create_json(wav_list, json_file, resample_audio=False):
         # Manipulate path to get relative path and uttid
         path_parts = wav_file.split(os.path.sep)
         uttid, _ = os.path.splitext(path_parts[-1])
-        if not resample_audio:
-            uttid = "_".join(uttid.split("_")[:-1])
 
         relative_path = os.path.join("{data_root}", *path_parts[-5:])
 
@@ -143,15 +138,9 @@ def create_json(wav_list, json_file, resample_audio=False):
             signal = signal.unsqueeze(0)
             resampled_signal = resampler(signal)
 
-            resampled_path = os.path.join("/", *path_parts[:-1], uttid + "_resampled.wav")
-            torchaudio.save(resampled_path, resampled_signal, sample_rate=SAMPLERATE)
+            torchaudio.save(wav_file, resampled_signal, sample_rate=SAMPLERATE)
 
             duration = resampled_signal.shape[1] / SAMPLERATE
-
-            resampled_path_parts = resampled_path.split(os.path.sep)
-            relative_path = os.path.join("{data_root}", *resampled_path_parts[-5:])
-
-            os.unlink(wav_file)
 
         # Getting speaker-id from utterance-id
         spk_id = uttid.split("_")[0]

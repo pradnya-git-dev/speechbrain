@@ -248,4 +248,4 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
     loadables:
         model: !ref <model>
     paths:
-        model: /workspace/mstts_output/exp6_t_ljspeech_base/save/CKPT+2022-09-30+05-54-09+00/model.ckpt 
+        model: /workspace/mstts_output/exp11_t_ljspeech_base/save/CKPT+2022-10-07+04-34-46+00/model.ckpt
