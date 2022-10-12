@@ -96,17 +96,17 @@ train_dataloader_opts:
   batch_size: !ref <batch_size>
   drop_last: False  #True #False
   num_workers: 8
-  collate_fn: !new:speechbrain.lobes.models.MSTacotron2.TextMelCollate
+  collate_fn: !new:MSTacotron2.TextMelCollate
 
 valid_dataloader_opts:
   batch_size: !ref <batch_size>
   num_workers: 8
-  collate_fn: !new:speechbrain.lobes.models.MSTacotron2.TextMelCollate
+  collate_fn: !new:MSTacotron2.TextMelCollate
 
 test_dataloader_opts:
   batch_size: !ref <batch_size>
   num_workers: 8
-  collate_fn: !new:speechbrain.lobes.models.MSTacotron2.TextMelCollate
+  collate_fn: !new:MSTacotron2.TextMelCollate
 
 ################################
 # Model Parameters and model   #
@@ -143,7 +143,7 @@ postnet_embedding_dim: 512
 postnet_kernel_size: 5
 postnet_n_convolutions: 5
 
-mel_spectogram: !name:speechbrain.lobes.models.MSTacotron2.mel_spectogram
+mel_spectogram: !name:MSTacotron2.mel_spectogram
   sample_rate: !ref <sample_rate>
   hop_length: !ref <hop_length>
   win_length: !ref <win_length>
@@ -158,7 +158,7 @@ mel_spectogram: !name:speechbrain.lobes.models.MSTacotron2.mel_spectogram
   compression: !ref <dynamic_range_compression>
 
 #model
-model: !new:speechbrain.lobes.models.MSTacotron2.Tacotron2
+model: !new:MSTacotron2.Tacotron2
   mask_padding: !ref <mask_padding>
   n_mel_channels: !ref <n_mel_channels>
   # symbols
@@ -194,7 +194,7 @@ guided_attention_scheduler: !new:speechbrain.nnet.schedulers.StepScheduler
   initial_value: !ref <guided_attention_weight>
   half_life: !ref <guided_attention_weight_half_life>
 
-criterion: !new:speechbrain.lobes.models.MSTacotron2.Loss
+criterion: !new:MSTacotron2.Loss
   gate_loss_weight: !ref <gate_loss_weight>
   guided_attention_weight: !ref <guided_attention_weight>
   guided_attention_sigma: !ref <guided_attention_sigma>
