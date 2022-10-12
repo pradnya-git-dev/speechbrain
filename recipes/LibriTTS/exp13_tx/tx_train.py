@@ -127,7 +127,7 @@ class Tacotron2Brain(sb.Brain):
         loss: torch.Tensor
             the loss value
         """
-        inputs, targets, num_items, original_texts, wavs, spk_embs = batch
+        inputs, targets, num_items, labels, wavs, spk_embs = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         loss_stats = self.hparams.criterion(
             predictions, targets, input_lengths, output_lengths, self.last_epoch
@@ -145,7 +145,7 @@ class Tacotron2Brain(sb.Brain):
         predictions: tuple
             predictions (raw output of the Tacotron model)
         """
-        inputs, targets, num_items, original_texts, wavs, spk_embs = batch
+        inputs, targets, num_items, labels, wavs, spk_embs = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         mel_target, _ = targets
         mel_out, mel_out_postnet, gate_out, alignments = predictions
@@ -173,7 +173,7 @@ class Tacotron2Brain(sb.Brain):
                     "output_lengths": output_lengths,
                     "gate_out": gate_out,
                     "alignments": alignments,
-                    "original_texts": original_texts,
+                    "labels": labels,
                     "wavs": wavs,
                     "spk_embs": spk_embs
                 }
@@ -200,7 +200,7 @@ class Tacotron2Brain(sb.Brain):
             gate_padded,
             output_lengths,
             len_x,
-            original_texts,
+            labels,
             wavs,
             spk_embs
         ) = batch
@@ -217,7 +217,7 @@ class Tacotron2Brain(sb.Brain):
         y = (mel_padded, gate_padded)
         len_x = torch.sum(output_lengths)
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
-        return (x, y, len_x, original_texts, wavs, spk_embs)
+        return (x, y, len_x, labels, wavs, spk_embs)
 
     def _get_spectrogram_sample(self, raw):
         """Converts a raw spectrogram to one that can be saved as an image
@@ -262,7 +262,7 @@ class Tacotron2Brain(sb.Brain):
           # if not os.path.exists(train_sample_path):
           #     os.makedirs(train_sample_path)
 
-          _, targets, _, original_texts, wavs, _ = self.last_batch
+          _, targets, _, labels, wavs, _ = self.last_batch
 
           # Extra lines
           _, mel_out_postnet, _, _ = self.last_preds
@@ -363,7 +363,7 @@ class Tacotron2Brain(sb.Brain):
         samples and can be useful because"""
         if self.last_batch is None:
             return
-        inputs, targets, _, original_texts, wavs, spk_embs = self.last_batch
+        inputs, targets, _, labels, wavs, spk_embs = self.last_batch
         text_padded, input_lengths, _, _, _ = inputs
         mel_out, _, _ = self.hparams.model.infer(
             text_padded[:1], spk_embs[:1], input_lengths[:1]
@@ -410,13 +410,13 @@ def dataio_prepare(hparams):
     # Define audio pipeline:
 
     # import pdb; pdb.set_trace()
-    @sb.utils.data_pipeline.takes("wav", "original_text")
+    @sb.utils.data_pipeline.takes("wav", "label")
     @sb.utils.data_pipeline.provides("mel_text_pair")
-    def audio_pipeline(wav, original_text):
+    def audio_pipeline(wav, label):
 
         try:
           text_seq = torch.IntTensor(
-              text_to_sequence(original_text, hparams["text_cleaners"])
+              text_to_sequence(label, hparams["text_cleaners"])
           )
 
           audio = sb.dataio.dataio.read_audio(wav)
@@ -441,7 +441,7 @@ def dataio_prepare(hparams):
               json_path=data_info[dataset],
               replacements={"data_root": hparams["data_folder"]},
               dynamic_items=[audio_pipeline],
-              output_keys=["mel_text_pair", "wav", "original_text"],
+              output_keys=["mel_text_pair", "wav", "label"],
           )
     except Exception as ex:
       print("EXCEPTION: ", ex)
