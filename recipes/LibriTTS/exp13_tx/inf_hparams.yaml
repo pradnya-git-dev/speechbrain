@@ -1,0 +1,41 @@
+
+################################
+# X-Vector model parameters:   #
+################################
+
+# X-Vector Feature parameters
+se_n_mels: 24
+se_left_frames: 0
+se_right_frames: 0
+se_deltas: False
+
+# Functions
+compute_features: !new:speechbrain.lobes.features.Fbank
+  n_mels: !ref <se_n_mels>
+  left_frames: !ref <se_left_frames>
+  right_frames: !ref <se_right_frames>
+  deltas: !ref <se_deltas>
+
+mean_var_norm: !new:speechbrain.processing.features.InputNormalization
+  norm_type: sentence
+  std_norm: False
+
+speaker_embedding_model: !new:speechbrain.lobes.models.Xvector.Xvector
+  in_channels: !ref <se_n_mels>
+  activation: !name:torch.nn.LeakyReLU
+  tdnn_blocks: 5
+  tdnn_channels: [512, 512, 512, 512, 1500]
+  tdnn_kernel_sizes: [5, 3, 3, 1, 1]
+  tdnn_dilations: [1, 2, 3, 1, 1]
+  lin_neurons: 512
+
+modules:
+  compute_features: !ref <compute_features>
+  mean_var_norm: !ref <mean_var_norm>
+  embedding_model: !ref <speaker_embedding_model>
+
+
+# If you do not want to use the pretrained separator you can simply delete pretrained_separator field.
+pretrainer: !new:speechbrain.utils.parameter_transfer.Pretrainer
+    loadables:
+        speaker_embedding_model: !ref <speaker_embedding_model>

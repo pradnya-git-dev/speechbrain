@@ -276,9 +276,9 @@ class Tacotron2Brain(sb.Brain):
             return
 
 
-          # train_sample_path = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current))
-          # if not os.path.exists(train_sample_path):
-          #     os.makedirs(train_sample_path)
+          train_sample_path = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current))
+          if not os.path.exists(train_sample_path):
+              os.makedirs(train_sample_path)
 
           _, targets, _, labels, wavs, _, _ = self.last_batch
 
@@ -384,10 +384,9 @@ class Tacotron2Brain(sb.Brain):
         inputs, targets, _, labels, wavs, wav_tensors, wav_tensors_lens = self.last_batch
         text_padded, input_lengths, _, _, _ = inputs
 
-        # import pdb; pdb.set_trace()
         # Feature extraction and normalization for speaker embeddings
         feats = self.modules.compute_features(wav_tensors[:1])
-        # feats = self.modules.mean_var_norm(feats, wav_tensors_lens[:1])
+        feats = self.modules.mean_var_norm(feats, wav_tensors_lens[:1])
 
         # Speaker embeddings extraction
         spk_embs = self.modules.speaker_embedding_model(feats)
