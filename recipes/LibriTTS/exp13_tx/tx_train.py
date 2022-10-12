@@ -43,7 +43,7 @@ class Tacotron2Brain(sb.Brain):
         self.last_batch = None
         self.last_preds = None
         self.vocoder = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir="tmpdir_vocoder")
-        self.spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")
+        # self.spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")
         
         self.last_loss_stats = {}
         return super().on_fit_start()
@@ -63,13 +63,21 @@ class Tacotron2Brain(sb.Brain):
         the model output
         """
         effective_batch = self.batch_to_device(batch)
-        inputs, y, num_items, _, _, wav_tensors = effective_batch
+        inputs, y, num_items, _, _, wav_tensors, wav_tensors_lens = effective_batch
 
         _, input_lengths, _, _, _ = inputs
 
         max_input_length = input_lengths.max().item()
 
-        spk_embs = self.spk_emb_encoder.encode_batch(wav_tensors)
+        # spk_embs = self.spk_emb_encoder.encode_batch(wav_tensors)
+
+        # Feature extraction and normalization for speaker embeddings
+        feats = self.modules.compute_features(wav_tensors)
+        feats = self.modules.mean_var_norm(feats, wav_tensors_lens)
+
+        # Speaker embeddings extraction
+        spk_embs = self.modules.speaker_embedding_model(feats)
+
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
         spk_embs = spk_embs.squeeze()
 
@@ -134,7 +142,7 @@ class Tacotron2Brain(sb.Brain):
         loss: torch.Tensor
             the loss value
         """
-        inputs, targets, num_items, labels, wavs, wav_tensors = batch
+        inputs, targets, num_items, labels, wavs, wav_tensors, _ = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         loss_stats = self.hparams.criterion(
             predictions, targets, input_lengths, output_lengths, self.last_epoch
@@ -152,7 +160,7 @@ class Tacotron2Brain(sb.Brain):
         predictions: tuple
             predictions (raw output of the Tacotron model)
         """
-        inputs, targets, num_items, labels, wavs, wav_tensors = batch
+        inputs, targets, num_items, labels, wavs, wav_tensors, wav_tensors_lens = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         mel_target, _ = targets
         mel_out, mel_out_postnet, gate_out, alignments = predictions
@@ -182,7 +190,8 @@ class Tacotron2Brain(sb.Brain):
                     "alignments": alignments,
                     "labels": labels,
                     "wavs": wavs,
-                    "wav_tensors": wav_tensors
+                    "wav_tensors": wav_tensors,
+                    "wav_tensors_lens": wav_tensors_lens
                 }
             ),
         )
@@ -209,7 +218,8 @@ class Tacotron2Brain(sb.Brain):
             len_x,
             labels,
             wavs,
-            wav_tensors
+            wav_tensors,
+            wav_tensors_lens
         ) = batch
         text_padded = text_padded.to(self.device, non_blocking=True).long()
         input_lengths = input_lengths.to(self.device, non_blocking=True).long()
@@ -224,7 +234,8 @@ class Tacotron2Brain(sb.Brain):
         y = (mel_padded, gate_padded)
         len_x = torch.sum(output_lengths)
         wav_tensors = wav_tensors.to(self.device, non_blocking=True).float()
-        return (x, y, len_x, labels, wavs, wav_tensors)
+        wav_tensors_lens = wav_tensors_lens.to(self.device, non_blocking=True).float()
+        return (x, y, len_x, labels, wavs, wav_tensors, wav_tensors_lens)
 
     def _get_spectrogram_sample(self, raw):
         """Converts a raw spectrogram to one that can be saved as an image
@@ -269,15 +280,15 @@ class Tacotron2Brain(sb.Brain):
           # if not os.path.exists(train_sample_path):
           #     os.makedirs(train_sample_path)
 
-          _, targets, _, labels, wavs, _ = self.last_batch
+          _, targets, _, labels, wavs, _, _ = self.last_batch
 
           # Extra lines
-          _, mel_out_postnet, _, _ = self.last_preds
-          waveform_ss = self.vocoder.decode_batch(mel_out_postnet[0])
-          """
+          # _, mel_out_postnet, _, _ = self.last_preds
+          # waveform_ss = self.vocoder.decode_batch(mel_out_postnet[0])
+          
           train_sample_text = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "train_input_text.txt")
           with open(train_sample_text, 'w') as f:
-            f.write(original_texts[0])
+            f.write(labels[0])
 
           train_input_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "train_input_audio.wav")
           torchaudio.save(train_input_audio, sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0), self.hparams.sample_rate)
@@ -286,7 +297,7 @@ class Tacotron2Brain(sb.Brain):
           waveform_ss = self.vocoder.decode_batch(mel_out_postnet[0])
           train_sample_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "train_output_audio.wav")
           torchaudio.save(train_sample_audio, waveform_ss.squeeze(1), self.hparams.sample_rate)
-          """
+          
 
           if self.hparams.use_tensorboard:
               self.tensorboard_logger.log_audio(
@@ -370,12 +381,17 @@ class Tacotron2Brain(sb.Brain):
         samples and can be useful because"""
         if self.last_batch is None:
             return
-        inputs, targets, _, labels, wavs, wav_tensors = self.last_batch
+        inputs, targets, _, labels, wavs, wav_tensors, wav_tensors_lens = self.last_batch
         text_padded, input_lengths, _, _, _ = inputs
 
-        # ToDo: spk_embs[:1] replaced with None for now to test modifications to wav_tensors
-        # Replace this with speaker embedding calcualtions
-        spk_embs = self.spk_emb_encoder.encode_batch(wav_tensors[:1])
+        # import pdb; pdb.set_trace()
+        # Feature extraction and normalization for speaker embeddings
+        feats = self.modules.compute_features(wav_tensors[:1])
+        # feats = self.modules.mean_var_norm(feats, wav_tensors_lens[:1])
+
+        # Speaker embeddings extraction
+        spk_embs = self.modules.speaker_embedding_model(feats)
+        
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
         spk_embs = spk_embs.squeeze(0)
 
@@ -389,15 +405,15 @@ class Tacotron2Brain(sb.Brain):
         print("INFERENCE - inference_mel_out.shape: ", self._get_spectrogram_sample(mel_out).shape)
 
         if stage == sb.Stage.VALID:
-          waveform_ss = self.vocoder.decode_batch(mel_out) # Extra Line
-          # inf_sample_path = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current))
-          """
+          # waveform_ss = self.vocoder.decode_batch(mel_out) # Extra Line
+          inf_sample_path = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current))
+          
           if not os.path.exists(inf_sample_path):
               os.makedirs(inf_sample_path)
 
           inf_sample_text = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_input_text.txt")
           with open(inf_sample_text, 'w') as f:
-            f.write(original_texts[0])
+            f.write(labels[0])
 
           inf_input_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_input_audio.wav")
           torchaudio.save(inf_input_audio, sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0), self.hparams.sample_rate)
@@ -405,7 +421,7 @@ class Tacotron2Brain(sb.Brain):
           waveform_ss = self.vocoder.decode_batch(mel_out)
           inf_sample_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_output_audio.wav")
           torchaudio.save(inf_sample_audio, waveform_ss.squeeze(1), self.hparams.sample_rate)
-          """
+          
 
           if self.hparams.use_tensorboard:
               self.tensorboard_logger.log_audio(
@@ -498,6 +514,11 @@ if __name__ == "__main__":
 
     datasets = dataio_prepare(hparams)
 
+    # Load pretrained model if pretrained_separator is present in the yaml
+    if "pretrained_separator" in hparams:
+        hparams["pretrained_separator"].collect_files()
+        hparams["pretrained_separator"].load_collected()
+
     # Brain class initialization
     tacotron2_brain = Tacotron2Brain(
         modules=hparams["modules"],
@@ -506,6 +527,11 @@ if __name__ == "__main__":
         run_opts=run_opts,
         checkpointer=hparams["checkpointer"],
     )
+
+    # re-initialize the parameters if we don't use a pretrained model
+    if "pretrained_separator" not in hparams:
+        for module in tacotron2_brain.modules.values():
+            tacotron2_brain.reset_layer_recursively(module)
 
     if hparams["use_tensorboard"]:
         tacotron2_brain.tensorboard_logger = sb.utils.train_logger.TensorboardLogger(

@@ -95,17 +95,17 @@ gate_loss_weight: 1.0
 train_dataloader_opts:
   batch_size: !ref <batch_size>
   drop_last: False  #True #False
-  num_workers: 8
+  num_workers: 0
   collate_fn: !new:MSTacotron2.TextMelCollate
 
 valid_dataloader_opts:
   batch_size: !ref <batch_size>
-  num_workers: 8
+  num_workers: 0
   collate_fn: !new:MSTacotron2.TextMelCollate
 
 test_dataloader_opts:
   batch_size: !ref <batch_size>
-  num_workers: 8
+  num_workers: 0
   collate_fn: !new:MSTacotron2.TextMelCollate
 
 ################################
@@ -201,7 +201,40 @@ criterion: !new:MSTacotron2.Loss
   guided_attention_scheduler: !ref <guided_attention_scheduler>
   guided_attention_hard_stop: !ref <guided_attention_hard_stop>
 
+################################
+# X-Vector model parameters:   #
+################################
+
+# X-Vector Feature parameters
+se_n_mels: 24
+se_left_frames: 0
+se_right_frames: 0
+se_deltas: False
+
+# Functions
+compute_features: !new:speechbrain.lobes.features.Fbank
+  n_mels: !ref <se_n_mels>
+  left_frames: !ref <se_left_frames>
+  right_frames: !ref <se_right_frames>
+  deltas: !ref <se_deltas>
+
+mean_var_norm: !new:speechbrain.processing.features.InputNormalization
+  norm_type: sentence
+  std_norm: False
+
+speaker_embedding_model: !new:speechbrain.lobes.models.Xvector.Xvector
+  in_channels: !ref <se_n_mels>
+  activation: !name:torch.nn.LeakyReLU
+  tdnn_blocks: 5
+  tdnn_channels: [512, 512, 512, 512, 1500]
+  tdnn_kernel_sizes: [5, 3, 3, 1, 1]
+  tdnn_dilations: [1, 2, 3, 1, 1]
+  lin_neurons: 512
+
 modules:
+  compute_features: !ref <compute_features>
+  mean_var_norm: !ref <mean_var_norm>
+  speaker_embedding_model: !ref <speaker_embedding_model>
   model: !ref <model>
 
 #optimizer
@@ -230,6 +263,8 @@ lr_annealing: !new:speechbrain.nnet.schedulers.IntervalScheduler
 checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
   checkpoints_dir: !ref <save_folder>
   recoverables:
+    normalizer: !ref <mean_var_norm>
+    speaker_embedding_model: !ref <speaker_embedding_model>
     model: !ref <model>
     counter: !ref <epoch_counter>
     scheduler: !ref <lr_annealing>
@@ -245,6 +280,6 @@ progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
 pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
     collect_in: !ref <save_folder>
     loadables:
-        model: !ref <model>
+        speaker_embedding_model: !ref <speaker_embedding_model>
     paths:
-        model: /content/drive/MyDrive/tacotron2/exp11_t_dec_gaw_75_resampled_16/model.ckpt
+        speaker_embedding_model: speechbrain/spkrec-xvect-voxceleb/embedding_model.ckpt

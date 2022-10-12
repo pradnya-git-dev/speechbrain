@@ -8,7 +8,7 @@ import logging
 import torchaudio
 
 logger = logging.getLogger(__name__)
-# LIBRITTS_SUBSETS = ["train-clean-100", "train-clean-360"]
+# LIBRITTS_SUBSETS = ["dev-clean", "train-clean-100", "train-clean-360"]
 LIBRITTS_SUBSETS = ["dev-clean"]
 LIBRITTS_URL_PREFIX = "https://www.openslr.org/resources/60/"
 SAMPLERATE = 16000
@@ -53,6 +53,8 @@ def prepare_libritts(
     # If the dataset doesn't exist yet, download it
     # train_folder = os.path.join(data_folder, "LibriTTS", LIBRITTS_DATASET_URL.split(os.path.sep)[-1].split(".")[0])
     # train_folder = os.path.join(data_folder)
+    extension = [".wav"]
+    wav_list = list()
 
     resample_audio = dict()
     for subset_name in LIBRITTS_SUBSETS:
@@ -65,23 +67,27 @@ def prepare_libritts(
         subset_data = os.path.join(subset_folder, "LibriTTS")
         if not check_folders(subset_data):
             logger.info(f"No data found for {subset_name}. Checking for an archive file.")
+            print(f"No data found for {subset_name}. Checking for an archive file.")
             if not os.path.isfile(subset_archive):
                 logger.info(f"No archive file found for {subset_name}. Downloading and unpacking.")
+                print(f"No archive file found for {subset_name}. Downloading and unpacking.")
                 subset_url = LIBRITTS_URL_PREFIX + subset_name + ".tar.gz"
                 download_file(subset_url, subset_archive)
                 logger.info(f"Downloaded data for subset {subset_name}.")
+                print(f"Downloaded data for subset {subset_name}.")
             else:
                 logger.info(f"Found an archive file for {subset_name}. Unpacking.")
+                print(f"Found an archive file for {subset_name}. Unpacking.")
 
             shutil.unpack_archive(subset_archive, subset_folder)
             resample_audio[subset_name] = True
+
+        wav_list.extend(get_all_files(subset_folder, match_and=extension))
 
     # List files and create manifest from list
     logger.info(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
     )
-    extension = [".wav"]
-    wav_list = get_all_files(data_folder, match_and=extension)
 
     logger.info(f"Total number of samples: {len(wav_list)}")
 
@@ -114,6 +120,8 @@ def create_json(wav_list, json_file, resample_audio):
 
     for wav_file in wav_list:
 
+        # print("Processing file: ", wav_file)
+
         # Reading the signal
         signal = read_audio(wav_file)
 
@@ -137,8 +145,8 @@ def create_json(wav_list, json_file, resample_audio):
             resampled_signal = resampler(signal)
             os.unlink(wav_file)
             torchaudio.save(wav_file, resampled_signal, sample_rate=SAMPLERATE)
-        else:
-            print("No resampling needed.")
+        # else:
+        #     print("No resampling needed.")
 
         # Getting speaker-id from utterance-id
         spk_id = uttid.split("_")[0]
@@ -215,5 +223,5 @@ def check_folders(*folders):
 
 
 if __name__ == "__main__":
-    prepare_libritts("/content/libritts_train_clean_resampled_16000",
+    prepare_libritts("/content/libritts_dev_clean_sr_16000",
                      "train.json", "valid.json", "test.json")
