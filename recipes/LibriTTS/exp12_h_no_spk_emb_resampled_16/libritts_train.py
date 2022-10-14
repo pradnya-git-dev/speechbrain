@@ -281,7 +281,7 @@ class HifiGanBrain(sb.Brain):
             os.makedirs(target_path)
         file_name = f"{name}.wav"
         effective_file_name = os.path.join(target_path, file_name)
-        torchaudio.save(effective_file_name, data.cpu(), self.hparams.sample_rate)
+        torchaudio.save(effective_file_name, data.cpu(), 22050)
 
 
 def dataio_prepare(hparams):
@@ -344,17 +344,16 @@ if __name__ == "__main__":
     )
 
     sys.path.append("../../")
-    from ljspeech_prepare import prepare_ljspeech
+    from libritts_prepare import prepare_libritts
 
     sb.utils.distributed.run_on_main(
-        prepare_ljspeech,
+        prepare_libritts,
         kwargs={
             "data_folder": hparams["data_folder"],
-            "save_folder": hparams["save_folder"],
-            "splits": hparams["splits"],
+            "save_json_train": hparams["train_json"],
+            "save_json_valid": hparams["valid_json"],
+            "save_json_test": hparams["test_json"],
             "split_ratio": hparams["split_ratio"],
-            "seed": hparams["seed"],
-            "skip_prep": hparams["skip_prep"],
         },
     )
 
