@@ -9,17 +9,17 @@ import os
 import torchaudio
 from speechbrain.pretrained import EncoderClassifier
 
-INF_SAMPLE_DIR = "/content/libritts_inference_samples"
-RESAMPLE_FILES = False
+INF_SAMPLE_DIR = "/content/libritts_data_inference_22050"
+RESAMPLE_FILES = True
 ORIGINAL_SR = 22050
-NEW_SR = 16000
+SPK_EMB_SR = 16000
 
 spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")
-resampler = Resample(orig_freq=ORIGINAL_SR, new_freq=NEW_SR)
+resampler = Resample(orig_freq=ORIGINAL_SR, new_freq=SPK_EMB_SR)
 
 # Intialize TTS (tacotron2) and Vocoder (HiFIGAN)
 tacotron2 = Tacotron2.from_hparams(source="speechbrain/tts-tacotron2-ljspeech", savedir="tmpdir_tts")
-tacotron2_ms = Tacotron2MS.from_hparams(source="/content/drive/MyDrive/tacotron2/sb_exp6_t_fine_tune/libritts_fine_tune_gaw_75/epoch_50",
+tacotron2_ms = Tacotron2MS.from_hparams(source="/content/drive/MyDrive/tacotron2/sb_exp6_t_fine_tune/libritts_fine_tune_gaw_75/epoch_300",
                                         hparams_file="/content/speechbrain/recipes/LibriTTS/exp5_t_spk_embs_fine_tune_gaw_75/inf_hparams.yaml")
 
 hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir="tmpdir_vocoder")
@@ -31,6 +31,8 @@ text_list = list()
 
 
 for wav_file in wav_list:
+
+  print(wav_file)
 
   path_parts = wav_file.split(os.path.sep)
   uttid, _ = os.path.splitext(path_parts[-1])
