@@ -107,6 +107,9 @@ text_list = list()
 
 for wav_file in wav_list:
 
+  if wav_file.__contains__("oracle_spec") or wav_file.__contains__("synthesized"):
+    continue
+
   path_parts = wav_file.split(os.path.sep)
   uttid, _ = os.path.splitext(path_parts[-1])
 
@@ -140,26 +143,27 @@ for wav_file in wav_list:
     0.0,
     8000.0,
     1,
-    True,
+    False,
     "slaney",
     "slaney",
     True,
     signal.squeeze(),)
 
+  # import pdb; pdb.set_trace()
   # Running the TTS
-  mel_output_ss, mel_length_ss, alignment_ss = tacotron2.encode_text(original_text)
+  # mel_output_ss, mel_length_ss, alignment_ss = tacotron2.encode_text(original_text)
   mel_output_ms, mel_length_ms, alignment_ms = tacotron2_ms.encode_text(original_text, spk_embs)
 
-  print("mel_output_ss.shape: ", mel_output_ss.shape)
+  # print("mel_output_ss.shape: ", mel_output_ss.shape)
   print("mel_output_ms.shape: ", mel_output_ms.shape)
 
   # Running Vocoder (spectrogram-to-waveform)
-  oracle_spec_wav = hifi_gan.decode_batch(oracle_mel_spec.unsqueeze(0))
+  oracle_spec_wav = hifi_gan.decode_batch(oracle_mel_spec)
   # waveform_ss = hifi_gan.decode_batch(mel_output_ss)
   waveform_ms = hifi_gan.decode_batch(mel_output_ms)
 
-  oracle_spec_wav_path = os.path.join("/", *path_parts[:-1], uttid + "_oracle_spec.wav")
+  oracle_spec_wav_path = os.path.join("/", *path_parts[:-1], uttid + "_oracle_spec_16000_epoch54.wav")
   torchaudio.save(oracle_spec_wav_path, oracle_spec_wav.squeeze(1), NEW_SR)
 
-  synthesized_audio_path = os.path.join("/", *path_parts[:-1], uttid + "_synthesized.wav")
+  synthesized_audio_path = os.path.join("/", *path_parts[:-1], uttid + "_synthesized_16000_epoch54.wav")
   torchaudio.save(synthesized_audio_path, waveform_ms.squeeze(1), NEW_SR)
