@@ -14,6 +14,82 @@ RESAMPLE_FILES = True
 ORIGINAL_SR = 22050
 NEW_SR = 16000
 
+
+def dynamic_range_compression(x, C=1, clip_val=1e-5):
+    """Dynamic range compression for audio signals
+    """
+    return torch.log(torch.clamp(x, min=clip_val) * C)
+
+
+def mel_spectogram_exp(
+    sample_rate,
+    hop_length,
+    win_length,
+    n_fft,
+    n_mels,
+    f_min,
+    f_max,
+    power,
+    normalized,
+    norm,
+    mel_scale,
+    compression,
+    audio,
+):
+    """calculates MelSpectrogram for a raw audio signal
+    Arguments
+    ---------
+    sample_rate : int
+        Sample rate of audio signal.
+    hop_length : int
+        Length of hop between STFT windows.
+    win_length : int
+        Window size.
+    n_fft : int
+        Size of FFT.
+    n_mels : int
+        Number of mel filterbanks.
+    f_min : float
+        Minimum frequency.
+    f_max : float
+        Maximum frequency.
+    power : float
+        Exponent for the magnitude spectrogram.
+    normalized : bool
+        Whether to normalize by magnitude after stft.
+    norm : str or None
+        If "slaney", divide the triangular mel weights by the width of the mel band
+    mel_scale : str
+        Scale to use: "htk" or "slaney".
+    compression : bool
+        whether to do dynamic range compression
+    audio : torch.tensor
+        input audio signal
+    """
+    from torchaudio import transforms
+
+    audio_to_mel = transforms.MelSpectrogram(
+        sample_rate=sample_rate,
+        hop_length=hop_length,
+        win_length=win_length,
+        n_fft=n_fft,
+        n_mels=n_mels,
+        f_min=f_min,
+        f_max=f_max,
+        power=power,
+        normalized=normalized,
+        norm=norm,
+        mel_scale=mel_scale,
+    ).to(audio.device)
+
+    mel = audio_to_mel(audio)
+
+    if compression:
+        mel = dynamic_range_compression(mel)
+
+    return mel
+
+
 spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")
 resampler = Resample(orig_freq=ORIGINAL_SR, new_freq=NEW_SR)
 
@@ -56,6 +132,19 @@ for wav_file in wav_list:
   print("len(text_list): ", len(text_list))
   print("spk_embs.shape: ", spk_embs.shape)
 
+  oracle_mel_spec = mel_spectogram_exp(NEW_SR,
+    256,
+    1024,
+    1024,
+    80,
+    0.0,
+    8000.0,
+    1,
+    True,
+    "slaney",
+    "slaney",
+    True,
+    signal.squeeze(),)
 
   # Running the TTS
   mel_output_ss, mel_length_ss, alignment_ss = tacotron2.encode_text(original_text)
@@ -65,8 +154,12 @@ for wav_file in wav_list:
   print("mel_output_ms.shape: ", mel_output_ms.shape)
 
   # Running Vocoder (spectrogram-to-waveform)
+  oracle_spec_wav = hifi_gan.decode_batch(oracle_mel_spec.unsqueeze(0))
   # waveform_ss = hifi_gan.decode_batch(mel_output_ss)
   waveform_ms = hifi_gan.decode_batch(mel_output_ms)
 
+  oracle_spec_wav_path = os.path.join("/", *path_parts[:-1], uttid + "_oracle_spec.wav")
+  torchaudio.save(oracle_spec_wav_path, oracle_spec_wav.squeeze(1), NEW_SR)
+
   synthesized_audio_path = os.path.join("/", *path_parts[:-1], uttid + "_synthesized.wav")
-  torchaudio.save(synthesized_audio_path, waveform_ms.squeeze(1), 16000)
+  torchaudio.save(synthesized_audio_path, waveform_ms.squeeze(1), NEW_SR)
