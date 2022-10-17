@@ -281,7 +281,7 @@ class HifiGanBrain(sb.Brain):
             os.makedirs(target_path)
         file_name = f"{name}.wav"
         effective_file_name = os.path.join(target_path, file_name)
-        torchaudio.save(effective_file_name, data.cpu(), 22050)
+        torchaudio.save(effective_file_name, data.cpu(), self.hparams.sample_rate)
 
 
 def dataio_prepare(hparams):
