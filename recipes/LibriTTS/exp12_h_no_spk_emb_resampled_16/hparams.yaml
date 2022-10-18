@@ -47,7 +47,7 @@ learning_rate: 0.0002
 weight_decay: 0.9999
 adam_b1: 0.8
 adam_b2: 0.99
-batch_size: 64 #minimum 2
+batch_size: 128 #minimum 2
 
 train_dataloader_opts:
   batch_size: !ref <batch_size>
