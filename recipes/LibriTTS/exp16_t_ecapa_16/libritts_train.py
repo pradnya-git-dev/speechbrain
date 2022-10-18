@@ -42,8 +42,8 @@ class Tacotron2Brain(sb.Brain):
         self.last_epoch = 0
         self.last_batch = None
         self.last_preds = None
-        self.vocoder = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir="tmpdir_vocoder").to(self.device)
-        self.spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb").to(self.device)
+        self.vocoder = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir="tmpdir_vocoder", run_opts={"device": self.device})
+        self.spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb", run_opts={"device": self.device})
         # print(next(self.vocoder.parameters()).device)
         self.last_loss_stats = {}
         return super().on_fit_start()
@@ -68,11 +68,8 @@ class Tacotron2Brain(sb.Brain):
         _, input_lengths, _, _, _ = inputs
 
         max_input_length = input_lengths.max().item()
-
-        import pdb; pdb.set_trace()
         
         spk_embs = self.spk_emb_encoder.encode_batch(wav_tensors, wav_tensors_lens)
-        spk_embs = spk_embs.to(self.device, non_blocking=True).float()
         spk_embs = spk_embs.squeeze()
 
         return self.modules.model(inputs, spk_embs, alignments_dim=max_input_length)
@@ -290,7 +287,7 @@ class Tacotron2Brain(sb.Brain):
           _, mel_out_postnet, _, _ = self.last_preds
           waveform_ss = self.vocoder.decode_batch(mel_out_postnet[0])
           train_sample_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "train_output_audio.wav")
-          torchaudio.save(train_sample_audio, waveform_ss.squeeze(1), self.hparams.sample_rate)
+          torchaudio.save(train_sample_audio, waveform_ss.squeeze(1).cpu(), self.hparams.sample_rate)
           
 
           if self.hparams.use_tensorboard:
@@ -379,7 +376,6 @@ class Tacotron2Brain(sb.Brain):
         text_padded, input_lengths, _, _, _ = inputs
 
         spk_embs = self.spk_emb_encoder.encode_batch(wav_tensors[:1], wav_tensors_lens[:1])
-        spk_embs = spk_embs.to(self.device, non_blocking=True).float()
         spk_embs = spk_embs.squeeze(0)
 
         mel_out, _, _ = self.hparams.model.infer(
@@ -407,7 +403,7 @@ class Tacotron2Brain(sb.Brain):
 
           waveform_ss = self.vocoder.decode_batch(mel_out)
           inf_sample_audio = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current), "inf_output_audio.wav")
-          torchaudio.save(inf_sample_audio, waveform_ss.squeeze(1), self.hparams.sample_rate)
+          torchaudio.save(inf_sample_audio, waveform_ss.squeeze(1).cpu(), self.hparams.sample_rate)
           
 
           if self.hparams.use_tensorboard:

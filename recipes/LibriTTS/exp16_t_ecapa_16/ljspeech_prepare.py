@@ -250,7 +250,7 @@ def prepare_json(seg_lst, json_file, wavs_folder, csv_reader):
         label = list(csv_reader)[index][2]
         json_dict[id] = {
             "wav": wav,
-            "original_text": label,
+            "label": label,
             "segment": True if "train" in json_file else False,
         }
 
