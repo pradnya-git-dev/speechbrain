@@ -42,9 +42,9 @@ class Tacotron2Brain(sb.Brain):
         self.last_epoch = 0
         self.last_batch = None
         self.last_preds = None
-        self.vocoder = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir="tmpdir_vocoder")
-        self.spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
-        
+        self.vocoder = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir="tmpdir_vocoder").to(self.device)
+        self.spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb").to(self.device)
+        # print(next(self.vocoder.parameters()).device)
         self.last_loss_stats = {}
         return super().on_fit_start()
 
@@ -63,13 +63,15 @@ class Tacotron2Brain(sb.Brain):
         the model output
         """
         effective_batch = self.batch_to_device(batch)
-        inputs, y, num_items, _, _, wav_tensors = effective_batch
+        inputs, y, num_items, _, _, wav_tensors, wav_tensors_lens = effective_batch
 
         _, input_lengths, _, _, _ = inputs
 
         max_input_length = input_lengths.max().item()
 
-        spk_embs = self.spk_emb_encoder.encode_batch(wav_tensors)
+        import pdb; pdb.set_trace()
+        
+        spk_embs = self.spk_emb_encoder.encode_batch(wav_tensors, wav_tensors_lens)
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
         spk_embs = spk_embs.squeeze()
 
@@ -134,7 +136,7 @@ class Tacotron2Brain(sb.Brain):
         loss: torch.Tensor
             the loss value
         """
-        inputs, targets, num_items, labels, wavs, wav_tensors = batch
+        inputs, targets, num_items, labels, wavs, wav_tensors, wav_tensors_lens = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         loss_stats = self.hparams.criterion(
             predictions, targets, input_lengths, output_lengths, self.last_epoch
@@ -152,7 +154,7 @@ class Tacotron2Brain(sb.Brain):
         predictions: tuple
             predictions (raw output of the Tacotron model)
         """
-        inputs, targets, num_items, labels, wavs, wav_tensors = batch
+        inputs, targets, num_items, labels, wavs, wav_tensors, wav_tensors_lens = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         mel_target, _ = targets
         mel_out, mel_out_postnet, gate_out, alignments = predictions
@@ -182,7 +184,8 @@ class Tacotron2Brain(sb.Brain):
                     "alignments": alignments,
                     "labels": labels,
                     "wavs": wavs,
-                    "wav_tensors": wav_tensors
+                    "wav_tensors": wav_tensors,
+                    "wav_tensors_lens": wav_tensors_lens
                 }
             ),
         )
@@ -209,7 +212,8 @@ class Tacotron2Brain(sb.Brain):
             len_x,
             labels,
             wavs,
-            wav_tensors
+            wav_tensors,
+            wav_tensors_lens
         ) = batch
         text_padded = text_padded.to(self.device, non_blocking=True).long()
         input_lengths = input_lengths.to(self.device, non_blocking=True).long()
@@ -224,7 +228,8 @@ class Tacotron2Brain(sb.Brain):
         y = (mel_padded, gate_padded)
         len_x = torch.sum(output_lengths)
         wav_tensors = wav_tensors.to(self.device, non_blocking=True).float()
-        return (x, y, len_x, labels, wavs, wav_tensors)
+        wav_tensors_lens = wav_tensors_lens.to(self.device, non_blocking=True).float()
+        return (x, y, len_x, labels, wavs, wav_tensors, wav_tensors_lens)
 
     def _get_spectrogram_sample(self, raw):
         """Converts a raw spectrogram to one that can be saved as an image
@@ -269,7 +274,7 @@ class Tacotron2Brain(sb.Brain):
           # if not os.path.exists(train_sample_path):
           #     os.makedirs(train_sample_path)
 
-          _, targets, _, labels, wavs, _ = self.last_batch
+          _, targets, _, labels, wavs, _, wav_tensors_lens = self.last_batch
 
           # Extra lines
           # _, mel_out_postnet, _, _ = self.last_preds
@@ -370,10 +375,10 @@ class Tacotron2Brain(sb.Brain):
         samples and can be useful because"""
         if self.last_batch is None:
             return
-        inputs, targets, _, labels, wavs, wav_tensors = self.last_batch
+        inputs, targets, _, labels, wavs, wav_tensors, wav_tensors_lens = self.last_batch
         text_padded, input_lengths, _, _, _ = inputs
 
-        spk_embs = self.spk_emb_encoder.encode_batch(wav_tensors[:1])
+        spk_embs = self.spk_emb_encoder.encode_batch(wav_tensors[:1], wav_tensors_lens[:1])
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
         spk_embs = spk_embs.squeeze(0)
 
