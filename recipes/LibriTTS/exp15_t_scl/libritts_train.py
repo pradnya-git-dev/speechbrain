@@ -42,8 +42,8 @@ class Tacotron2Brain(sb.Brain):
         self.last_epoch = 0
         self.last_batch = None
         self.last_preds = None
-        self.vocoder = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir="tmpdir_vocoder")
-        self.spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb")
+        self.vocoder = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir="tmpdir_vocoder", run_opts={"device": self.device})
+        self.spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", savedir="pretrained_models/spkrec-xvect-voxceleb", run_opts={"device": self.device})
         
         self.last_loss_stats = {}
         return super().on_fit_start()
@@ -69,8 +69,10 @@ class Tacotron2Brain(sb.Brain):
 
         max_input_length = input_lengths.max().item()
 
+        # import pdb; pdb.set_trace()
+        
         spk_embs = self.spk_emb_encoder.encode_batch(wav_tensors, wav_tensors_lens, normalize=True)
-        spk_embs = spk_embs.to(self.device, non_blocking=True).float()
+        # spk_embs = spk_embs.to(self.device, non_blocking=True).float()
         spk_embs = spk_embs.squeeze()
 
         return self.modules.model(inputs, spk_embs, alignments_dim=max_input_length)
@@ -137,7 +139,6 @@ class Tacotron2Brain(sb.Brain):
         inputs, targets, num_items, labels, wavs, wav_tensors, wav_tensors_lens = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
 
-        # import pdb; pdb.set_trace()
 
         target_spk_embs = self.spk_emb_encoder.encode_batch(wav_tensors, wav_tensors_lens, normalize=True)
         target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
