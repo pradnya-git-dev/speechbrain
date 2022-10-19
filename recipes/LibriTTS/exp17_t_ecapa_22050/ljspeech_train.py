@@ -261,6 +261,10 @@ class Tacotron2Brain(sb.Brain):
         if stage == sb.Stage.TRAIN and (self.hparams.epoch_counter.current % 10 == 0):
           if self.last_batch is None:
             return
+           
+          train_sample_path = os.path.join(self.hparams.progress_sample_path, str(self.hparams.epoch_counter.current))
+          if not os.path.exists(train_sample_path):
+              os.makedirs(train_sample_path)
 
           _, targets, _, labels, wavs, _, wav_tensors_lens = self.last_batch
 
