@@ -496,6 +496,11 @@ if __name__ == "__main__":
     )
 
     datasets = dataio_prepare(hparams)
+    
+    # Load pretrained model if pretrained_separator is present in the yaml
+    if "pretrained_separator" in hparams:
+        hparams["pretrained_separator"].collect_files()
+        hparams["pretrained_separator"].load_collected()
 
     # Brain class initialization
     tacotron2_brain = Tacotron2Brain(
@@ -519,6 +524,11 @@ if __name__ == "__main__":
         train_loader_kwargs=hparams["train_dataloader_opts"],
         valid_loader_kwargs=hparams["valid_dataloader_opts"],
     )
+    
+    # re-initialize the parameters if we don't use a pretrained model
+    if "pretrained_separator" not in hparams:
+        for module in tacotron2_brain.modules.values():
+            tacotron2_brain.reset_layer_recursively(module)
 
     # Test
     if "test" in datasets:
