@@ -243,8 +243,8 @@ progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
 
 # If you do not want to use the pretrained separator you can simply delete pretrained_separator field.
 pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
-    collect_in: !ref <save_folder>
-    loadables:
-        model: !ref <model>
-    paths:
-        model: /workspace/mstts_saved_models/exp16_t_ecapa_ljspeech_16000/model.ckpt
+  collect_in: !ref <save_folder>
+  loadables:
+    model: !ref <model>
+  paths:
+    model: /workspace/mstts_saved_models/exp16_t_ecapa_ljspeech_16000/model.ckpt
