@@ -510,6 +510,11 @@ if __name__ == "__main__":
         run_opts=run_opts,
         checkpointer=hparams["checkpointer"],
     )
+    
+    # re-initialize the parameters if we don't use a pretrained model
+    if "pretrained_separator" not in hparams:
+        for module in tacotron2_brain.modules.values():
+            tacotron2_brain.reset_layer_recursively(module)
 
     if hparams["use_tensorboard"]:
         tacotron2_brain.tensorboard_logger = sb.utils.train_logger.TensorboardLogger(
@@ -524,11 +529,6 @@ if __name__ == "__main__":
         train_loader_kwargs=hparams["train_dataloader_opts"],
         valid_loader_kwargs=hparams["valid_dataloader_opts"],
     )
-    
-    # re-initialize the parameters if we don't use a pretrained model
-    if "pretrained_separator" not in hparams:
-        for module in tacotron2_brain.modules.values():
-            tacotron2_brain.reset_layer_recursively(module)
 
     # Test
     if "test" in datasets:
