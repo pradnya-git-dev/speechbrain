@@ -67,18 +67,14 @@ def prepare_libritts(
         subset_data = os.path.join(subset_folder, "LibriTTS")
         if not check_folders(subset_data):
             logger.info(f"No data found for {subset_name}. Checking for an archive file.")
-            print(f"No data found for {subset_name}. Checking for an archive file.")
             if not os.path.isfile(subset_archive):
                 logger.info(f"No archive file found for {subset_name}. Downloading and unpacking.")
-                print(f"No archive file found for {subset_name}. Downloading and unpacking.")
                 subset_url = LIBRITTS_URL_PREFIX + subset_name + ".tar.gz"
                 download_file(subset_url, subset_archive)
                 logger.info(f"Downloaded data for subset {subset_name}.")
-                print(f"Downloaded data for subset {subset_name}.")
             else:
                 logger.info(f"Found an archive file for {subset_name}. Unpacking.")
-                print(f"Found an archive file for {subset_name}. Unpacking.")
-
+            
             shutil.unpack_archive(subset_archive, subset_folder)
             resample_audio[subset_name] = True
 
