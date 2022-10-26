@@ -84,7 +84,7 @@ spk_emb_sample_rate: 16000
 ################################
 learning_rate: 0.0001
 weight_decay: 0.000006
-batch_size: 16 #minimum 2
+batch_size: 32 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 75.0
@@ -247,10 +247,11 @@ progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
   formats:
     raw_batch: raw
 
+
 # If you do not want to use the pretrained separator you can simply delete pretrained_separator field.
-# pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
-#     collect_in: !ref <save_folder>
-#     loadables:
-#         model: !ref <model>
-#     paths:
-#         model: /workspace/mstts_output/exp6_t_ljspeech_base/save/CKPT+2022-09-30+05-54-09+00/model.ckpt
+pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
+  collect_in: !ref <save_folder>
+  loadables:
+    model: !ref <model>
+  paths:
+    model: /workspace/mstts_saved_models/exp17_t_ecapa_ljspeech_22050/model.ckpt
