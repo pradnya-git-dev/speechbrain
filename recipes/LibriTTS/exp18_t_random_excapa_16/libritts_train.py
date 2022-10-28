@@ -45,8 +45,7 @@ class Tacotron2Brain(sb.Brain):
         self.last_batch = None
         self.last_preds = None
         self.vocoder = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir="tmpdir_vocoder", run_opts={"device": self.device})
-        self.spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", 
-                                                              savedir="pretrained_models/spkrec-xvect-voxceleb", 
+        self.spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb",
                                                               run_opts={"device": self.device})
         self.last_loss_stats = {}
         return super().on_fit_start()
