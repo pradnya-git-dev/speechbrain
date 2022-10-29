@@ -481,6 +481,18 @@ if __name__ == "__main__":
         },
     )
 
+    from compute_speaker_embeddings import compute_speaker_embeddings
+    sb.utils.distributed.run_on_main(
+        compute_speaker_embeddings,
+        kwargs={
+            "input_filepaths": [hparams["train_json"], hparams["valid_json"], hparams["test_json"]],
+            "output_file_paths": [hparams["train_speaker_embeddings_pickle"], hparams["valid_speaker_embeddings_pickle"], hparams["test_speaker_embeddings_pickle"]],
+            "data_folder": hparams["data_folder"],
+            "audio_sr": hparams["sample_rate"],
+            "spk_emb_sr": hparams["spk_emb_sample_rate"]
+        },
+    )
+
     datasets = dataio_prepare(hparams)
 
     # Brain class initialization
