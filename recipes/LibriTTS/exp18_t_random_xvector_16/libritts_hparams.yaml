@@ -101,16 +101,19 @@ train_dataloader_opts:
   drop_last: False  #True #False
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
+    speaker_embeddings_pickle: !ref <train_speaker_embeddings_pickle>
 
 valid_dataloader_opts:
   batch_size: !ref <batch_size>
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
+    speaker_embeddings_pickle: !ref <valid_speaker_embeddings_pickle>
 
 test_dataloader_opts:
   batch_size: !ref <batch_size>
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
+    speaker_embeddings_pickle: !ref <test_speaker_embeddings_pickle>
 
 ################################
 # Model Parameters and model   #

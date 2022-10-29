@@ -47,6 +47,10 @@ train_json: !ref <save_folder>/train.json
 valid_json: !ref <save_folder>/valid.json
 test_json: !ref <save_folder>/test.json
 
+train_speaker_embeddings_pickle: !ref <save_folder>/train_speaker_embeddings.pickle
+valid_speaker_embeddings_pickle: !ref <save_folder>/valid_speaker_embeddings.pickle
+test_speaker_embeddings_pickle: !ref <save_folder>/test_speaker_embeddings.pickle
+
 splits: ["train", "valid"]
 split_ratio: [90, 10]
 
@@ -80,7 +84,7 @@ spk_emb_sample_rate: 16000
 ################################
 learning_rate: 0.001
 weight_decay: 0.000006
-batch_size: 64 #minimum 2
+batch_size: 32 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 75.0

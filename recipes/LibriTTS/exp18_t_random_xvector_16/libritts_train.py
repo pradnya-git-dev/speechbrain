@@ -66,30 +66,11 @@ class Tacotron2Brain(sb.Brain):
         the model output
         """
         effective_batch = self.batch_to_device(batch)
-        inputs, y, num_items, _, _, spk_ids = effective_batch
+        inputs, y, num_items, _, _, spk_embs = effective_batch
 
         _, input_lengths, _, _, _ = inputs
 
         max_input_length = input_lengths.max().item()
-        
-        spk_embs_list = list()
-        if stage == sb.Stage.TRAIN:
-          with open(self.hparams.train_speaker_embeddings_pickle, "rb") as speaker_embeddings_file:
-            speaker_embeddings = pickle.load(speaker_embeddings_file)
-
-        if stage == sb.Stage.VALID:
-          with open(self.hparams.valid_speaker_embeddings_pickle, "rb") as speaker_embeddings_file:
-            speaker_embeddings = pickle.load(speaker_embeddings_file)
-
-        if stage == sb.Stage.TEST:
-          with open(self.hparams.test_speaker_embeddings_pickle, "rb") as speaker_embeddings_file:
-            speaker_embeddings = pickle.load(speaker_embeddings_file)
-
-        for spk_id in spk_ids:
-          spk_emb = random.choice(speaker_embeddings[spk_id])
-          spk_embs_list.append(spk_emb)
-        
-        spk_embs = torch.stack(spk_embs_list)
           
         return self.modules.model(inputs, spk_embs, alignments_dim=max_input_length)
 
@@ -152,7 +133,7 @@ class Tacotron2Brain(sb.Brain):
         loss: torch.Tensor
             the loss value
         """
-        inputs, targets, num_items, labels, wavs, spk_ids = batch
+        inputs, targets, num_items, labels, wavs, spk_embs = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         loss_stats = self.hparams.criterion(
             predictions, targets, input_lengths, output_lengths, self.last_epoch
@@ -170,7 +151,7 @@ class Tacotron2Brain(sb.Brain):
         predictions: tuple
             predictions (raw output of the Tacotron model)
         """
-        inputs, targets, num_items, labels, wavs, spk_ids = batch
+        inputs, targets, num_items, labels, wavs, spk_embs = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         mel_target, _ = targets
         mel_out, mel_out_postnet, gate_out, alignments = predictions
@@ -200,7 +181,7 @@ class Tacotron2Brain(sb.Brain):
                     "alignments": alignments,
                     "labels": labels,
                     "wavs": wavs,
-                    "spk_ids": spk_ids
+                    "spk_embs": spk_embs
                 }
             ),
         )
@@ -227,7 +208,7 @@ class Tacotron2Brain(sb.Brain):
             len_x,
             labels,
             wavs,
-            spk_ids
+            spk_embs
         ) = batch
         text_padded = text_padded.to(self.device, non_blocking=True).long()
         input_lengths = input_lengths.to(self.device, non_blocking=True).long()
@@ -241,7 +222,8 @@ class Tacotron2Brain(sb.Brain):
         x = (text_padded, input_lengths, mel_padded, max_len, output_lengths)
         y = (mel_padded, gate_padded)
         len_x = torch.sum(output_lengths)
-        return (x, y, len_x, labels, wavs, spk_ids)
+        spk_embs = spk_embs.to(self.device, non_blocking=True).float()
+        return (x, y, len_x, labels, wavs, spk_embs)
 
     def _get_spectrogram_sample(self, raw):
         """Converts a raw spectrogram to one that can be saved as an image
@@ -286,7 +268,7 @@ class Tacotron2Brain(sb.Brain):
           if not os.path.exists(train_sample_path):
               os.makedirs(train_sample_path)
 
-          _, targets, _, labels, wavs, spk_ids = self.last_batch
+          _, targets, _, labels, wavs, spk_embs = self.last_batch
 
           # Extra lines
           # _, mel_out_postnet, _, _ = self.last_preds
@@ -387,23 +369,8 @@ class Tacotron2Brain(sb.Brain):
         samples and can be useful because"""
         if self.last_batch is None:
             return
-        inputs, targets, _, labels, wavs, spk_ids = self.last_batch
+        inputs, targets, _, labels, wavs, spk_embs = self.last_batch
         text_padded, input_lengths, _, _, _ = inputs
-
-        spk_embs_list = list()
-        if stage == sb.Stage.VALID:
-          with open(self.hparams.valid_speaker_embeddings_pickle, "rb") as speaker_embeddings_file:
-            speaker_embeddings = pickle.load(speaker_embeddings_file)
-
-        if stage == sb.Stage.TEST:
-          with open(self.hparams.test_speaker_embeddings_pickle, "rb") as speaker_embeddings_file:
-            speaker_embeddings = pickle.load(speaker_embeddings_file)
-
-        for spk_id in spk_ids:
-          spk_emb = random.choice(speaker_embeddings[spk_id])
-          spk_embs_list.append(spk_emb)
-        
-        spk_embs = torch.stack(spk_embs_list)
           
         mel_out, _, _ = self.hparams.model.infer(
             text_padded[:1], spk_embs[:1], input_lengths[:1]

@@ -50,6 +50,8 @@ from speechbrain.nnet.linear import Linear
 from speechbrain.nnet.CNN import Conv1d
 from speechbrain.processing.speech_augmentation import Resample
 from speechbrain.utils.data_utils import batch_pad_right
+import pickle
+import random
 
 
 class LinearNorm(torch.nn.Module):
@@ -1785,8 +1787,10 @@ class TextMelCollate:
     """
 
     def __init__(self,
-      n_frames_per_step=1):
+      speaker_embeddings_pickle,
+      n_frames_per_step=1,):
         self.n_frames_per_step = n_frames_per_step
+        self.speaker_embeddings_pickle = speaker_embeddings_pickle
         
     # TODO: Make this more intuitive, use the pipeline
     def __call__(self, batch):
@@ -1832,7 +1836,10 @@ class TextMelCollate:
         gate_padded = torch.FloatTensor(len(batch), max_target_len)
         gate_padded.zero_()
         output_lengths = torch.LongTensor(len(batch))
-        labels, wavs, wav_tensors_list, spk_ids = [], [], [], []
+        labels, wavs, wav_tensors_list, spk_embs_list = [], [], [], []
+        with open(self.speaker_embeddings_pickle, "rb") as speaker_embeddings_file:
+            speaker_embeddings = pickle.load(speaker_embeddings_file)
+
         for i in range(len(ids_sorted_decreasing)):
             idx = ids_sorted_decreasing[i]
             mel = batch[idx][1]
@@ -1841,7 +1848,11 @@ class TextMelCollate:
             output_lengths[i] = mel.size(1)
             labels.append(raw_batch[idx]["label"])
             wavs.append(raw_batch[idx]["wav"])
-            spk_ids.append(raw_batch[idx]["spk_id"])
+
+            spk_emb = random.choice(speaker_embeddings[raw_batch[idx]["spk_id"]])
+            spk_embs_list.append(spk_emb)
+
+        spk_embs = torch.stack(spk_embs_list)
 
         # count number of items - characters in text
         len_x = [x[2] for x in batch]
@@ -1855,7 +1866,7 @@ class TextMelCollate:
             len_x,
             labels,
             wavs,
-            spk_ids
+            spk_embs
         )
 
 

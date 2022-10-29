@@ -55,7 +55,7 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
       if utt_data["spk_id"] not in speaker_embeddings.keys():
         speaker_embeddings[utt_data["spk_id"]] = list()
 
-      speaker_embeddings[utt_data["spk_id"]].append(spk_emb)
+      speaker_embeddings[utt_data["spk_id"]].append(spk_emb.cpu())
 
 
     with open(output_file_paths[i], "wb") as output_file:
