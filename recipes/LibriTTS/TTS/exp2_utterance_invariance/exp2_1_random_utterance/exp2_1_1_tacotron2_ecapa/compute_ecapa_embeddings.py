@@ -4,7 +4,9 @@ from speechbrain.processing.speech_augmentation import Resample
 import torchaudio
 import pickle
 import torch
+import logging
 
+logger = logging.getLogger(__name__)
 
 
 def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, audio_sr, spk_emb_sr):
@@ -33,8 +35,11 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
   if audio_sr != spk_emb_sr:
     resampler = Resample(orig_freq=audio_sr, new_freq=spk_emb_sr)
     resample_audio = True
+    logger.info(f"Audio file sample rate is {audio_sr} and speaker embedding sample rate is {spk_emb_sr}.\nResampling audio files to match the sample rate required for speaker embeddings.")
+
 
   for i in range(len(input_filepaths)):
+    logger.info(f"Creating {output_file_paths[i]}.")
     speaker_embeddings = dict()
     json_file = open(input_filepaths[i])
     json_data = json.load(json_file)
@@ -59,6 +64,8 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
 
     with open(output_file_paths[i], "wb") as output_file:
       pickle.dump(speaker_embeddings, output_file, protocol=pickle.HIGHEST_PROTOCOL)
+  
+    logger.info(f"Created {output_file_paths[i]}.")
 
 
 if __name__=="__main__":
