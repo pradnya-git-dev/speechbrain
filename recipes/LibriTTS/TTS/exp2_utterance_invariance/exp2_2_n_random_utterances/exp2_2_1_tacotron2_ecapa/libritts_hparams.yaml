@@ -89,7 +89,7 @@ n_random_uttrances: 2
 ################################
 learning_rate: 0.0001
 weight_decay: 0.000006
-batch_size: 16 #minimum 2
+batch_size: 8 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 75.0
@@ -100,21 +100,21 @@ gate_loss_weight: 1.0
 train_dataloader_opts:
   batch_size: !ref <batch_size>
   drop_last: False  #True #False
-  num_workers: 0
+  num_workers: 4
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <train_speaker_embeddings_pickle>
     n_random_uttrances: !ref <n_random_uttrances>
 
 valid_dataloader_opts:
   batch_size: !ref <batch_size>
-  num_workers: 0
+  num_workers: 4
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <valid_speaker_embeddings_pickle>
     n_random_uttrances: !ref <n_random_uttrances>
 
 test_dataloader_opts:
   batch_size: !ref <batch_size>
-  num_workers: 0
+  num_workers: 4
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <test_speaker_embeddings_pickle>
     n_random_uttrances: !ref <n_random_uttrances>

@@ -5,6 +5,7 @@ import torchaudio
 import pickle
 import torch
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,11 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
   Sample rate used by the speaker embedding encoder
   """
 
+
+  # Checks if this phase is already done (if so, skips it)
+  if skip(input_filepaths):
+      logger.info("Preparation completed in previous run, skipping.")
+      return
 
 
   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -67,6 +73,20 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
   
     logger.info(f"Created {output_file_paths[i]}.")
 
+def skip(filepaths):
+    """
+    Detects if the data preparation has been already done.
+    If the preparation has been done, we can skip it.
+    Returns
+    -------
+    bool
+        if True, the preparation phase can be skipped.
+        if False, it must be done.
+    """
+    for filepath in filepaths:
+        if not os.path.isfile(filepath):
+            return False
+    return True
 
 if __name__=="__main__":
   compute_speaker_embeddings(["train.json"], 

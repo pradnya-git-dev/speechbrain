@@ -52,6 +52,7 @@ from speechbrain.processing.speech_augmentation import Resample
 from speechbrain.utils.data_utils import batch_pad_right
 import pickle
 import random
+from itertools import combinations
 
 
 class LinearNorm(torch.nn.Module):
@@ -1673,7 +1674,7 @@ class Loss(nn.Module):
         self.guided_attention_hard_stop = guided_attention_hard_stop
 
     def forward(
-        self, model_output, targets, input_lengths, target_lengths, epoch
+        self, model_output, targets, input_lengths, target_lengths, spk_ids, epoch
     ):
         """Computes the loss
 
@@ -1709,6 +1710,28 @@ class Loss(nn.Module):
         mel_loss = self.mse_loss(mel_out, mel_target) + self.mse_loss(
             mel_out_postnet, mel_target
         )
+
+        spk_wise_mel_loss = 0
+        i1, i2 = [], []
+
+        spk_ids_set = set(spk_ids)
+        for spk_id in spk_ids_set:
+          spk_id_indices = [i for i, x in enumerate(spk_ids) if x == spk_id]
+          # spk_id_index_pairs = list(combinations(spk_id_indices, 2))
+          spk_id_pair = random.sample(spk_id_indices, k=2)
+          i1.append(spk_id_pair[0])
+          i2.append(spk_id_pair[1])
+
+          # for (i1, i2) in spk_id_index_pairs:
+          #   spk_wise_mel_loss += self.mse_loss(mel_out[i1], mel_out[i2])
+          #   + self.mse_loss(mel_out_postnet[i1], mel_out_postnet[i2])
+        spk_wise_mel_loss += self.mse_loss(mel_out[i1], mel_out[i2])
+        + self.mse_loss(mel_out_postnet[i1], mel_out_postnet[i2])
+        
+        spk_wise_mel_loss = spk_wise_mel_loss / len(spk_ids_set)
+
+        mel_loss = mel_loss + spk_wise_mel_loss
+
         gate_loss = self.gate_loss_weight * self.bce_loss(gate_out, gate_target)
         attn_loss, attn_weight = self.get_attention_loss(
             alignments, input_lengths, target_lengths, epoch
@@ -1840,7 +1863,7 @@ class TextMelCollate:
         gate_padded = torch.FloatTensor(len(batch) * self.n_random_uttrances, max_target_len)
         gate_padded.zero_()
         output_lengths = torch.LongTensor(len(batch) * self.n_random_uttrances)
-        labels, wavs, spk_embs_list = [], [], []
+        labels, wavs, spk_ids, spk_embs_list = [], [], [], []
         with open(self.speaker_embeddings_pickle, "rb") as speaker_embeddings_file:
             speaker_embeddings = pickle.load(speaker_embeddings_file)
 
@@ -1854,7 +1877,7 @@ class TextMelCollate:
                 output_lengths[i * self.n_random_uttrances + j] = mel.size(1)
                 labels.append(raw_batch[idx]["label"])
                 wavs.append(raw_batch[idx]["wav"])
-
+                spk_ids.append(raw_batch[idx]["spk_id"])
                 spk_embs_list.append(spk_emb_samples[j])
 
         spk_embs = torch.stack(spk_embs_list)
@@ -1872,6 +1895,7 @@ class TextMelCollate:
             len_x,
             labels,
             wavs,
+            spk_ids,
             spk_embs
         )
 
