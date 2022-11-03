@@ -63,7 +63,7 @@ text_cleaners: ['english_cleaners']
 ################################
 # Audio Parameters             #
 ################################
-sample_rate: 22050
+sample_rate: 16000
 hop_length: 256
 win_length: 1024
 n_mel_channels: 80
@@ -88,7 +88,7 @@ spk_emb_sample_rate: 16000
 ################################
 learning_rate: 0.0001
 weight_decay: 0.000006
-batch_size: 16 #minimum 2
+batch_size: 32 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 75.0
@@ -254,4 +254,4 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
   loadables:
     model: !ref <model>
   paths:
-    model: /workspace/mstts_saved_models/tacotron2_ecapa_ljspeech_22050/model.ckpt
+    model: /workspace/mstts_saved_models/tacotron2_ecapa_ljspeech_16000/model.ckpt
