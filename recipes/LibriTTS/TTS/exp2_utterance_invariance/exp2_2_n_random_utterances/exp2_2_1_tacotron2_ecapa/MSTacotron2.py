@@ -1603,7 +1603,7 @@ def infer(model, text_sequences, input_lengths):
 
 
 LossStats = namedtuple(
-    "TacotronLoss", "loss mel_loss gate_loss attn_loss attn_weight"
+    "TacotronLoss", "loss mel_loss utt_invariance_loss gate_loss attn_loss attn_weight"
 )
 
 
@@ -1658,6 +1658,7 @@ class Loss(nn.Module):
         guided_attention_weight=1.0,
         guided_attention_scheduler=None,
         guided_attention_hard_stop=None,
+        utt_invariance_loss_weight=1.0
     ):
         super().__init__()
         if guided_attention_weight == 0:
@@ -1672,9 +1673,10 @@ class Loss(nn.Module):
         self.guided_attention_weight = guided_attention_weight
         self.guided_attention_scheduler = guided_attention_scheduler
         self.guided_attention_hard_stop = guided_attention_hard_stop
+        self.utt_invariance_loss_weight = utt_invariance_loss_weight
 
     def forward(
-        self, model_output, targets, input_lengths, target_lengths, spk_ids, epoch
+        self, model_output, targets, input_lengths, target_lengths, utt_inv_loss_pairs, epoch
     ):
         """Computes the loss
 
@@ -1711,34 +1713,18 @@ class Loss(nn.Module):
             mel_out_postnet, mel_target
         )
 
-        spk_wise_mel_loss = 0
-        i1, i2 = [], []
-
-        spk_ids_set = set(spk_ids)
-        for spk_id in spk_ids_set:
-          spk_id_indices = [i for i, x in enumerate(spk_ids) if x == spk_id]
-          # spk_id_index_pairs = list(combinations(spk_id_indices, 2))
-          spk_id_pair = random.sample(spk_id_indices, k=2)
-          i1.append(spk_id_pair[0])
-          i2.append(spk_id_pair[1])
-
-          # for (i1, i2) in spk_id_index_pairs:
-          #   spk_wise_mel_loss += self.mse_loss(mel_out[i1], mel_out[i2])
-          #   + self.mse_loss(mel_out_postnet[i1], mel_out_postnet[i2])
-        spk_wise_mel_loss += self.mse_loss(mel_out[i1], mel_out[i2])
-        + self.mse_loss(mel_out_postnet[i1], mel_out_postnet[i2])
-        
-        spk_wise_mel_loss = spk_wise_mel_loss / len(spk_ids_set)
-
-        mel_loss = mel_loss + spk_wise_mel_loss
+        i1 = utt_inv_loss_pairs[:, 0]
+        i2 = utt_inv_loss_pairs[:, 1]
+        utt_invariance_loss = self.mse_loss(mel_out[i1], mel_out[i2]) + self.mse_loss(mel_out_postnet[i1], mel_out_postnet[i2])
+        utt_invariance_loss = self.utt_invariance_loss_weight * utt_invariance_loss
 
         gate_loss = self.gate_loss_weight * self.bce_loss(gate_out, gate_target)
         attn_loss, attn_weight = self.get_attention_loss(
             alignments, input_lengths, target_lengths, epoch
         )
-        total_loss = mel_loss + gate_loss + attn_loss
+        total_loss = mel_loss + utt_invariance_loss + gate_loss + attn_loss
         return LossStats(
-            total_loss, mel_loss, gate_loss, attn_loss, attn_weight
+            total_loss, mel_loss, utt_invariance_loss, gate_loss, attn_loss, attn_weight
         )
 
     def get_attention_loss(
@@ -1863,7 +1849,7 @@ class TextMelCollate:
         gate_padded = torch.FloatTensor(len(batch) * self.n_random_uttrances, max_target_len)
         gate_padded.zero_()
         output_lengths = torch.LongTensor(len(batch) * self.n_random_uttrances)
-        labels, wavs, spk_ids, spk_embs_list = [], [], [], []
+        labels, wavs, spk_embs_list, utt_inv_loss_pairs_list = [], [], [], []
         with open(self.speaker_embeddings_pickle, "rb") as speaker_embeddings_file:
             speaker_embeddings = pickle.load(speaker_embeddings_file)
 
@@ -1877,10 +1863,14 @@ class TextMelCollate:
                 output_lengths[i * self.n_random_uttrances + j] = mel.size(1)
                 labels.append(raw_batch[idx]["label"])
                 wavs.append(raw_batch[idx]["wav"])
-                spk_ids.append(raw_batch[idx]["spk_id"])
                 spk_embs_list.append(spk_emb_samples[j])
 
+            idx_range = torch.arange(i * self.n_random_uttrances, (i + 1) * self.n_random_uttrances)
+            pairs = torch.combinations(idx_range, r=2,  with_replacement=False)
+            utt_inv_loss_pairs_list.append(pairs)
+        
         spk_embs = torch.stack(spk_embs_list)
+        utt_inv_loss_pairs = torch.cat(utt_inv_loss_pairs_list)
 
         # count number of items - characters in text
         len_x = [x[2] for x in batch for i in range(self.n_random_uttrances)]
@@ -1895,8 +1885,8 @@ class TextMelCollate:
             len_x,
             labels,
             wavs,
-            spk_ids,
-            spk_embs
+            spk_embs,
+            utt_inv_loss_pairs
         )
 
 

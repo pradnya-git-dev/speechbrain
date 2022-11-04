@@ -28,7 +28,7 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
 
 
   # Checks if this phase is already done (if so, skips it)
-  if skip(input_filepaths):
+  if skip(output_file_paths):
       logger.info("Preparation completed in previous run, skipping.")
       return
 
