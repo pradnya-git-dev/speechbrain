@@ -1856,9 +1856,9 @@ class TextMelCollate:
         for i in range(len(ids_sorted_decreasing)):
             idx = ids_sorted_decreasing[i]
             mel = batch[idx][1]
-            try:
+            if len(speaker_embeddings[raw_batch[idx]["spk_id"]]) >= self.n_random_uttrances:
                 spk_emb_samples = random.sample(speaker_embeddings[raw_batch[idx]["spk_id"]], k=self.n_random_uttrances)
-            except Exception as ex:
+            else:
                 spk_emb_samples = random.choices(speaker_embeddings[raw_batch[idx]["spk_id"]], k=self.n_random_uttrances)
             for j in range(self.n_random_uttrances):
                 mel_padded[i * self.n_random_uttrances + j, :, : mel.size(1)] = mel
