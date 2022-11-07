@@ -82,7 +82,7 @@ dynamic_range_compression: True
 
 spk_emb_size: 512
 spk_emb_sample_rate: 16000
-n_random_uttrances: 2
+n_random_uttrances: 3
 
 ################################
 # Optimization Hyperparameters #
