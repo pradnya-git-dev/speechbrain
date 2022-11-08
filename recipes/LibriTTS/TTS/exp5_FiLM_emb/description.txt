@@ -1,0 +1,7 @@
+# Experiment description:
+Injecting the embeddings as suggested in FiLM (https://arxiv.org/pdf/1709.07871.pdf).
+Performing a multiplication and a shift..
+If h is the hidden representation and e is embeddings:
+h_out = f(e) * h + g(e)
+Where f and g and learnable transformations (see eq.1 and 2 in the paper).
+They can be a linear transformation or a small MLP
