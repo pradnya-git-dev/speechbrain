@@ -1,105 +1,102 @@
 from speechbrain.utils.data_utils import get_all_files, download_file
-from speechbrain.dataio.dataio import read_audio
 from speechbrain.processing.speech_augmentation import Resample
 import json
-import os, shutil
-import re
+import os
+import shutil
 import random
 import logging
 import torchaudio
 
 logger = logging.getLogger(__name__)
-# LIBRITTS_SUBSETS = ["dev-clean", "train-clean-100", "train-clean-360"]
+# Change the entries in the following "LIBRITTS_SUBSETS" to modify the downloaded subsets for LibriTTS
+# Used subsets ["dev-clean", "train-clean-100", "train-clean-360"]
 LIBRITTS_SUBSETS = ["dev-clean"]
 LIBRITTS_URL_PREFIX = "https://www.openslr.org/resources/60/"
-SAMPLERATE = 16000
 
 
 def prepare_libritts(
-        data_folder,
-        save_json_train,
-        save_json_valid,
-        save_json_test,
-        split_ratio=[80, 10, 10],
+    data_folder,
+    save_json_train,
+    save_json_valid,
+    save_json_test,
+    sample_rate,
+    split_ratio=[80, 10, 10],
 ):
     """
-    Prepares the json files for the Mini Librispeech dataset.
-    Downloads the dataset if it is not found in the `data_folder`.
+    Prepares the json files for the LibriTTS dataset.
+    Downloads the dataset if it is not found in the `data_folder` as expected.
     Arguments
     ---------
     data_folder : str
-        Path to the folder where the Mini Librispeech dataset is stored.
+        Path to the folder where the LibriTTS dataset is stored.
     save_json_train : str
         Path where the train data specification file will be saved.
     save_json_valid : str
         Path where the validation data specification file will be saved.
     save_json_test : str
         Path where the test data specification file will be saved.
-    split_ratio: list
+    split_ratio : list
         List composed of three integers that sets split ratios for train, valid,
         and test sets, respectively. For instance split_ratio=[80, 10, 10] will
         assign 80% of the sentences to training, 10% for validation, and 10%
         for test.
+    sample_rate : int
+        The sample rate to be used for the dataset
     Example
     -------
     >>> data_folder = '/path/to/mini_librispeech'
     >>> prepare_mini_librispeech(data_folder, 'train.json', 'valid.json', 'test.json')
     """
 
-    # Check if this phase is already done (if so, skip it)
+    # Checks if this phase is already done (if so, skips it)
     if skip(save_json_train, save_json_valid, save_json_test):
         logger.info("Preparation completed in previous run, skipping.")
         return
 
-    # If the dataset doesn't exist yet, download it
+    extension = [".wav"]  # The expected extension for audio files
+    wav_list = list()  # Stores all audio file paths for the dataset
 
-    extension = [".wav"]
-    wav_list = list()
-
-    resample_audio = dict()
+    # For every subset of the dataset, if it doesn't exist, downloads it and sets flag to resample the subset
     for subset_name in LIBRITTS_SUBSETS:
-
-        resample_audio[subset_name] = False
 
         subset_folder = os.path.join(data_folder, subset_name)
         subset_archive = os.path.join(subset_folder, subset_name + ".tar.gz")
 
         subset_data = os.path.join(subset_folder, "LibriTTS")
         if not check_folders(subset_data):
-            logger.info(f"No data found for {subset_name}. Checking for an archive file.")
-            print(f"No data found for {subset_name}. Checking for an archive file.")
+            logger.info(
+                f"No data found for {subset_name}. Checking for an archive file."
+            )
             if not os.path.isfile(subset_archive):
-                logger.info(f"No archive file found for {subset_name}. Downloading and unpacking.")
-                print(f"No archive file found for {subset_name}. Downloading and unpacking.")
+                logger.info(
+                    f"No archive file found for {subset_name}. Downloading and unpacking."
+                )
                 subset_url = LIBRITTS_URL_PREFIX + subset_name + ".tar.gz"
                 download_file(subset_url, subset_archive)
                 logger.info(f"Downloaded data for subset {subset_name}.")
-                print(f"Downloaded data for subset {subset_name}.")
             else:
-                logger.info(f"Found an archive file for {subset_name}. Unpacking.")
-                print(f"Found an archive file for {subset_name}. Unpacking.")
+                logger.info(
+                    f"Found an archive file for {subset_name}. Unpacking."
+                )
 
             shutil.unpack_archive(subset_archive, subset_folder)
-            resample_audio[subset_name] = True
 
+        # Collects all files matching the provided extension
         wav_list.extend(get_all_files(subset_folder, match_and=extension))
 
-    # List files and create manifest from list
     logger.info(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
     )
 
-    logger.info(f"Total number of samples: {len(wav_list)}")
-
     # Random split the signal list into train, valid, and test sets.
     data_split = split_sets(wav_list, split_ratio)
     # Creating json files
-    create_json(data_split["train"], save_json_train, resample_audio)
-    create_json(data_split["valid"], save_json_valid, resample_audio)
-    create_json(data_split["test"], save_json_test, resample_audio)
+    create_json(data_split["train"], save_json_train, sample_rate)
+    create_json(data_split["valid"], save_json_valid, sample_rate)
+    create_json(data_split["test"], save_json_test, sample_rate)
 
 
-def create_json(wav_list, json_file, resample_audio):
+def create_json(wav_list, json_file, sample_rate):
     """
     Creates the json file given a list of wav files.
     Arguments
@@ -108,60 +105,56 @@ def create_json(wav_list, json_file, resample_audio):
         The list of wav files.
     json_file : str
         The path of the output json file
+    sample_rate : int
+        The sample rate to be used for the dataset
     """
-    # Processing all the wav files in the list
-    json_dict = {}
-    resampler = Resample(orig_freq=24000, new_freq=SAMPLERATE)
 
+    json_dict = {}
+    # Creates a resampler object with orig_freq set to LibriTTS sample rate (24KHz) and  new_freq set to SAMPLERATE
+    resampler = Resample(orig_freq=24000, new_freq=sample_rate)
+
+    # Processes all the wav files in the list
     for wav_file in wav_list:
 
-        # Reading the signal
-        signal = read_audio(wav_file)
+        # Reads the signal
+        signal, sig_sr = torchaudio.load(wav_file)
+        signal = signal.squeeze(0)
 
-        # duration = None
-        # if resample_audio[path_parts[-6]] == False:
-        #   duration = signal.shape[0] / SAMPLERATE
-        # else:
-        #   duration = signal.shape[0] / 24000
-        # if duration > 10.50:
-        #   continue
-
-        # Manipulate path to get relative path and uttid
+        # Manipulates path to get relative path and uttid
         path_parts = wav_file.split(os.path.sep)
         uttid, _ = os.path.splitext(path_parts[-1])
-
         relative_path = os.path.join("{data_root}", *path_parts[-6:])
 
-        original_text_path = os.path.join("/", *path_parts[:-1], uttid + ".original.txt")
-
+        # Gets the path for the  text files and extracts the input text
+        original_text_path = os.path.join(
+            "/", *path_parts[:-1], uttid + ".original.txt"
+        )
         with open(original_text_path) as f:
             original_text = f.read()
-            if not re.search("[a-zA-Z]", original_text):
-                print("Excluding: ", original_text)
-                continue
             if original_text.__contains__("{"):
                 original_text = original_text.replace("{", "")
             if original_text.__contains__("}"):
                 original_text = original_text.replace("}", "")
 
-        if resample_audio[path_parts[-6]]:
+        # Resamples the audio file if required
+        if sig_sr != sample_rate:
             signal = signal.unsqueeze(0)
             resampled_signal = resampler(signal)
             os.unlink(wav_file)
-            torchaudio.save(wav_file, resampled_signal, sample_rate=SAMPLERATE)
+            torchaudio.save(wav_file, resampled_signal, sample_rate=sample_rate)
 
-        # Getting speaker-id from utterance-id
+        # Gets the speaker-id from the utterance-id
         spk_id = uttid.split("_")[0]
 
-        # Create entry for this utterance
+        # Creates an entry for the utterance
         json_dict[uttid] = {
             "wav": relative_path,
             "spk_id": spk_id,
             "label": original_text,
-            "segment": True if "train" in json_file else False
+            "segment": True if "train" in json_file else False,
         }
 
-    # Writing the dictionary to the json file
+    # Writes the dictionary to the json file
     with open(json_file, mode="w") as json_f:
         json.dump(json_dict, json_f, indent=2)
 
@@ -189,7 +182,7 @@ def split_sets(wav_list, split_ratio):
 
     Arguments
     ---------
-    wav_lst : list
+    wav_list : list
         list of all the signals in the dataset
     split_ratio: list
         List composed of three integers that sets split ratios for train, valid,
@@ -200,7 +193,7 @@ def split_sets(wav_list, split_ratio):
     ------
     dictionary containing train, valid, and test splits.
     """
-    # Random shuffle of the list
+    # Random shuffles the list
     random.shuffle(wav_list)
     tot_split = sum(split_ratio)
     tot_snts = len(wav_list)
@@ -225,5 +218,6 @@ def check_folders(*folders):
 
 
 if __name__ == "__main__":
-    prepare_libritts("/content/libritts_data_sr_16000",
-                     "train.json", "valid.json", "test.json")
+    prepare_libritts(
+        "libritts_data", "train.json", "valid.json", "test.json", 16000
+    )

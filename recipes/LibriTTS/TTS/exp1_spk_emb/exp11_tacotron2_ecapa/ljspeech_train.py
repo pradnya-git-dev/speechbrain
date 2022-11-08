@@ -44,7 +44,6 @@ class Tacotron2Brain(sb.Brain):
         self.last_preds = None
         self.vocoder = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir="tmpdir_vocoder", run_opts={"device": self.device})
         self.spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb", run_opts={"device": self.device})
-        # print(next(self.vocoder.parameters()).device)
         self.last_loss_stats = {}
         return super().on_fit_start()
 
@@ -64,9 +63,8 @@ class Tacotron2Brain(sb.Brain):
         """
         effective_batch = self.batch_to_device(batch)
         inputs, y, num_items, _, _, wav_tensors, wav_tensors_lens = effective_batch
-
+        
         _, input_lengths, _, _, _ = inputs
-
         max_input_length = input_lengths.max().item()
         
         spk_embs = self.spk_emb_encoder.encode_batch(wav_tensors, wav_tensors_lens)
@@ -258,11 +256,7 @@ class Tacotron2Brain(sb.Brain):
             `None` during the test stage.
         """
 
-        # import pdb; pdb.set_trace()
-
         if stage == sb.Stage.TRAIN and (self.hparams.epoch_counter.current % 10 == 0):
-          # self.last_batch = batch_to_device (x, y, len_x, original_texts, wavs, spk_embs)
-          # self.last_preds = (mel_out, mel_out_postnet, gate_out, alignments)
           if self.last_batch is None:
             return
 
@@ -422,24 +416,20 @@ class Tacotron2Brain(sb.Brain):
 def dataio_prepare(hparams):
     # Define audio pipeline:
 
-    # import pdb; pdb.set_trace()
     @sb.utils.data_pipeline.takes("wav", "label")
     @sb.utils.data_pipeline.provides("mel_text_pair")
     def audio_pipeline(wav, label):
 
-        try:
-          text_seq = torch.IntTensor(
-              text_to_sequence(label, hparams["text_cleaners"])
-          )
+        text_seq = torch.IntTensor(
+            text_to_sequence(label, hparams["text_cleaners"])
+        )
 
-          audio = sb.dataio.dataio.read_audio(wav)
-          mel = hparams["mel_spectogram"](audio=audio)
+        audio = sb.dataio.dataio.read_audio(wav)
+        mel = hparams["mel_spectogram"](audio=audio)
 
-          len_text = len(text_seq)
+        len_text = len(text_seq)
 
-          return text_seq, mel, len_text
-        except Exception as ex:
-          print("EXCEPTION: ", ex)
+        return text_seq, mel, len_text
 
     datasets = {}
     data_info = {
@@ -447,17 +437,14 @@ def dataio_prepare(hparams):
         "valid": hparams["valid_json"],
         "test": hparams["test_json"],
     }
-    try:
-
-      for dataset in hparams["splits"]:
-          datasets[dataset] = sb.dataio.dataset.DynamicItemDataset.from_json(
-              json_path=data_info[dataset],
-              replacements={"data_root": hparams["data_folder"]},
-              dynamic_items=[audio_pipeline],
-              output_keys=["mel_text_pair", "wav", "label"],
-          )
-    except Exception as ex:
-      print("EXCEPTION: ", ex)
+    
+    for dataset in hparams["splits"]:
+        datasets[dataset] = sb.dataio.dataset.DynamicItemDataset.from_json(
+            json_path=data_info[dataset],
+            replacements={"data_root": hparams["data_folder"]},
+            dynamic_items=[audio_pipeline],
+            output_keys=["mel_text_pair", "wav", "label"],
+        )
 
     return datasets
 
@@ -481,26 +468,20 @@ if __name__ == "__main__":
         overrides=overrides,
     )
 
-    sys.path.append("../")
-    from libritts_prepare import prepare_libritts
+    sys.path.append("../../../")
+    from recipes.LibriTTS.TTS.exp1_spk_emb.exp11_tacotron2_ecapa.ljspeech_prepare import prepare_ljspeech
 
     sb.utils.distributed.run_on_main(
-        prepare_libritts,
+        prepare_ljspeech,
         kwargs={
             "data_folder": hparams["data_folder"],
-            "save_json_train": hparams["train_json"],
-            "save_json_valid": hparams["valid_json"],
-            "save_json_test": hparams["test_json"],
+            "save_folder": hparams["save_folder"],
+            "splits": hparams["splits"],
             "split_ratio": hparams["split_ratio"],
         },
     )
 
     datasets = dataio_prepare(hparams)
-    
-    # Load pretrained model if pretrained_separator is present in the yaml
-    if "pretrained_separator" in hparams:
-        hparams["pretrained_separator"].collect_files()
-        hparams["pretrained_separator"].load_collected()
 
     # Brain class initialization
     tacotron2_brain = Tacotron2Brain(
@@ -510,11 +491,6 @@ if __name__ == "__main__":
         run_opts=run_opts,
         checkpointer=hparams["checkpointer"],
     )
-    
-    # re-initialize the parameters if we don't use a pretrained model
-    if "pretrained_separator" not in hparams:
-        for module in tacotron2_brain.modules.values():
-            tacotron2_brain.reset_layer_recursively(module)
 
     if hparams["use_tensorboard"]:
         tacotron2_brain.tensorboard_logger = sb.utils.train_logger.TensorboardLogger(
