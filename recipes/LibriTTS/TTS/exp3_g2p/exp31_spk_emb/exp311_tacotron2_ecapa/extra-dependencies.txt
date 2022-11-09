@@ -1,0 +1,6 @@
+# Needed only with use_tensorboard=True
+tensorboard
+# torchvision is needed to save spectrograms
+torchvision
+# transformers module is needed for the g2p model used to convert graphemes to phonemes
+transformers
