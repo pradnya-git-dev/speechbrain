@@ -22,7 +22,7 @@ import speechbrain as sb
 import sys
 import logging
 from hyperpyyaml import load_hyperpyyaml
-from speechbrain.utils.text_to_sequence import text_to_sequence
+from text_to_sequence import text_to_sequence
 from speechbrain.utils.data_utils import scalarize
 import os
 from speechbrain.pretrained import HIFIGAN
@@ -417,29 +417,14 @@ def dataio_prepare(hparams):
     # Define audio pipeline:
 
     # import pdb; pdb.set_trace()
-    @sb.utils.data_pipeline.takes("wav", "label")
-    @sb.utils.data_pipeline.provides("mel_text_pair")
-    def audio_pipeline(wav, label):
+    @sb.utils.data_pipeline.takes("wav")
+    @sb.utils.data_pipeline.provides("mel")
+    def audio_pipeline(wav):
+        
+        audio = sb.dataio.dataio.read_audio(wav)
+        mel = hparams["mel_spectogram"](audio=audio)
 
-        from speechbrain.pretrained import GraphemeToPhoneme
-        g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p")
-
-
-        try:
-
-          import pdb; pdb.set_trace()
-          text_seq = torch.IntTensor(
-              text_to_sequence(label, hparams["text_cleaners"])
-          )
-
-          audio = sb.dataio.dataio.read_audio(wav)
-          mel = hparams["mel_spectogram"](audio=audio)
-
-          len_text = len(text_seq)
-
-          return text_seq, mel, len_text
-        except Exception as ex:
-          print("EXCEPTION: ", ex)
+        return mel
 
     datasets = {}
     data_info = {
@@ -454,10 +439,10 @@ def dataio_prepare(hparams):
               json_path=data_info[dataset],
               replacements={"data_root": hparams["data_folder"]},
               dynamic_items=[audio_pipeline],
-              output_keys=["mel_text_pair", "wav", "label", "spk_id"],
+              output_keys=["mel", "wav", "label", "label_phoneme", "spk_id"],
           )
     except Exception as ex:
-      print("EXCEPTION: ", ex)
+      print("SECOND EXCEPTION: ", ex)
 
     return datasets
 

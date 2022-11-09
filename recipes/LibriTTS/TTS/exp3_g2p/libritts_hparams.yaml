@@ -18,6 +18,7 @@ train_log: !ref <output_folder>/train_log.txt
 epochs: 100
 keep_checkpoint_interval: 50
 use_tensorboard: True
+device: cuda:0
 
 ###################################
 # Progress Samples                #
@@ -55,6 +56,7 @@ splits: ["train", "valid"]
 split_ratio: [90, 10]
 
 skip_prep: False
+phoneme_input: True
 
 # Use the original preprocessing from nvidia
 # The cleaners to be used (applicable to nvidia only)
@@ -104,21 +106,27 @@ train_dataloader_opts:
   num_workers: 0
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <train_speaker_embeddings_pickle>
+    text_cleaners: !ref <text_cleaners>
     n_random_uttrances: !ref <n_random_uttrances>
+    device: !ref <device>
 
 valid_dataloader_opts:
   batch_size: !ref <batch_size>
   num_workers: 0
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <valid_speaker_embeddings_pickle>
+    text_cleaners: !ref <text_cleaners>
     n_random_uttrances: !ref <n_random_uttrances>
+    device: !ref <device>
 
 test_dataloader_opts:
   batch_size: !ref <batch_size>
   num_workers: 0
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <test_speaker_embeddings_pickle>
+    text_cleaners: !ref <text_cleaners>
     n_random_uttrances: !ref <n_random_uttrances>
+    device: !ref <device>
 
 ################################
 # Model Parameters and model   #

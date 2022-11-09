@@ -53,6 +53,8 @@ from speechbrain.utils.data_utils import batch_pad_right
 import pickle
 import random
 from itertools import combinations
+# from speechbrain.pretrained import GraphemeToPhoneme
+from text_to_sequence import text_to_sequence
 
 
 class LinearNorm(torch.nn.Module):
@@ -1798,10 +1800,14 @@ class TextMelCollate:
     def __init__(self,
       speaker_embeddings_pickle,
       n_random_uttrances,
-      n_frames_per_step=1,):
+      text_cleaners,
+      n_frames_per_step=1,
+      device="cpu"):
         self.n_frames_per_step = n_frames_per_step
         self.speaker_embeddings_pickle = speaker_embeddings_pickle
         self.n_random_uttrances = n_random_uttrances
+        self.text_cleaners = text_cleaners
+        # self.g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p", run_opts={"device":device})
         
     # TODO: Make this more intuitive, use the pipeline
     def __call__(self, batch):
@@ -1814,12 +1820,15 @@ class TextMelCollate:
 
         # TODO: Remove for loops and this dirty hack
         raw_batch = list(batch)
+        label_list = list()
         for i in range(
             len(batch)
         ):  # the pipline return a dictionary wiht one elemnent
-            batch[i] = batch[i]["mel_text_pair"]
-
-        # Right zero-pad all one-hot text sequences to max input length
+            label_phoneme = "{" + " ".join(batch[i]["label_phoneme"]) + "}"
+            label_phoneme_seq = torch.IntTensor(
+                text_to_sequence(label_phoneme, self.text_cleaners)
+            )
+            batch[i] = (label_phoneme_seq, batch[i]["mel"], len(label_phoneme_seq))
 
         input_lengths, ids_sorted_decreasing = torch.sort(
             torch.LongTensor([len(x[0]) for x in batch]), dim=0, descending=True
