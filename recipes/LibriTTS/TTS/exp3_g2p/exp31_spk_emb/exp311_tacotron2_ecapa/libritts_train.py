@@ -477,8 +477,8 @@ if __name__ == "__main__":
     sb.utils.distributed.run_on_main(
         compute_speaker_embeddings,
         kwargs={
-            "input_filepaths": [hparams["train_json"], hparams["valid_json"], hparams["test_json"]],
-            "output_file_paths": [hparams["train_speaker_embeddings_pickle"], hparams["valid_speaker_embeddings_pickle"], hparams["test_speaker_embeddings_pickle"]],
+            "input_filepaths": [hparams["train_json"], hparams["valid_json"]],
+            "output_file_paths": [hparams["train_speaker_embeddings_pickle"], hparams["valid_speaker_embeddings_pickle"]],
             "data_folder": hparams["data_folder"],
             "audio_sr": hparams["sample_rate"],
             "spk_emb_sr": hparams["spk_emb_sample_rate"]
@@ -486,11 +486,6 @@ if __name__ == "__main__":
     )
 
     datasets = dataio_prepare(hparams)
-
-    # Load pretrained model if pretrained_separator is present in the yaml
-    if "pretrained_separator" in hparams:
-        hparams["pretrained_separator"].collect_files()
-        hparams["pretrained_separator"].load_collected()
 
     # Brain class initialization
     tacotron2_brain = Tacotron2Brain(
@@ -500,11 +495,6 @@ if __name__ == "__main__":
         run_opts=run_opts,
         checkpointer=hparams["checkpointer"],
     )
-
-    # re-initialize the parameters if we don't use a pretrained model
-    if "pretrained_separator" not in hparams:
-        for module in tacotron2_brain.modules.values():
-            tacotron2_brain.reset_layer_recursively(module)
 
     if hparams["use_tensorboard"]:
         tacotron2_brain.tensorboard_logger = sb.utils.train_logger.TensorboardLogger(
