@@ -462,16 +462,14 @@ if __name__ == "__main__":
     )
 
     sys.path.append("../")
-    from libritts_prepare import prepare_libritts
+    from ljspeech_prepare import prepare_ljspeech
 
     sb.utils.distributed.run_on_main(
-        prepare_libritts,
+        prepare_ljspeech,
         kwargs={
             "data_folder": hparams["data_folder"],
-            "save_json_train": hparams["train_json"],
-            "save_json_valid": hparams["valid_json"],
-            "save_json_test": hparams["test_json"],
-            "sample_rate": hparams["sample_rate"],
+            "save_folder": hparams["save_folder"],
+            "splits": hparams["splits"],
             "split_ratio": hparams["split_ratio"],
         },
     )

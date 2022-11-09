@@ -53,8 +53,7 @@ from speechbrain.utils.data_utils import batch_pad_right
 import pickle
 import random
 from itertools import combinations
-# from speechbrain.pretrained import GraphemeToPhoneme
-from text_to_sequence import text_to_sequence
+from speechbrain.utils.text_to_sequence import text_to_sequence
 
 
 class LinearNorm(torch.nn.Module):
@@ -1801,13 +1800,12 @@ class TextMelCollate:
       speaker_embeddings_pickle,
       n_random_uttrances,
       text_cleaners,
-      n_frames_per_step=1,
-      device="cpu"):
+      n_frames_per_step=1
+      ):
         self.n_frames_per_step = n_frames_per_step
         self.speaker_embeddings_pickle = speaker_embeddings_pickle
         self.n_random_uttrances = n_random_uttrances
         self.text_cleaners = text_cleaners
-        # self.g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p", run_opts={"device":device})
         
     # TODO: Make this more intuitive, use the pipeline
     def __call__(self, batch):
