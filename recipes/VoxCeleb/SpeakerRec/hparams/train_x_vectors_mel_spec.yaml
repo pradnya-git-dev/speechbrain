@@ -41,7 +41,7 @@ shuffle: True
 random_chunk: True
 
 # Feature parameters
-hop_length: 256
+hop_length: 64
 win_length: 1024
 n_mel_channels: 80
 n_fft: 1024
