@@ -8,12 +8,16 @@ import os
 import torchaudio
 from speechbrain.pretrained import EncoderClassifier
 
+from speechbrain.pretrained import GraphemeToPhoneme
+import torch
+
 DEVICE = "cuda:0"
 
-INF_SAMPLE_DIR = "/content/libritts_data_inference_22050"
+INF_SAMPLE_DIR = "/content/ljspeech_train_samples_22050"
 ORIGINAL_AUDIO_SR = 22050
 EXP_AUDIO_SR = 16000
 SPK_EMB_SR = 16000
+PHONEME_INPUT = True
 
 
 def dynamic_range_compression(x, C=1, clip_val=1e-5):
@@ -91,6 +95,8 @@ def mel_spectogram_exp(
     return mel
 
 
+g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p", run_opts={"device":DEVICE})
+
 spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb",
                                                  run_opts={"device": DEVICE})
                                                  
@@ -98,12 +104,11 @@ spk_emb_resampler = Resample(orig_freq=ORIGINAL_AUDIO_SR, new_freq=SPK_EMB_SR)
 mel_spec_resampler = Resample(orig_freq=ORIGINAL_AUDIO_SR, new_freq=EXP_AUDIO_SR)
 
 # Intialize TTS (tacotron2) and Vocoder (HiFIGAN)
-tacotron2_ms = Tacotron2MS.from_hparams(source="/content/drive/MyDrive/tacotron2/exp2_utterance_invariance/exp2_1_random_utterance/exp2_1_1_tacotron2_ecapa/libritts_dev_clean_sr16000_e100",
-                                        hparams_file="/content/speechbrain/recipes/LibriTTS/TTS/inference_samples_generation/tacotron2_inf_hparams.yaml",
+tacotron2_ms = Tacotron2MS.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/TTS/exp3_g2p/exp31_spk_emb/exp311_tacotron2_ecapa/ljspeech_sr16000_e100",
+                                        hparams_file="/content/speechbrain/recipes/LibriTTS/TTS/exp3_g2p/exp31_spk_emb/exp311_tacotron2_ecapa/tacotron2_inf_hparams.yaml",
                                         run_opts={"device": DEVICE})
 
-hifi_gan = HIFIGAN.from_hparams(source="/content/drive/MyDrive/hifigan/ljspeech_resampled_16",
-                                hparams_file="/content/speechbrain/recipes/LibriTTS/TTS/inference_samples_generation/hifigan_inf_hparams.yaml",
+hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-libritts-16kHz",
                                 run_opts={"device": DEVICE})
 
 extension = [".wav"]
@@ -137,6 +142,14 @@ for wav_file in wav_list:
     if original_text.__contains__("}"):
       original_text.replace("}", "")
     text_list.append(original_text)
+
+  if PHONEME_INPUT:
+    print(original_text)
+    original_text_phoneme_list = g2p(original_text)
+    original_text = " ".join(original_text_phoneme_list)
+    original_text = "{" + original_text + "}"
+    print(original_text)
+
 
   print("len(text_list): ", len(text_list))
   print("spk_embs.shape: ", spk_embs.shape)
