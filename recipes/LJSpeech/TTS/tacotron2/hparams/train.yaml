@@ -15,7 +15,7 @@ __set_seed: !apply:torch.manual_seed [!ref <seed>]
 output_folder: !ref ./results/tacotron2/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
-epochs: 750
+epochs: 50
 keep_checkpoint_interval: 50
 
 ###################################
@@ -58,7 +58,7 @@ text_cleaners: ['english_cleaners']
 ################################
 # Audio Parameters             #
 ################################
-sample_rate: 22050
+sample_rate: 16000
 hop_length: 256
 win_length: 1024
 n_mel_channels: 80
