@@ -22,6 +22,7 @@ import speechbrain as sb
 import sys
 import logging
 from hyperpyyaml import load_hyperpyyaml
+from speechbrain.utils.text_to_sequence import text_to_sequence
 from speechbrain.utils.data_utils import scalarize
 import os
 from speechbrain.pretrained import HIFIGAN
@@ -413,14 +414,25 @@ def dataio_prepare(hparams):
     # Define audio pipeline:
 
     # import pdb; pdb.set_trace()
-    @sb.utils.data_pipeline.takes("wav")
-    @sb.utils.data_pipeline.provides("mel")
-    def audio_pipeline(wav):
-        
-        audio = sb.dataio.dataio.read_audio(wav)
-        mel = hparams["mel_spectogram"](audio=audio)
+    @sb.utils.data_pipeline.takes("wav", "label_phoneme")
+    @sb.utils.data_pipeline.provides("mel_text_pair")
+    def audio_pipeline(wav, label_phoneme):
 
-        return mel
+        label_phoneme = "{" + label_phoneme + "}"
+
+        try:
+          text_seq = torch.IntTensor(
+              text_to_sequence(label_phoneme, hparams["text_cleaners"])
+          )
+
+          audio = sb.dataio.dataio.read_audio(wav)
+          mel = hparams["mel_spectogram"](audio=audio)
+
+          len_text = len(text_seq)
+
+          return text_seq, mel, len_text
+        except Exception as ex:
+          print("FIRST EXCEPTION: ", ex)
 
     datasets = {}
     data_info = {
@@ -428,14 +440,18 @@ def dataio_prepare(hparams):
         "valid": hparams["valid_json"],
         "test": hparams["test_json"],
     }
+    try:
 
-    for dataset in hparams["splits"]:
-        datasets[dataset] = sb.dataio.dataset.DynamicItemDataset.from_json(
-            json_path=data_info[dataset],
-            replacements={"data_root": hparams["data_folder"]},
-            dynamic_items=[audio_pipeline],
-            output_keys=["mel", "wav", "label", "label_phoneme", "uttid"],
-        )
+      for dataset in hparams["splits"]:
+          datasets[dataset] = sb.dataio.dataset.DynamicItemDataset.from_json(
+              json_path=data_info[dataset],
+              replacements={"data_root": hparams["data_folder"]},
+              dynamic_items=[audio_pipeline],
+              output_keys=["mel_text_pair", "wav", "label", "uttid"],
+          )
+    except Exception as ex:
+      print("SECOND EXCEPTION: ", ex)
+
     return datasets
 
 
@@ -487,6 +503,11 @@ if __name__ == "__main__":
 
     datasets = dataio_prepare(hparams)
 
+    # Load pretrained model if pretrained_separator is present in the yaml
+    if "pretrained_separator" in hparams:
+        hparams["pretrained_separator"].collect_files()
+        hparams["pretrained_separator"].load_collected()
+
     # Brain class initialization
     tacotron2_brain = Tacotron2Brain(
         modules=hparams["modules"],
@@ -495,6 +516,11 @@ if __name__ == "__main__":
         run_opts=run_opts,
         checkpointer=hparams["checkpointer"],
     )
+
+    # re-initialize the parameters if we don't use a pretrained model
+    if "pretrained_separator" not in hparams:
+        for module in tacotron2_brain.modules.values():
+            tacotron2_brain.reset_layer_recursively(module)
 
     if hparams["use_tensorboard"]:
         tacotron2_brain.tensorboard_logger = sb.utils.train_logger.TensorboardLogger(

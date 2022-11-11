@@ -22,6 +22,7 @@ import speechbrain as sb
 import sys
 import logging
 from hyperpyyaml import load_hyperpyyaml
+from speechbrain.utils.text_to_sequence import text_to_sequence
 from speechbrain.utils.data_utils import scalarize
 import os
 from speechbrain.pretrained import HIFIGAN
@@ -413,14 +414,22 @@ def dataio_prepare(hparams):
     # Define audio pipeline:
 
     # import pdb; pdb.set_trace()
-    @sb.utils.data_pipeline.takes("wav")
-    @sb.utils.data_pipeline.provides("mel")
-    def audio_pipeline(wav):
-        
+    @sb.utils.data_pipeline.takes("wav", "label_phoneme")
+    @sb.utils.data_pipeline.provides("mel_text_pair")
+    def audio_pipeline(wav, label_phoneme):
+
+        label_phoneme = "{" + label_phoneme + "}"
+
+        text_seq = torch.IntTensor(
+            text_to_sequence(label_phoneme, hparams["text_cleaners"])
+        )
+
         audio = sb.dataio.dataio.read_audio(wav)
         mel = hparams["mel_spectogram"](audio=audio)
 
-        return mel
+        len_text = len(text_seq)
+
+        return text_seq, mel, len_text
 
     datasets = {}
     data_info = {
@@ -428,14 +437,16 @@ def dataio_prepare(hparams):
         "valid": hparams["valid_json"],
         "test": hparams["test_json"],
     }
+    
 
     for dataset in hparams["splits"]:
         datasets[dataset] = sb.dataio.dataset.DynamicItemDataset.from_json(
             json_path=data_info[dataset],
             replacements={"data_root": hparams["data_folder"]},
             dynamic_items=[audio_pipeline],
-            output_keys=["mel", "wav", "label", "label_phoneme", "uttid"],
+            output_keys=["mel_text_pair", "wav", "label", "uttid"],
         )
+
     return datasets
 
 
@@ -468,6 +479,8 @@ if __name__ == "__main__":
             "save_folder": hparams["save_folder"],
             "splits": hparams["splits"],
             "split_ratio": hparams["split_ratio"],
+            "seed": hparams["seed"],
+            "skip_prep": hparams["skip_prep"],
         },
     )
 

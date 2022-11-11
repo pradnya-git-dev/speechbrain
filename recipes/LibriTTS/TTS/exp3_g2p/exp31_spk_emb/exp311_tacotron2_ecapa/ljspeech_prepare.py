@@ -26,6 +26,7 @@ VALID_JSON = "valid.json"
 TEST_JSON = "test.json"
 WAVS = "wavs"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p", run_opts={"device":DEVICE})
 
 def prepare_ljspeech(
     data_folder,
@@ -244,7 +245,6 @@ def prepare_json(seg_lst, json_file, wavs_folder, csv_reader):
     None
     """
 
-    g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p", run_opts={"device":DEVICE})
     json_dict = {}
 
     # seg_lst = seg_lst[:int(len(seg_lst)/10)]

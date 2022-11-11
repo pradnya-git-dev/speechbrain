@@ -52,8 +52,6 @@ from speechbrain.processing.speech_augmentation import Resample
 from speechbrain.utils.data_utils import batch_pad_right
 import pickle
 import random
-from itertools import combinations
-from speechbrain.utils.text_to_sequence import text_to_sequence
 
 
 class LinearNorm(torch.nn.Module):
@@ -1790,12 +1788,9 @@ class TextMelCollate:
 
     def __init__(self,
       speaker_embeddings_pickle,
-      text_cleaners,
-      n_frames_per_step=1
-      ):
+      n_frames_per_step=1,):
         self.n_frames_per_step = n_frames_per_step
         self.speaker_embeddings_pickle = speaker_embeddings_pickle
-        self.text_cleaners = text_cleaners
         
     # TODO: Make this more intuitive, use the pipeline
     def __call__(self, batch):
@@ -1808,15 +1803,10 @@ class TextMelCollate:
 
         # TODO: Remove for loops and this dirty hack
         raw_batch = list(batch)
-        label_list = list()
         for i in range(
             len(batch)
         ):  # the pipline return a dictionary wiht one elemnent
-            label_phoneme = "{" + " ".join(batch[i]["label_phoneme"]) + "}"
-            label_phoneme_seq = torch.IntTensor(
-                text_to_sequence(label_phoneme, self.text_cleaners)
-            )
-            batch[i] = (label_phoneme_seq, batch[i]["mel"], len(label_phoneme_seq), batch[i]["uttid"])
+            batch[i] = batch[i]["mel_text_pair"]
 
         # Right zero-pad all one-hot text sequences to max input length
 
@@ -1846,7 +1836,6 @@ class TextMelCollate:
         gate_padded = torch.FloatTensor(len(batch), max_target_len)
         gate_padded.zero_()
         output_lengths = torch.LongTensor(len(batch))
-
         labels, wavs, spk_embs_list = [], [], []
         with open(self.speaker_embeddings_pickle, "rb") as speaker_embeddings_file:
             speaker_embeddings = pickle.load(speaker_embeddings_file)
@@ -1859,14 +1848,15 @@ class TextMelCollate:
             output_lengths[i] = mel.size(1)
             labels.append(raw_batch[idx]["label"])
             wavs.append(raw_batch[idx]["wav"])
-            spk_embs_list.append(speaker_embeddings[batch[idx][3]])
-        
+
+            spk_emb = speaker_embeddings[raw_batch[idx]["uttid"]]
+            spk_embs_list.append(spk_emb)
+
         spk_embs = torch.stack(spk_embs_list)
 
         # count number of items - characters in text
         len_x = [x[2] for x in batch]
         len_x = torch.Tensor(len_x)
-        
         return (
             text_padded,
             input_lengths,
