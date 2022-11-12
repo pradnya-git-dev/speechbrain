@@ -100,25 +100,22 @@ gate_loss_weight: 1.0
 train_dataloader_opts:
   batch_size: !ref <batch_size>
   drop_last: False  #True #False
-  num_workers: 0
+  num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <train_speaker_embeddings_pickle>
-    text_cleaners: !ref <text_cleaners>
-    
+
 valid_dataloader_opts:
   batch_size: !ref <batch_size>
-  num_workers: 0
+  num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <valid_speaker_embeddings_pickle>
-    text_cleaners: !ref <text_cleaners>
-    
+
 test_dataloader_opts:
   batch_size: !ref <batch_size>
-  num_workers: 0
+  num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <test_speaker_embeddings_pickle>
-    text_cleaners: !ref <text_cleaners>
-    
+
 ################################
 # Model Parameters and model   #
 ################################
@@ -211,7 +208,7 @@ criterion: !new:MSTacotron2.Loss
   guided_attention_sigma: !ref <guided_attention_sigma>
   guided_attention_scheduler: !ref <guided_attention_scheduler>
   guided_attention_hard_stop: !ref <guided_attention_hard_stop>
-  
+
 modules:
   model: !ref <model>
 
@@ -244,7 +241,7 @@ checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
     model: !ref <model>
     counter: !ref <epoch_counter>
     scheduler: !ref <lr_annealing>
-    
+
 
 progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
   output_path: !ref <progress_sample_path>
@@ -259,4 +256,4 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
     model: !ref <model>
   paths:
     # model: /workspace/mstts_saved_models/tacotron2_ecapa_ljspeech_16000/model.ckpt
-    model: /content/drive/MyDrive/tacotron2/sb_exp16_t_ecapa_16/libritts_dev_clean_sr_16000_e23/model.ckpt
+    model: /content/drive/MyDrive/mstts_saved_models/TTS/exp1_spk_emb/exp11_tacotron2_ecapa/libritts_dev_clean_sr16000_e28/model.ckpt

@@ -9,13 +9,15 @@ import torchaudio
 import torch
 from speechbrain.pretrained import GraphemeToPhoneme
 
-
 logger = logging.getLogger(__name__)
 # Change the entries in the following "LIBRITTS_SUBSETS" to modify the downloaded subsets for LibriTTS
 # Used subsets ["dev-clean", "train-clean-100", "train-clean-360"]
 LIBRITTS_SUBSETS = ["dev-clean"]
 LIBRITTS_URL_PREFIX = "https://www.openslr.org/resources/60/"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+g2p = GraphemeToPhoneme.from_hparams(
+    "speechbrain/soundchoice-g2p", run_opts={"device": DEVICE}
+)
 
 
 def prepare_libritts(
@@ -24,7 +26,7 @@ def prepare_libritts(
     save_json_valid,
     save_json_test,
     sample_rate,
-    split_ratio=[80, 10, 10]
+    split_ratio=[80, 10, 10],
 ):
     """
     Prepares the json files for the LibriTTS dataset.
@@ -87,8 +89,8 @@ def prepare_libritts(
 
         # Collects all files matching the provided extension
         wav_list.extend(get_all_files(subset_folder, match_and=extension))
-        wav_list = wav_list[:50]
-        
+        wav_list = wav_list[:100]
+
     logger.info(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
     )
@@ -117,7 +119,6 @@ def create_json(wav_list, json_file, sample_rate):
     json_dict = {}
     # Creates a resampler object with orig_freq set to LibriTTS sample rate (24KHz) and  new_freq set to SAMPLERATE
     resampler = Resample(orig_freq=24000, new_freq=sample_rate)
-    g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p", run_opts={"device":DEVICE})
 
     # Processes all the wav files in the list
     for wav_file in wav_list:
@@ -230,5 +231,11 @@ def check_folders(*folders):
 
 if __name__ == "__main__":
     prepare_libritts(
-        "/content/libritts_data_sr_16000", "train.json", "valid.json", "test.json", 16000, [80, 10, 10], True
+        "/content/libritts_data_sr_16000",
+        "train.json",
+        "valid.json",
+        "test.json",
+        16000,
+        [80, 10, 10],
+        True,
     )
