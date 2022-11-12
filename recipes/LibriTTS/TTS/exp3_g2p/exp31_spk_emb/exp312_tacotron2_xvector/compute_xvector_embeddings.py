@@ -16,7 +16,7 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
     ---------
     input_filepaths : list
     A list of paths to the JSON files to be processed
-    output_file_path : list
+    output_file_paths : list
     A list of paths to the output pickle files corrsponding to the input JSON files
     data_folder : str
     Path to the folder where LibriTTS data is stored
