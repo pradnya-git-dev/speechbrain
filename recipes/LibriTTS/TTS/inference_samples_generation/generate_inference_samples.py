@@ -13,11 +13,11 @@ import torch
 
 DEVICE = "cuda:0"
 
-INF_SAMPLE_DIR = "/content/ljspeech_train_samples_22050"
-ORIGINAL_AUDIO_SR = 22050
+INF_SAMPLE_DIR = "/content/libritts_test_clean_subset_sr24000"
+ORIGINAL_AUDIO_SR = 24000
 EXP_AUDIO_SR = 16000
 SPK_EMB_SR = 16000
-PHONEME_INPUT = True
+PHONEME_INPUT = False
 
 
 def dynamic_range_compression(x, C=1, clip_val=1e-5):
@@ -104,8 +104,8 @@ spk_emb_resampler = Resample(orig_freq=ORIGINAL_AUDIO_SR, new_freq=SPK_EMB_SR)
 mel_spec_resampler = Resample(orig_freq=ORIGINAL_AUDIO_SR, new_freq=EXP_AUDIO_SR)
 
 # Intialize TTS (tacotron2) and Vocoder (HiFIGAN)
-tacotron2_ms = Tacotron2MS.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/TTS/exp3_g2p/exp31_spk_emb/exp311_tacotron2_ecapa/ljspeech_sr16000_e100",
-                                        hparams_file="/content/speechbrain/recipes/LibriTTS/TTS/exp3_g2p/exp31_spk_emb/exp311_tacotron2_ecapa/tacotron2_inf_hparams.yaml",
+tacotron2_ms = Tacotron2MS.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/TTS/exp1_spk_emb/exp11_tacotron2_ecapa/ljspeech_sr16000_e500",
+                                        hparams_file="/content/speechbrain/recipes/LibriTTS/TTS/exp1_spk_emb/exp11_tacotron2_ecapa/tacotron2_inf_hparams.yaml",
                                         run_opts={"device": DEVICE})
 
 hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-libritts-16kHz",
@@ -182,6 +182,13 @@ for wav_file in wav_list:
   torchaudio.save(synthesized_audio_path, waveform_ms.squeeze(1).cpu(), EXP_AUDIO_SR)
 
   common_phrase = "Mary had a little lamb."
+  if PHONEME_INPUT:
+    print(common_phrase)
+    common_phrase_phoneme_list = g2p(common_phrase)
+    common_phrase = " ".join(common_phrase_phoneme_list)
+    common_phrase = "{" + common_phrase + "}"
+    print(common_phrase)
+
   mel_output_cp, mel_length_ms, alignment_ms = tacotron2_ms.encode_text(common_phrase, spk_embs)
   waveform_cp = hifi_gan.decode_batch(mel_output_cp)
   print("mel_output_ms.shape: ", mel_output_ms.shape)
