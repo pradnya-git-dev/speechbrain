@@ -228,13 +228,3 @@ def check_folders(*folders):
     return True
 
 
-if __name__ == "__main__":
-    prepare_libritts(
-        "/content/libritts_data_sr_16000",
-        "train.json",
-        "valid.json",
-        "test.json",
-        16000,
-        [80, 10, 10],
-        True,
-    )
