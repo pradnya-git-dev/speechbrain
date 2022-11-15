@@ -319,10 +319,13 @@ if __name__ == "__main__":
         params = load_hyperpyyaml(fin, overrides)
 
     # Download verification list (to exlude verification sentences from train)
-    veri_file_path = os.path.join(
-        params["save_folder"], os.path.basename(params["verification_file"])
-    )
-    download_file(params["verification_file"], veri_file_path)
+    if "verification_file_path" in params:
+      veri_file_path = params["verification_file_path"]
+    else:
+      veri_file_path = os.path.join(
+          params["save_folder"], os.path.basename(params["verification_file"])
+      )
+      download_file(params["verification_file"], veri_file_path)
 
     from voxceleb_prepare import prepare_voxceleb  # noqa E402
 
