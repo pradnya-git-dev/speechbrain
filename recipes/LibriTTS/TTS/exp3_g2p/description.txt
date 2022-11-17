@@ -1,8 +1,0 @@
-# Experiment description:
-1. Using phonemes as input instead of text
-# Models used:
-1. speechbrain/soundchoice-g2p
-2. speechbrain/tts-tacotron2-ljspeech
-# Dataset:
-1. LJSpeech
-2. LibriTTS (dev-clean)
