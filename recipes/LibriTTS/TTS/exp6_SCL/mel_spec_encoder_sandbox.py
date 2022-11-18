@@ -1,4 +1,4 @@
-from pretrained_interfaces import MelSpectrogramEncoder
+from spk_emb_pretrained_interfaces import MelSpectrogramEncoder
 import torch
 import torchaudio
 from speechbrain.processing.speech_augmentation import Resample

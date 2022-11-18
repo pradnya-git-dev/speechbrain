@@ -2854,7 +2854,11 @@ class MelSpectrogramEncoder(Pretrained):
         results = self.encode_batch(batch, rel_length)
         return results
 
-    def encode_batch(self, mel_specs, lens):
+    def encode_batch(self, mel_specs, lens=None):
+
+        # Assign full length if lens is not assigned
+        if lens is None:
+            lens = torch.ones(mel_specs.shape[0], device=self.device)
         
         mel_specs, lens = mel_specs.to(self.device), lens.to(self.device)
         mel_specs = torch.transpose(mel_specs, 1, 2)
