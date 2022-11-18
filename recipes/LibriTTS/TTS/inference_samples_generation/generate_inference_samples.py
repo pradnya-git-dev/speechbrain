@@ -13,8 +13,8 @@ import torch
 
 DEVICE = "cuda:0"
 
-INF_SAMPLE_DIR = "/content/libritts_test_clean_subset_sr24000"
-ORIGINAL_AUDIO_SR = 24000
+INF_SAMPLE_DIR = "/content/ljspeech_test_subset_sr22050"
+ORIGINAL_AUDIO_SR = 22050
 EXP_AUDIO_SR = 16000
 SPK_EMB_SR = 16000
 PHONEME_INPUT = False
@@ -97,15 +97,15 @@ def mel_spectogram_exp(
 
 g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p", run_opts={"device":DEVICE})
 
-spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb",
+spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb",
                                                  run_opts={"device": DEVICE})
                                                  
 spk_emb_resampler = Resample(orig_freq=ORIGINAL_AUDIO_SR, new_freq=SPK_EMB_SR)
 mel_spec_resampler = Resample(orig_freq=ORIGINAL_AUDIO_SR, new_freq=EXP_AUDIO_SR)
 
 # Intialize TTS (tacotron2) and Vocoder (HiFIGAN)
-tacotron2_ms = Tacotron2MS.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/TTS/exp1_spk_emb/exp11_tacotron2_ecapa/ljspeech_sr16000_e500",
-                                        hparams_file="/content/speechbrain/recipes/LibriTTS/TTS/exp1_spk_emb/exp11_tacotron2_ecapa/tacotron2_inf_hparams.yaml",
+tacotron2_ms = Tacotron2MS.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/TTS/exp1_spk_emb/exp12_tacotron2_xvector/ljspeech_sr16000_e500",
+                                        hparams_file="/content/speechbrain/recipes/LibriTTS/TTS/inference_samples_generation/tacotron2_inf_hparams.yaml",
                                         run_opts={"device": DEVICE})
 
 hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-libritts-16kHz",
@@ -113,8 +113,6 @@ hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-libritts-16kHz",
 
 extension = [".wav"]
 wav_list = get_all_files(INF_SAMPLE_DIR, match_and=extension)
-
-text_list = list()
 
 for wav_file in wav_list:
 
@@ -129,10 +127,10 @@ for wav_file in wav_list:
   if ORIGINAL_AUDIO_SR != SPK_EMB_SR:
     spk_emb_signal = spk_emb_resampler(signal)
 
-  spk_embs_list = list()
-  emb = spk_emb_encoder.encode_batch(spk_emb_signal)
-  spk_embs_list.append(emb.squeeze())
-  spk_embs = torch.stack((spk_embs_list))
+  spk_emb = spk_emb_encoder.encode_batch(spk_emb_signal)
+  spk_emb = spk_emb.squeeze(0)
+
+  print("Speaker embedding shape: ", spk_emb.shape)
 
   original_text_path = os.path.join("/", *path_parts[:-1], uttid + ".original.txt")
   with open(original_text_path) as f:
@@ -141,7 +139,6 @@ for wav_file in wav_list:
       original_text.replace("{", "")
     if original_text.__contains__("}"):
       original_text.replace("}", "")
-    text_list.append(original_text)
 
   if PHONEME_INPUT:
     print(original_text)
@@ -149,10 +146,6 @@ for wav_file in wav_list:
     original_text = " ".join(original_text_phoneme_list)
     original_text = "{" + original_text + "}"
     print(original_text)
-
-
-  print("len(text_list): ", len(text_list))
-  print("spk_embs.shape: ", spk_embs.shape)
 
   if ORIGINAL_AUDIO_SR != EXP_AUDIO_SR:
     mel_spec_signal = mel_spec_resampler(signal)
@@ -175,7 +168,7 @@ for wav_file in wav_list:
   oracle_spec_wav_path = os.path.join("/", *path_parts[:-1], uttid + "_oracle_spec.wav")
   torchaudio.save(oracle_spec_wav_path, oracle_spec_wav.squeeze(1).cpu(), EXP_AUDIO_SR)
 
-  mel_output_ms, mel_length_ms, alignment_ms = tacotron2_ms.encode_text(original_text, spk_embs)
+  mel_output_ms, mel_length_ms, alignment_ms = tacotron2_ms.encode_text(original_text, spk_emb)
   waveform_ms = hifi_gan.decode_batch(mel_output_ms)
   print("mel_output_ms.shape: ", mel_output_ms.shape)
   synthesized_audio_path = os.path.join("/", *path_parts[:-1], uttid + "_synthesized.wav")
@@ -189,7 +182,7 @@ for wav_file in wav_list:
     common_phrase = "{" + common_phrase + "}"
     print(common_phrase)
 
-  mel_output_cp, mel_length_ms, alignment_ms = tacotron2_ms.encode_text(common_phrase, spk_embs)
+  mel_output_cp, mel_length_ms, alignment_ms = tacotron2_ms.encode_text(common_phrase, spk_emb)
   waveform_cp = hifi_gan.decode_batch(mel_output_cp)
   print("mel_output_ms.shape: ", mel_output_ms.shape)
   cp_audio_path = os.path.join("/", *path_parts[:-1], uttid + "_synthesized_common_phrase.wav")

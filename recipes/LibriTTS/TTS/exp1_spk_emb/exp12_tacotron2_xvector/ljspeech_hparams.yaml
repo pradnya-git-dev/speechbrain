@@ -18,6 +18,7 @@ train_log: !ref <output_folder>/train_log.txt
 epochs: 500
 keep_checkpoint_interval: 50
 use_tensorboard: True
+device: cuda:0
 
 ###################################
 # Progress Samples                #
@@ -47,6 +48,10 @@ train_json: !ref <save_folder>/train.json
 valid_json: !ref <save_folder>/valid.json
 test_json: !ref <save_folder>/test.json
 
+train_speaker_embeddings_pickle: !ref <save_folder>/train_speaker_embeddings.pickle
+valid_speaker_embeddings_pickle: !ref <save_folder>/valid_speaker_embeddings.pickle
+test_speaker_embeddings_pickle: !ref <save_folder>/test_speaker_embeddings.pickle
+
 splits: ["train", "valid"]
 split_ratio: [90, 10]
 
@@ -72,6 +77,10 @@ norm: "slaney"
 mel_scale: "slaney"
 dynamic_range_compression: True
 
+################################
+# Speaker Embedding Parameters #
+################################
+
 spk_emb_size: 512
 spk_emb_sample_rate: 16000
 
@@ -93,16 +102,19 @@ train_dataloader_opts:
   drop_last: False  #True #False
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
+    speaker_embeddings_pickle: !ref <train_speaker_embeddings_pickle>
 
 valid_dataloader_opts:
   batch_size: !ref <batch_size>
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
+    speaker_embeddings_pickle: !ref <valid_speaker_embeddings_pickle>
 
 test_dataloader_opts:
   batch_size: !ref <batch_size>
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
+    speaker_embeddings_pickle: !ref <test_speaker_embeddings_pickle>
 
 ################################
 # Model Parameters and model   #

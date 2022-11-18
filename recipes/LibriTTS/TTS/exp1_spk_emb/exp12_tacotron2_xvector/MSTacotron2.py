@@ -50,6 +50,8 @@ from speechbrain.nnet.linear import Linear
 from speechbrain.nnet.CNN import Conv1d
 from speechbrain.processing.speech_augmentation import Resample
 from speechbrain.utils.data_utils import batch_pad_right
+import pickle
+import random
 
 
 class LinearNorm(torch.nn.Module):
@@ -1409,8 +1411,10 @@ class Tacotron2(nn.Module):
             postnet_n_convolutions,
         )
 
-        self.spk_emb_pre_decoder = LinearNorm(spk_emb_size, encoder_embedding_dim)
-        
+        self.spk_emb_pre_decoder = LinearNorm(
+            spk_emb_size, encoder_embedding_dim
+        )
+
         """
         self.conv_spk_post_decoder = Conv1d(
             in_channels=spk_emb_size,
@@ -1493,7 +1497,9 @@ class Tacotron2(nn.Module):
         encoder_outputs = self.encoder(embedded_inputs, input_lengths)
 
         spk_embs = self.spk_emb_pre_decoder(spk_embs)
-        spk_embs_dec = torch.unsqueeze(spk_embs, 1).repeat(1, encoder_outputs.shape[1], 1)
+        spk_embs_dec = torch.unsqueeze(spk_embs, 1).repeat(
+            1, encoder_outputs.shape[1], 1
+        )
         encoder_outputs = (encoder_outputs + spk_embs_dec) / 2
 
         mel_outputs, gate_outputs, alignments = self.decoder(
@@ -1508,7 +1514,6 @@ class Tacotron2(nn.Module):
             output_lengths,
             alignments_dim,
         )
-
 
     def infer(self, inputs, spk_embs, input_lengths):
         """Produces outputs
@@ -1536,7 +1541,9 @@ class Tacotron2(nn.Module):
         encoder_outputs = self.encoder.infer(embedded_inputs, input_lengths)
 
         spk_embs = self.spk_emb_pre_decoder(spk_embs)
-        spk_embs_dec = torch.unsqueeze(spk_embs, 1).repeat(1, encoder_outputs.shape[1], 1)
+        spk_embs_dec = torch.unsqueeze(spk_embs, 1).repeat(
+            1, encoder_outputs.shape[1], 1
+        )
         encoder_outputs = (encoder_outputs + spk_embs_dec) / 2
 
         mel_outputs, gate_outputs, alignments, mel_lengths = self.decoder.infer(
@@ -1784,10 +1791,12 @@ class TextMelCollate:
         )
     """
 
-    def __init__(self,
-      n_frames_per_step=1):
+    def __init__(
+        self, speaker_embeddings_pickle, n_frames_per_step=1,
+    ):
         self.n_frames_per_step = n_frames_per_step
-        
+        self.speaker_embeddings_pickle = speaker_embeddings_pickle
+
     # TODO: Make this more intuitive, use the pipeline
     def __call__(self, batch):
         """Collate's training batch from normalized text and mel-spectrogram
@@ -1832,7 +1841,12 @@ class TextMelCollate:
         gate_padded = torch.FloatTensor(len(batch), max_target_len)
         gate_padded.zero_()
         output_lengths = torch.LongTensor(len(batch))
-        labels, wavs, wav_tensors_list = [], [], []
+        labels, wavs, spk_embs_list = [], [], []
+        with open(
+            self.speaker_embeddings_pickle, "rb"
+        ) as speaker_embeddings_file:
+            speaker_embeddings = pickle.load(speaker_embeddings_file)
+
         for i in range(len(ids_sorted_decreasing)):
             idx = ids_sorted_decreasing[i]
             mel = batch[idx][1]
@@ -1842,9 +1856,10 @@ class TextMelCollate:
             labels.append(raw_batch[idx]["label"])
             wavs.append(raw_batch[idx]["wav"])
 
-            audio_tensor = sb.dataio.dataio.read_audio(raw_batch[idx]["wav"])
-            wav_tensors_list.append(audio_tensor)
-        wav_tensors, wav_tensors_lens = batch_pad_right(wav_tensors_list)
+            spk_emb = speaker_embeddings[raw_batch[idx]["uttid"]]
+            spk_embs_list.append(spk_emb)
+
+        spk_embs = torch.stack(spk_embs_list)
 
         # count number of items - characters in text
         len_x = [x[2] for x in batch]
@@ -1858,8 +1873,7 @@ class TextMelCollate:
             len_x,
             labels,
             wavs,
-            wav_tensors,
-            wav_tensors_lens
+            spk_embs,
         )
 
 

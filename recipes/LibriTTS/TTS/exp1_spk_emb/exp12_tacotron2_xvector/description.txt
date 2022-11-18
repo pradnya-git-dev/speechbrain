@@ -1,1 +1,5 @@
-Files to be added
+# Experiment description:
+1. Using text input for Tacotron2
+# Dataset:
+1. LJSpeech
+2. LibriTTS (dev-clean)

@@ -18,6 +18,7 @@ train_log: !ref <output_folder>/train_log.txt
 epochs: 100
 keep_checkpoint_interval: 50
 use_tensorboard: True
+device: cuda:0
 
 ###################################
 # Progress Samples                #
@@ -46,6 +47,10 @@ data_folder: !PLACEHOLDER # e.g, /localscratch/ljspeech
 train_json: !ref <save_folder>/train.json
 valid_json: !ref <save_folder>/valid.json
 test_json: !ref <save_folder>/test.json
+
+train_speaker_embeddings_pickle: !ref <save_folder>/train_speaker_embeddings.pickle
+valid_speaker_embeddings_pickle: !ref <save_folder>/valid_speaker_embeddings.pickle
+test_speaker_embeddings_pickle: !ref <save_folder>/test_speaker_embeddings.pickle
 
 splits: ["train", "valid"]
 split_ratio: [90, 10]
@@ -84,7 +89,7 @@ spk_emb_sample_rate: 16000
 ################################
 learning_rate: 0.0001
 weight_decay: 0.000006
-batch_size: 32 #minimum 2
+batch_size: 16 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 75.0
@@ -97,16 +102,19 @@ train_dataloader_opts:
   drop_last: False  #True #False
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
+    speaker_embeddings_pickle: !ref <train_speaker_embeddings_pickle>
 
 valid_dataloader_opts:
   batch_size: !ref <batch_size>
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
+    speaker_embeddings_pickle: !ref <valid_speaker_embeddings_pickle>
 
 test_dataloader_opts:
   batch_size: !ref <batch_size>
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
+    speaker_embeddings_pickle: !ref <test_speaker_embeddings_pickle>
 
 ################################
 # Model Parameters and model   #
@@ -233,7 +241,7 @@ checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
     model: !ref <model>
     counter: !ref <epoch_counter>
     scheduler: !ref <lr_annealing>
-    
+
 
 progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
   output_path: !ref <progress_sample_path>
@@ -247,4 +255,5 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
   loadables:
     model: !ref <model>
   paths:
-    model: /workspace/mstts_saved_models/tacotron2_xvector_ljspeech_16000/model.ckpt
+    # model: /workspace/mstts_saved_models/tacotron2_text_avg_xvector_ljspeech_16000/model.ckpt
+    model: /content/drive/MyDrive/mstts_saved_models/TTS/exp1_spk_emb/exp12_tacotron2_xvector/ljspeech_sr16000_e500/model.ckpt

@@ -16,6 +16,7 @@ from speechbrain.dataio.dataio import (
     save_pkl,
 )
 
+
 logger = logging.getLogger(__name__)
 OPT_FILE = "opt_ljspeech_prepare.pkl"
 METADATA_CSV = "metadata.csv"
@@ -77,7 +78,6 @@ def prepare_ljspeech(
 
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
-
 
     # Setting ouput files
     meta_csv = os.path.join(data_folder, METADATA_CSV)
@@ -241,14 +241,18 @@ def prepare_json(seg_lst, json_file, wavs_folder, csv_reader):
     -------
     None
     """
+
     json_dict = {}
-    # seg_lst = seg_lst[:int(len(seg_lst)/50)]
-    # print("PREPARE JSON: ", json_file, len(seg_lst))
+
+    # seg_lst = seg_lst[:int(len(seg_lst)/10)]
+
     for index in seg_lst:
         id = list(csv_reader)[index][0]
         wav = os.path.join(wavs_folder, f"{id}.wav")
         label = list(csv_reader)[index][2]
+
         json_dict[id] = {
+            "uttid": id,
             "wav": wav,
             "label": label,
             "segment": True if "train" in json_file else False,
