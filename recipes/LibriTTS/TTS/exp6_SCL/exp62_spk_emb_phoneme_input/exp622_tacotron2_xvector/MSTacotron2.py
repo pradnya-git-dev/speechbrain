@@ -1711,8 +1711,9 @@ class Loss(nn.Module):
         mel_target, gate_target = targets[0], targets[1]
         mel_target.requires_grad = False
         gate_target.requires_grad = False
-        scl_spk_embs[0].requires_grad = False
-        scl_spk_embs[1].requires_grad = False
+
+        target_spk_embs, preds_spk_embs = scl_spk_embs
+        target_spk_embs.requires_grad = False
 
         gate_target = gate_target.view(-1, 1)
 
@@ -1728,9 +1729,9 @@ class Loss(nn.Module):
         )
 
         speaker_consistency_loss = self.scl_weight * self.cos_sim_loss(
-          scl_spk_embs[0],
-          scl_spk_embs[1],
-          torch.ones(len(scl_spk_embs[0])).to(scl_spk_embs[0].device)
+          target_spk_embs,
+          preds_spk_embs,
+          torch.ones(len(target_spk_embs)).to(target_spk_embs.device)
         )
 
         total_loss = mel_loss + speaker_consistency_loss + gate_loss + attn_loss
