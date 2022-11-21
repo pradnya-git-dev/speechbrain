@@ -255,5 +255,4 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
   loadables:
     model: !ref <model>
   paths:
-    model: /workspace/mstts_saved_models/tacotron2_phoneme_xvector_ljspeech_16000/model.ckpt
-    # model: /content/drive/MyDrive/mstts_saved_models/TTS/exp1_spk_emb/exp11_tacotron2_ecapa/libritts_dev_clean_sr16000_e28/model.ckpt
+    model: /workspace/mstts_saved_models/tacotron2_phoneme_film_xvector_ljspeech_16000/model.ckpt
