@@ -87,7 +87,7 @@ n_random_uttrances: 2
 ################################
 # Optimization Hyperparameters #
 ################################
-learning_rate: 0.0001
+learning_rate: 0.001
 weight_decay: 0.000006
 batch_size: 16 #minimum 2
 mask_padding: True
@@ -233,11 +233,11 @@ train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
 lr_annealing: !new:speechbrain.nnet.schedulers.IntervalScheduler
   intervals:
     - steps: 6000
-      lr: 0.00005
+      lr: 0.0005
     - steps: 8000
-      lr: 0.00003
+      lr: 0.0003
     - steps: 10000
-      lr: 0.00001
+      lr: 0.0001
 
 #checkpointer
 checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
