@@ -1,5 +1,5 @@
 # Experiment description:
-1. Using phonemes as input instead of text
+1. Using phonemes as input instead of text and using speaker consistency loss as an additional loss component
 # Models used:
 1. speechbrain/soundchoice-g2p
 2. speechbrain/tts-tacotron2-ljspeech

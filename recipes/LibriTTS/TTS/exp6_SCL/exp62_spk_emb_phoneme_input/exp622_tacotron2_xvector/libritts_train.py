@@ -55,6 +55,13 @@ class Tacotron2Brain(sb.Brain):
           source="/workspace/mstts_saved_models/xvector_mel_spec_80",
           run_opts={"device": self.device}
         )
+
+        # self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
+        #   source="/content/drive/MyDrive/ecapa_tdnn/mel_spec_input",
+        #   run_opts={"device": self.device}
+        # )
+
+        
         self.last_loss_stats = {}
         return super().on_fit_start()
 
