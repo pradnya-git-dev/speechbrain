@@ -13,11 +13,11 @@ import torch
 
 DEVICE = "cuda:0"
 
-INF_SAMPLE_DIR = "/content/ljspeech_test_subset_sr22050"
-ORIGINAL_AUDIO_SR = 22050
+INF_SAMPLE_DIR = "/content/libritts_test_clean_subset_sr24000"
+ORIGINAL_AUDIO_SR = 24000
 EXP_AUDIO_SR = 16000
 SPK_EMB_SR = 16000
-PHONEME_INPUT = False
+PHONEME_INPUT = True
 
 
 def dynamic_range_compression(x, C=1, clip_val=1e-5):
@@ -104,8 +104,8 @@ spk_emb_resampler = Resample(orig_freq=ORIGINAL_AUDIO_SR, new_freq=SPK_EMB_SR)
 mel_spec_resampler = Resample(orig_freq=ORIGINAL_AUDIO_SR, new_freq=EXP_AUDIO_SR)
 
 # Intialize TTS (tacotron2) and Vocoder (HiFIGAN)
-tacotron2_ms = Tacotron2MS.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/TTS/exp1_spk_emb/exp12_tacotron2_xvector/ljspeech_sr16000_e500",
-                                        hparams_file="/content/speechbrain/recipes/LibriTTS/TTS/inference_samples_generation/tacotron2_inf_hparams.yaml",
+tacotron2_ms = Tacotron2MS.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/TTS/exp5_FiLM_emb/exp52_spk_emb_phoneme_input/exp522_tacotron2_xvector/libritts_dev_clean_sr16000_e100",
+                                        hparams_file="/content/speechbrain/recipes/LibriTTS/TTS/exp5_FiLM_emb/exp52_spk_emb_phoneme_input/exp522_tacotron2_xvector/tacotron2_inf_hparams.yaml",
                                         run_opts={"device": DEVICE})
 
 hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-libritts-16kHz",
