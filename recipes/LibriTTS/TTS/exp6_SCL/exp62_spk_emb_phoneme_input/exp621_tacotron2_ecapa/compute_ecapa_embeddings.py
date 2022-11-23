@@ -6,11 +6,88 @@ import pickle
 import torch
 import logging
 import os
+from spk_emb_pretrained_interfaces import MelSpectrogramEncoder
 
 logger = logging.getLogger(__name__)
 
 
-def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, audio_sr, spk_emb_sr):
+def dynamic_range_compression(x, C=1, clip_val=1e-5):
+    """Dynamic range compression for audio signals
+    """
+    return torch.log(torch.clamp(x, min=clip_val) * C)
+
+
+def mel_spectogram( 
+    sample_rate,
+    hop_length,
+    win_length,
+    n_fft,
+    n_mels,
+    f_min,
+    f_max,
+    power,
+    normalized,
+    norm,
+    mel_scale,
+    compression,
+    audio,
+):
+    """calculates MelSpectrogram for a raw audio signal
+
+    Arguments
+    ---------
+    sample_rate : int
+        Sample rate of audio signal.
+    hop_length : int
+        Length of hop between STFT windows.
+    win_length : int
+        Window size.
+    n_fft : int
+        Size of FFT.
+    n_mels : int
+        Number of mel filterbanks.
+    f_min : float
+        Minimum frequency.
+    f_max : float
+        Maximum frequency.
+    power : float
+        Exponent for the magnitude spectrogram.
+    normalized : bool
+        Whether to normalize by magnitude after stft.
+    norm : str or None
+        If "slaney", divide the triangular mel weights by the width of the mel band
+    mel_scale : str
+        Scale to use: "htk" or "slaney".
+    compression : bool
+        whether to do dynamic range compression
+    audio : torch.tensor
+        input audio signal
+    """
+    from torchaudio import transforms
+
+    audio_to_mel = transforms.MelSpectrogram(
+        sample_rate=sample_rate,
+        hop_length=hop_length,
+        win_length=win_length,
+        n_fft=n_fft,
+        n_mels=n_mels,
+        f_min=f_min,
+        f_max=f_max,
+        power=power,
+        normalized=normalized,
+        norm=norm,
+        mel_scale=mel_scale,
+    ).to(audio.device)
+
+    mel = audio_to_mel(audio)
+
+    if compression:
+        mel = dynamic_range_compression(mel)
+
+    return mel
+
+
+def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, audio_sr, spk_emb_sr, mel_spec_params):
     """This function processes a JSON file to compute the speaker embeddings.
     Arguments
     ---------
@@ -32,8 +109,16 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
         return
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb",
-                                                     run_opts={"device": device})
+    # spk_emb_encoder = MelSpectrogramEncoder.from_hparams(
+    #       source="/content/drive/MyDrive/ecapa_tdnn/mel_spec_input",
+    #       run_opts={"device": device}
+    #     )
+
+    spk_emb_encoder = MelSpectrogramEncoder.from_hparams(
+          source="/workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80",
+          run_opts={"device": device}
+        )
+
     resampler = None
     resample_audio = False
     if audio_sr != spk_emb_sr:
@@ -56,7 +141,23 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
                 signal = resampler(signal)
             signal = signal.to(device)
 
-            spk_emb = spk_emb_encoder.encode_batch(signal)
+            mel_spec = mel_spectogram(
+              sample_rate=mel_spec_params["sample_rate"],
+              hop_length=mel_spec_params["hop_length"],
+              win_length=mel_spec_params["win_length"],
+              n_fft=mel_spec_params["n_fft"],
+              n_mels=mel_spec_params["n_mel_channels"],
+              f_min=mel_spec_params["mel_fmin"],
+              f_max=mel_spec_params["mel_fmax"],
+              power=mel_spec_params["power"],
+              normalized=mel_spec_params["mel_normalized"],
+              norm=mel_spec_params["norm"],
+              mel_scale=mel_spec_params["mel_scale"],
+              compression=mel_spec_params["dynamic_range_compression"],
+              audio=signal
+            )
+
+            spk_emb = spk_emb_encoder.encode_batch(mel_spec)
             spk_emb = spk_emb.squeeze()
             spk_emb = spk_emb.detach()
 

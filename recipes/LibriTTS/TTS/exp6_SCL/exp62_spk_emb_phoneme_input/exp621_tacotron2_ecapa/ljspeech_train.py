@@ -161,9 +161,9 @@ class Tacotron2Brain(sb.Brain):
         preds_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(pred_mels_postnet.detach())
         preds_spk_embs = preds_spk_embs.to(self.device, non_blocking=True).float()
         preds_spk_embs = preds_spk_embs.squeeze()
-        
-        scl_spk_embs = (target_spk_embs, preds_spk_embs)
 
+        scl_spk_embs = (target_spk_embs, preds_spk_embs)
+        
         loss_stats = self.hparams.criterion(
             predictions, targets, input_lengths, output_lengths, scl_spk_embs, self.last_epoch
         )
@@ -566,17 +566,17 @@ if __name__ == "__main__":
     )
 
     sys.path.append("../")
-    from libritts_prepare import prepare_libritts
+    from ljspeech_prepare import prepare_ljspeech
 
     sb.utils.distributed.run_on_main(
-        prepare_libritts,
+        prepare_ljspeech,
         kwargs={
             "data_folder": hparams["data_folder"],
-            "save_json_train": hparams["train_json"],
-            "save_json_valid": hparams["valid_json"],
-            "save_json_test": hparams["test_json"],
-            "sample_rate": hparams["sample_rate"],
+            "save_folder": hparams["save_folder"],
+            "splits": hparams["splits"],
             "split_ratio": hparams["split_ratio"],
+            "seed": hparams["seed"],
+            "skip_prep": hparams["skip_prep"],
         },
     )
 
@@ -612,13 +612,6 @@ if __name__ == "__main__":
 
     datasets = dataio_prepare(hparams)
 
-    """
-    # Load pretrained model if pretrained_separator is present in the yaml
-    if "pretrained_separator" in hparams:
-        hparams["pretrained_separator"].collect_files()
-        hparams["pretrained_separator"].load_collected()
-    """
-
     # Brain class initialization
     tacotron2_brain = Tacotron2Brain(
         modules=hparams["modules"],
@@ -627,13 +620,6 @@ if __name__ == "__main__":
         run_opts=run_opts,
         checkpointer=hparams["checkpointer"],
     )
-
-    """
-    # re-initialize the parameters if we don't use a pretrained model
-    if "pretrained_separator" not in hparams:
-        for module in tacotron2_brain.modules.values():
-            tacotron2_brain.reset_layer_recursively(module)
-    """
     
     if hparams["use_tensorboard"]:
         tacotron2_brain.tensorboard_logger = sb.utils.train_logger.TensorboardLogger(

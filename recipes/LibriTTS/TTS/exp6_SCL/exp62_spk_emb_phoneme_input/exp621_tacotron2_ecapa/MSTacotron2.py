@@ -1673,12 +1673,7 @@ class Loss(nn.Module):
         self.guided_attention_loss = GuidedAttentionLoss(
             sigma=guided_attention_sigma
         )
-        # self.cos_sim_loss = nn.CosineEmbeddingLoss()
-        self.cosine_sim = nn.CosineSimilarity(dim=1)
-        self.COSINE_SIM_MIN = -1
-        self.COSINE_SIM_MAX = 1
-
-
+        self.cos_sim_loss = nn.CosineEmbeddingLoss()
         self.gate_loss_weight = gate_loss_weight
         self.guided_attention_weight = guided_attention_weight
         self.guided_attention_scheduler = guided_attention_scheduler
@@ -1717,6 +1712,7 @@ class Loss(nn.Module):
 
         target_spk_embs, preds_spk_embs = scl_spk_embs
         target_spk_embs.requires_grad = False
+        preds_spk_embs = preds_spk_embs.detach()
 
         gate_target = gate_target.view(-1, 1)
 
@@ -1731,11 +1727,13 @@ class Loss(nn.Module):
             alignments, input_lengths, target_lengths, epoch
         )
 
-        # import pdb; pdb.set_trace()
-        spk_loss_tensor = self.cosine_sim(preds_spk_embs, target_spk_embs)
-        spk_loss_tensor = (spk_loss_tensor - self.COSINE_SIM_MIN) / (self.COSINE_SIM_MAX - self.COSINE_SIM_MIN)
-        speaker_consistency_loss = -(self.scl_weight * torch.sum(spk_loss_tensor))
-
+        speaker_consistency_loss = self.cos_sim_loss(
+          target_spk_embs,
+          preds_spk_embs,
+          torch.ones(len(target_spk_embs)).to(target_spk_embs.device)
+        )
+        
+        speaker_consistency_loss = self.scl_weight * speaker_consistency_loss
 
         total_loss = mel_loss + speaker_consistency_loss + gate_loss + attn_loss
         return LossStats(

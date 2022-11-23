@@ -2,7 +2,7 @@
 # Model: Tacotron2
 # Tokens: Raw characters (English text)
 # losses: Transducer
-# Training: LibriTTS
+# Training: LJSpeech
 # Authors: Georges Abous-Rjeili, Artem Ploujnikov, Yingzhi Wang
 # ############################################################################
 
@@ -87,9 +87,9 @@ spk_emb_sample_rate: 16000
 ################################
 # Optimization Hyperparameters #
 ################################
-learning_rate: 0.0001
+learning_rate: 0.001
 weight_decay: 0.000006
-batch_size: 16 #minimum 2
+batch_size: 64 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 75.0
@@ -230,11 +230,11 @@ train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
 lr_annealing: !new:speechbrain.nnet.schedulers.IntervalScheduler
   intervals:
     - steps: 6000
-      lr: 0.00005
+      lr: 0.0005
     - steps: 8000
-      lr: 0.00003
+      lr: 0.0003
     - steps: 10000
-      lr: 0.00001
+      lr: 0.0001
 
 #checkpointer
 checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
@@ -244,18 +244,8 @@ checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
     counter: !ref <epoch_counter>
     scheduler: !ref <lr_annealing>
 
-
 progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
   output_path: !ref <progress_sample_path>
   batch_sample_size: !ref <progress_batch_sample_size>
   formats:
     raw_batch: raw
-
-# If you do not want to use the pretrained separator you can simply delete pretrained_separator field.
-# pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
-#   collect_in: !ref <save_folder>
-#   loadables:
-#     model: !ref <model>
-#   paths:
-#     # model: /workspace/mstts_saved_models/tacotron2_phoneme_ecapa_ljspeech_16000/model.ckpt
-#     model: /content/drive/MyDrive/mstts_saved_models/TTS/exp3_g2p/exp31_spk_emb/exp311_tacotron2_ecapa/ljspeech_sr16000_e500/model.ckpt
