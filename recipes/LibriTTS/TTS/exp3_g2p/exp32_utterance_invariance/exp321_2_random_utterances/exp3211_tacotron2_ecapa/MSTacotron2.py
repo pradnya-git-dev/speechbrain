@@ -52,7 +52,6 @@ from speechbrain.processing.speech_augmentation import Resample
 from speechbrain.utils.data_utils import batch_pad_right
 import pickle
 import random
-from itertools import combinations
 
 
 class LinearNorm(torch.nn.Module):
@@ -1236,32 +1235,25 @@ class Decoder(nn.Module):
 
 class Tacotron2(nn.Module):
     """The Tactron2 text-to-speech model, based on the NVIDIA implementation.
-
     This class is the main entry point for the model, which is responsible
     for instantiating all submodules, which, in turn, manage the individual
     neural network layers
-
     Simplified STRUCTURE: input->word embedding ->encoder ->attention \
     ->decoder(+prenet) -> postnet ->output
-
     prenet(input is decoder previous time step) output is input to decoder
     concatenanted with the attention output
-
     Arguments
     ---------
     mask_padding: bool
         whether or not to mask pad-outputs of tacotron
-
     #mel generation parameter in data io
     n_mel_channels: int
         number of mel channels for constructing spectrogram
-
     #symbols
     n_symbols:  int=128
         number of accepted char symbols defined in textToSequence
     symbols_embedding_dim: int
         number of embeding dimension for symbols fed to nn.Embedding
-
     # Encoder parameters
     encoder_kernel_size: int
         size of kernel processing the embeddings
@@ -1270,7 +1262,6 @@ class Tacotron2(nn.Module):
     encoder_embedding_dim: int
         number of kernels in encoder, this is also the dimension
         of the bidirectional LSTM in the encoder
-
     # Attention parameters
     attention_rnn_dim: int
         input dimension
@@ -1281,7 +1272,6 @@ class Tacotron2(nn.Module):
         number of 1-D convulation filters in attention
     attention_location_kernel_size: int
         length of the 1-D convolution filters
-
     # Decoder parameters
     n_frames_per_step: int=1
         only 1 generated mel-frame per step is supported for the decoder as of now.
@@ -1295,15 +1285,12 @@ class Tacotron2(nn.Module):
         attention drop out probability
     p_decoder_dropout: float
         decoder drop  out probability
-
     gate_threshold: int
         cut off level any output probabilty above that is considered
         complete and stops genration so we have variable length outputs
     decoder_no_early_stopping: bool
         determines early stopping of decoder
         along with gate_threshold . The logical inverse of this is fed to the decoder
-
-
     #Mel-post processing network parameters
     postnet_embedding_dim: int
         number os postnet dfilters
@@ -1311,7 +1298,6 @@ class Tacotron2(nn.Module):
         1d size of posnet kernel
     postnet_n_convolutions: int
         number of convolution layers in postnet
-
     Example
     -------
     >>> import torch
@@ -1429,7 +1415,6 @@ class Tacotron2(nn.Module):
     def parse_output(self, outputs, output_lengths, alignments_dim=None):
         """
         Masks the padded part of output
-
         Arguments
         ---------
         outputs: list
@@ -1439,8 +1424,6 @@ class Tacotron2(nn.Module):
         alignments_dim: int
             the desired dimension of the alignments along the last axis
             Optional but needed for data-parallel training
-
-
         Returns
         -------
         result: tuple
@@ -1467,7 +1450,6 @@ class Tacotron2(nn.Module):
 
     def forward(self, inputs, spk_embs, alignments_dim=None):
         """Decoder forward pass for training
-
         Arguments
         ---------
         inputs: tuple
@@ -1475,7 +1457,6 @@ class Tacotron2(nn.Module):
         alignments_dim: int
             the desired dimension of the alignments along the last axis
             Optional but needed for data-parallel training
-
         Returns
         ---------
         mel_outputs: torch.Tensor
@@ -1515,16 +1496,12 @@ class Tacotron2(nn.Module):
 
     def infer(self, inputs, spk_embs, input_lengths):
         """Produces outputs
-
-
         Arguments
         ---------
         inputs: torch.tensor
             text or phonemes converted
-
         input_lengths: torch.tensor
             the lengths of input parameters
-
         Returns
         -------
         mel_outputs_postnet: torch.Tensor
@@ -1609,14 +1586,11 @@ LossStats = namedtuple(
 
 class Loss(nn.Module):
     """The Tacotron loss implementation
-
     The loss consists of an MSE loss on the spectrogram, a BCE gate loss
     and a guided attention loss (if enabled) that attempts to make the
     attention matrix diagonal
-
     The output of the moduel is a LossStats tuple, which includes both the
     total loss
-
     Arguments
     ---------
     guided_attention_sigma: float
@@ -1631,7 +1605,6 @@ class Loss(nn.Module):
     guided_attention_hard_stop: int
         The number of epochs after which guided attention will be compeltely
         turned off
-
     Example:
     >>> import torch
     >>> _ = torch.manual_seed(42)
@@ -1679,7 +1652,6 @@ class Loss(nn.Module):
         self, model_output, targets, input_lengths, target_lengths, utt_inv_loss_pairs, epoch
     ):
         """Computes the loss
-
         Arguments
         ---------
         model_output: tuple
@@ -1694,12 +1666,10 @@ class Loss(nn.Module):
         epoch: int
             the current epoch number (used for the scheduling of the guided attention
             loss) A StepScheduler is typically used
-
         Returns
         -------
         result: LossStats
             the total loss - and individual losses (mel and gate)
-
         """
         mel_target, gate_target = targets[0], targets[1]
         mel_target.requires_grad = False
@@ -1775,12 +1745,10 @@ class Loss(nn.Module):
 
 class TextMelCollate:
     """ Zero-pads model inputs and targets based on number of frames per step
-
     Arguments
     ---------
     n_frames_per_step: int
         the number of output frames per step
-
     Returns
     -------
     result: tuple
@@ -1892,6 +1860,7 @@ class TextMelCollate:
             spk_embs,
             utt_inv_loss_pairs
         )
+
 
 
 def dynamic_range_compression(x, C=1, clip_val=1e-5):

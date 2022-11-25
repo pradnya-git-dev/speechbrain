@@ -19,6 +19,7 @@ g2p = GraphemeToPhoneme.from_hparams(
     "speechbrain/soundchoice-g2p", run_opts={"device": DEVICE}
 )
 
+
 def prepare_libritts(
     data_folder,
     save_json_train,
@@ -40,13 +41,13 @@ def prepare_libritts(
         Path where the validation data specification file will be saved.
     save_json_test : str
         Path where the test data specification file will be saved.
+    sample_rate : int
+        The sample rate to be used for the dataset
     split_ratio : list
         List composed of three integers that sets split ratios for train, valid,
         and test sets, respectively. For instance split_ratio=[80, 10, 10] will
         assign 80% of the sentences to training, 10% for validation, and 10%
         for test.
-    sample_rate : int
-        The sample rate to be used for the dataset
     Example
     -------
     >>> data_folder = '/path/to/mini_librispeech'
@@ -88,7 +89,7 @@ def prepare_libritts(
 
         # Collects all files matching the provided extension
         wav_list.extend(get_all_files(subset_folder, match_and=extension))
-
+        
     logger.info(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
     )
@@ -225,9 +226,3 @@ def check_folders(*folders):
         if not os.path.exists(folder):
             return False
     return True
-
-
-if __name__ == "__main__":
-    prepare_libritts(
-        "libritts_data", "train.json", "valid.json", "test.json", 16000
-    )
