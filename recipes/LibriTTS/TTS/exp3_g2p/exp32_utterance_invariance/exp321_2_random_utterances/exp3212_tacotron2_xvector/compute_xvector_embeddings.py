@@ -5,7 +5,6 @@ import torchaudio
 import pickle
 import torch
 import logging
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -27,14 +26,10 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
   """
 
 
-  # Checks if this phase is already done (if so, skips it)
-  if skip(output_file_paths):
-      logger.info("Preparation completed in previous run, skipping.")
-      return
-
 
   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
   spk_emb_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", 
+                                                   savedir="pretrained_models/spkrec-xvect-voxceleb",
                                                    run_opts={"device":device})
   resampler = None
   resample_audio = False
@@ -42,7 +37,6 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
     resampler = Resample(orig_freq=audio_sr, new_freq=spk_emb_sr)
     resample_audio = True
     logger.info(f"Audio file sample rate is {audio_sr} and speaker embedding sample rate is {spk_emb_sr}.\nResampling audio files to match the sample rate required for speaker embeddings.")
-
 
   for i in range(len(input_filepaths)):
     logger.info(f"Creating {output_file_paths[i]}.")
@@ -70,23 +64,9 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
 
     with open(output_file_paths[i], "wb") as output_file:
       pickle.dump(speaker_embeddings, output_file, protocol=pickle.HIGHEST_PROTOCOL)
-  
+
     logger.info(f"Created {output_file_paths[i]}.")
 
-def skip(filepaths):
-    """
-    Detects if the data preparation has been already done.
-    If the preparation has been done, we can skip it.
-    Returns
-    -------
-    bool
-        if True, the preparation phase can be skipped.
-        if False, it must be done.
-    """
-    for filepath in filepaths:
-        if not os.path.isfile(filepath):
-            return False
-    return True
 
 if __name__=="__main__":
   compute_speaker_embeddings(["train.json"], 
