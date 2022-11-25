@@ -31,6 +31,7 @@ from speechbrain.pretrained import EncoderClassifier
 import pickle
 import random
 
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 logger = logging.getLogger(__name__)
 
 
