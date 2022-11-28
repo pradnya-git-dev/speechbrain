@@ -52,15 +52,15 @@ class Tacotron2Brain(sb.Brain):
             savedir="tmpdir_vocoder",
             run_opts={"device": self.device},
         )
-        self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
-          source="/workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80",
-          run_opts={"device": self.device}
-        )
-
         # self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
-        #   source="/content/drive/MyDrive/ecapa_tdnn/mel_spec_input",
+        #   source="/workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80",
         #   run_opts={"device": self.device}
         # )
+
+        self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
+          source="/content/drive/MyDrive/ecapa_tdnn/mel_spec_input",
+          run_opts={"device": self.device}
+        )
         self.last_loss_stats = {}
         return super().on_fit_start()
 
@@ -612,12 +612,12 @@ if __name__ == "__main__":
 
     datasets = dataio_prepare(hparams)
 
-    """
+    
     # Load pretrained model if pretrained_separator is present in the yaml
     if "pretrained_separator" in hparams:
         hparams["pretrained_separator"].collect_files()
         hparams["pretrained_separator"].load_collected()
-    """
+    
 
     # Brain class initialization
     tacotron2_brain = Tacotron2Brain(
@@ -628,12 +628,12 @@ if __name__ == "__main__":
         checkpointer=hparams["checkpointer"],
     )
 
-    """
+    
     # re-initialize the parameters if we don't use a pretrained model
     if "pretrained_separator" not in hparams:
         for module in tacotron2_brain.modules.values():
             tacotron2_brain.reset_layer_recursively(module)
-    """
+    
     
     if hparams["use_tensorboard"]:
         tacotron2_brain.tensorboard_logger = sb.utils.train_logger.TensorboardLogger(

@@ -1411,10 +1411,10 @@ class Tacotron2(nn.Module):
             postnet_n_convolutions,
         )
 
-        self.spk_emb_pre_decoder = LinearNorm(
-            spk_emb_size, encoder_embedding_dim
-        )
-
+        # self.spk_emb_pre_decoder = LinearNorm(spk_emb_size, encoder_embedding_dim)
+        self.ms_h = LinearNorm(spk_emb_size, encoder_embedding_dim)
+        self.ms_g = LinearNorm(spk_emb_size, encoder_embedding_dim)
+        
         """
         self.conv_spk_post_decoder = Conv1d(
             in_channels=spk_emb_size,
@@ -1496,11 +1496,18 @@ class Tacotron2(nn.Module):
         embedded_inputs = self.embedding(inputs).transpose(1, 2)
         encoder_outputs = self.encoder(embedded_inputs, input_lengths)
 
-        spk_embs = self.spk_emb_pre_decoder(spk_embs)
-        spk_embs_dec = torch.unsqueeze(spk_embs, 1).repeat(
-            1, encoder_outputs.shape[1], 1
-        )
-        encoder_outputs = (encoder_outputs + spk_embs_dec) / 2
+        # spk_embs = self.spk_emb_pre_decoder(spk_embs)
+        # spk_embs_dec = torch.unsqueeze(spk_embs, 1).repeat(1, encoder_outputs.shape[1], 1)
+        # encoder_outputs = (encoder_outputs + spk_embs_dec) / 2
+        
+        spk_embs_h = self.ms_h(spk_embs)
+        spk_embs_h = torch.unsqueeze(spk_embs_h, 1).repeat(1, encoder_outputs.shape[1], 1)
+        encoder_outputs = encoder_outputs * spk_embs_h
+
+        spk_embs_g = self.ms_g(spk_embs)
+        spk_embs_g = torch.unsqueeze(spk_embs_g, 1).repeat(1, encoder_outputs.shape[1], 1)
+        encoder_outputs = encoder_outputs + spk_embs_g
+
 
         mel_outputs, gate_outputs, alignments = self.decoder(
             encoder_outputs, targets, memory_lengths=input_lengths
@@ -1514,6 +1521,7 @@ class Tacotron2(nn.Module):
             output_lengths,
             alignments_dim,
         )
+
 
     def infer(self, inputs, spk_embs, input_lengths):
         """Produces outputs
@@ -1540,11 +1548,17 @@ class Tacotron2(nn.Module):
         embedded_inputs = self.embedding(inputs).transpose(1, 2)
         encoder_outputs = self.encoder.infer(embedded_inputs, input_lengths)
 
-        spk_embs = self.spk_emb_pre_decoder(spk_embs)
-        spk_embs_dec = torch.unsqueeze(spk_embs, 1).repeat(
-            1, encoder_outputs.shape[1], 1
-        )
-        encoder_outputs = (encoder_outputs + spk_embs_dec) / 2
+        # spk_embs = self.spk_emb_pre_decoder(spk_embs)
+        # spk_embs_dec = torch.unsqueeze(spk_embs, 1).repeat(1, encoder_outputs.shape[1], 1)
+        # encoder_outputs = (encoder_outputs + spk_embs_dec) / 2
+
+        spk_embs_h = self.ms_h(spk_embs)
+        spk_embs_h = torch.unsqueeze(spk_embs_h, 1).repeat(1, encoder_outputs.shape[1], 1)
+        encoder_outputs = encoder_outputs * spk_embs_h
+
+        spk_embs_g = self.ms_g(spk_embs)
+        spk_embs_g = torch.unsqueeze(spk_embs_g, 1).repeat(1, encoder_outputs.shape[1], 1)
+        encoder_outputs = encoder_outputs + spk_embs_g
 
         mel_outputs, gate_outputs, alignments, mel_lengths = self.decoder.infer(
             encoder_outputs, input_lengths
@@ -1607,20 +1621,17 @@ def infer(model, text_sequences, input_lengths):
 
 
 LossStats = namedtuple(
-    "TacotronLoss", "loss mel_loss speaker_consistency_loss gate_loss attn_loss attn_weight"
+    "TacotronLoss", "loss mel_loss gate_loss attn_loss attn_weight"
 )
 
 
 class Loss(nn.Module):
     """The Tacotron loss implementation
-
     The loss consists of an MSE loss on the spectrogram, a BCE gate loss
     and a guided attention loss (if enabled) that attempts to make the
     attention matrix diagonal
-
     The output of the moduel is a LossStats tuple, which includes both the
     total loss
-
     Arguments
     ---------
     guided_attention_sigma: float
@@ -1635,7 +1646,6 @@ class Loss(nn.Module):
     guided_attention_hard_stop: int
         The number of epochs after which guided attention will be compeltely
         turned off
-
     Example:
     >>> import torch
     >>> _ = torch.manual_seed(42)
@@ -1684,7 +1694,6 @@ class Loss(nn.Module):
         self, model_output, targets, input_lengths, target_lengths, scl_spk_embs, epoch
     ):
         """Computes the loss
-
         Arguments
         ---------
         model_output: tuple
@@ -1699,12 +1708,10 @@ class Loss(nn.Module):
         epoch: int
             the current epoch number (used for the scheduling of the guided attention
             loss) A StepScheduler is typically used
-
         Returns
         -------
         result: LossStats
             the total loss - and individual losses (mel and gate)
-
         """
         mel_target, gate_target = targets[0], targets[1]
         mel_target.requires_grad = False
@@ -1744,7 +1751,6 @@ class Loss(nn.Module):
         self, alignments, input_lengths, target_lengths, epoch
     ):
         """Computes the attention loss
-
         Arguments
         ---------
         alignments: torch.Tensor
@@ -1756,7 +1762,6 @@ class Loss(nn.Module):
         epoch: int
             the current epoch number (used for the scheduling of the guided attention
             loss) A StepScheduler is typically used
-
         Returns
         -------
         attn_loss: torch.Tensor
@@ -1808,12 +1813,12 @@ class TextMelCollate:
         )
     """
 
-    def __init__(
-        self, speaker_embeddings_pickle, n_frames_per_step=1,
-    ):
+    def __init__(self,
+      speaker_embeddings_pickle,
+      n_frames_per_step=1,):
         self.n_frames_per_step = n_frames_per_step
         self.speaker_embeddings_pickle = speaker_embeddings_pickle
-
+        
     # TODO: Make this more intuitive, use the pipeline
     def __call__(self, batch):
         """Collate's training batch from normalized text and mel-spectrogram
@@ -1859,9 +1864,7 @@ class TextMelCollate:
         gate_padded.zero_()
         output_lengths = torch.LongTensor(len(batch))
         labels, wavs, spk_embs_list = [], [], []
-        with open(
-            self.speaker_embeddings_pickle, "rb"
-        ) as speaker_embeddings_file:
+        with open(self.speaker_embeddings_pickle, "rb") as speaker_embeddings_file:
             speaker_embeddings = pickle.load(speaker_embeddings_file)
 
         for i in range(len(ids_sorted_decreasing)):
@@ -1890,7 +1893,7 @@ class TextMelCollate:
             len_x,
             labels,
             wavs,
-            spk_embs,
+            spk_embs
         )
 
 

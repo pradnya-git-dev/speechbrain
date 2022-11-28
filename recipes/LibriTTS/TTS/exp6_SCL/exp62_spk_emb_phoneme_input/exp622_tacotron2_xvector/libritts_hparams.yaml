@@ -258,4 +258,4 @@ progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
 #     model: !ref <model>
 #   paths:
 #     # model: /workspace/mstts_saved_models/tacotron2_phoneme_ecapa_ljspeech_16000/model.ckpt
-#     model: /content/drive/MyDrive/mstts_saved_models/TTS/exp3_g2p/exp31_spk_emb/exp311_tacotron2_ecapa/ljspeech_sr16000_e500/model.ckpt
+#     model: /content/drive/MyDrive/mstts_saved_models/TTS/exp6_SCL/exp60_base/exp602_phoneme_film/exp6022_tacotron2_xvector/ljspeech_sr16000_e500/model.ckpt
