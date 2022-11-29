@@ -81,7 +81,7 @@ dynamic_range_compression: True
 # Speaker Embedding Parameters #
 ################################
 
-spk_emb_size: 192
+spk_emb_size: 512
 spk_emb_sample_rate: 16000
 
 ################################
@@ -255,4 +255,4 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
   loadables:
     model: !ref <model>
   paths:
-    model: /workspace/mstts_saved_models/tacotron2_phoneme_film_ecapa_ljspeech_16000/model.ckpt
+    model: /workspace/mstts_saved_models/tacotron2_phoneme_film_xvector_ljspeech_16000/model.ckpt
