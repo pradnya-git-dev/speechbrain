@@ -1700,7 +1700,7 @@ class Loss(nn.Module):
         # import pdb; pdb.set_trace()
         target_spk_embs, preds_spk_embs = scl_spk_embs
         target_spk_embs.requires_grad = False
-        # preds_spk_embs = preds_spk_embs.detach()
+        preds_spk_embs = preds_spk_embs.detach()
 
         gate_target = gate_target.view(-1, 1)
 

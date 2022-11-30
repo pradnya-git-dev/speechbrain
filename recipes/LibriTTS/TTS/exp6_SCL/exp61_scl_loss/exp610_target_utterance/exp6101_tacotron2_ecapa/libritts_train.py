@@ -52,8 +52,14 @@ class Tacotron2Brain(sb.Brain):
             run_opts={"device": self.device},
         )
 
+        # self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
+        #   source="/content/drive/MyDrive/ecapa_tdnn/mel_spec_input",
+        #   run_opts={"device": self.device},
+        #   freeze_params=True
+        # )
+
         self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
-          source="/content/drive/MyDrive/ecapa_tdnn/mel_spec_input",
+          source="/workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80",
           run_opts={"device": self.device},
           freeze_params=True
         )
@@ -152,6 +158,11 @@ class Tacotron2Brain(sb.Brain):
 
         target_mels = targets[0]
         pred_mels_postnet = predictions[1]
+
+        # import pdb; pdb.set_trace()
+        # print("self.spk_emb_mel_spec_encoder parameters:")
+        # for param in self.spk_emb_mel_spec_encoder.parameters():
+        #   print(param.data)
 
         target_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(target_mels)
         target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
@@ -587,7 +598,7 @@ if __name__ == "__main__":
             "input_filepaths": [hparams["train_json"], hparams["valid_json"]],
             "output_file_paths": [
                 hparams["train_speaker_embeddings_pickle"],
-                hparams["valid_speaker_embeddings_pickle"],
+                hparams["valid_speaker_embeddings_pickle"]
             ],
             "data_folder": hparams["data_folder"],
             "audio_sr": hparams["sample_rate"],
