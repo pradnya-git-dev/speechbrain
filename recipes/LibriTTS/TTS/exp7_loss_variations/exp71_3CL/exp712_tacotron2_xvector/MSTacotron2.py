@@ -1411,10 +1411,23 @@ class Tacotron2(nn.Module):
             postnet_n_convolutions,
         )
 
-        self.ms_h = LinearNorm(spk_emb_size, encoder_embedding_dim)
-        self.ms_g = LinearNorm(spk_emb_size, encoder_embedding_dim)
+        self.ms_film_hidden_size = int((spk_emb_size + encoder_embedding_dim) / 2)
+        self.ms_film_hidden = LinearNorm(spk_emb_size, self.ms_film_hidden_size)
+        self.ms_film_h = LinearNorm(self.ms_film_hidden_size, encoder_embedding_dim)
+        self.ms_film_g = LinearNorm(self.ms_film_hidden_size, encoder_embedding_dim)
         
-        
+        """
+        self.conv_spk_post_decoder = Conv1d(
+            in_channels=spk_emb_size,
+            out_channels=n_mel_channels,
+            kernel_size=7,
+            stride=1,
+            padding="same",
+            skip_transpose=True,
+            weight_norm=True,
+        )
+        """
+
     def parse_output(self, outputs, output_lengths, alignments_dim=None):
         """
         Masks the padded part of output
@@ -1484,12 +1497,13 @@ class Tacotron2(nn.Module):
         embedded_inputs = self.embedding(inputs).transpose(1, 2)
         encoder_outputs = self.encoder(embedded_inputs, input_lengths)
 
+        spk_embs_shared = F.relu(self.ms_film_hidden(spk_embs))
         
-        spk_embs_h = self.ms_h(spk_embs)
+        spk_embs_h = self.ms_film_h(spk_embs_shared)
         spk_embs_h = torch.unsqueeze(spk_embs_h, 1).repeat(1, encoder_outputs.shape[1], 1)
         encoder_outputs = encoder_outputs * spk_embs_h
 
-        spk_embs_g = self.ms_g(spk_embs)
+        spk_embs_g = self.ms_film_g(spk_embs_shared)
         spk_embs_g = torch.unsqueeze(spk_embs_g, 1).repeat(1, encoder_outputs.shape[1], 1)
         encoder_outputs = encoder_outputs + spk_embs_g
 
@@ -1533,12 +1547,13 @@ class Tacotron2(nn.Module):
         embedded_inputs = self.embedding(inputs).transpose(1, 2)
         encoder_outputs = self.encoder.infer(embedded_inputs, input_lengths)
 
+        spk_embs_shared = F.relu(self.ms_film_hidden(spk_embs))
         
-        spk_embs_h = self.ms_h(spk_embs)
+        spk_embs_h = self.ms_film_h(spk_embs_shared)
         spk_embs_h = torch.unsqueeze(spk_embs_h, 1).repeat(1, encoder_outputs.shape[1], 1)
         encoder_outputs = encoder_outputs * spk_embs_h
 
-        spk_embs_g = self.ms_g(spk_embs)
+        spk_embs_g = self.ms_film_g(spk_embs_shared)
         spk_embs_g = torch.unsqueeze(spk_embs_g, 1).repeat(1, encoder_outputs.shape[1], 1)
         encoder_outputs = encoder_outputs + spk_embs_g
 
