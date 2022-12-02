@@ -1618,7 +1618,7 @@ def infer(model, text_sequences, input_lengths):
 
 
 LossStats = namedtuple(
-    "TacotronLoss", "loss mel_loss gate_loss attn_loss attn_weight"
+    "TacotronLoss", "loss mel_loss mel_loss_c1 mel_loss_c2 mel_loss_c3 gate_loss attn_loss attn_weight"
 )
 
 
@@ -1673,8 +1673,8 @@ class Loss(nn.Module):
         guided_attention_weight=1.0,
         guided_attention_scheduler=None,
         guided_attention_hard_stop=None,
-        c2_weight=1.0,
-        c3_weight=1.0 
+        mel_loss_c2_weight=1.0,
+        mel_loss_c3_weight=1.0 
     ):
         super().__init__()
         if guided_attention_weight == 0:
@@ -1689,8 +1689,8 @@ class Loss(nn.Module):
         self.guided_attention_weight = guided_attention_weight
         self.guided_attention_scheduler = guided_attention_scheduler
         self.guided_attention_hard_stop = guided_attention_hard_stop
-        self.c2_weight = c2_weight
-        self.c3_weight = c3_weight
+        self.c2_weight = mel_loss_c2_weight
+        self.c3_weight = mel_loss_c3_weight
 
     def forward(
         self, model_output, targets, input_lengths, target_lengths, epoch
@@ -1756,7 +1756,7 @@ class Loss(nn.Module):
         )
         total_loss = mel_loss + gate_loss + attn_loss
         return LossStats(
-            total_loss, mel_loss, gate_loss, attn_loss, attn_weight
+            total_loss, mel_loss, mel_loss_c1, mel_loss_c2, mel_loss_c3, gate_loss, attn_loss, attn_weight
         )
 
     def get_attention_loss(
