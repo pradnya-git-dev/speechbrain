@@ -131,10 +131,6 @@ def create_json(wav_list, json_file, sample_rate):
         signal, sig_sr = torchaudio.load(wav_file)
         signal = signal.squeeze(0)
 
-        duration = signal.shape[0] / sig_sr
-        if duration > 5:
-          print(f"Duration = {duration}. Excluding.")
-
         # Manipulates path to get relative path and uttid
         path_parts = wav_file.split(os.path.sep)
         uttid, _ = os.path.splitext(path_parts[-1])
@@ -143,8 +139,14 @@ def create_json(wav_list, json_file, sample_rate):
         # Gets the speaker-id from the utterance-id
         spk_id = uttid.split("_")[0]
 
-        if spk_id != "1993" or spk_id != "3000":
+        if spk_id == "1993" or spk_id == "3000":
+          temp_counter = temp_counter + 1
+          print(spk_id)
+        else:
           continue
+          
+        if temp_counter == 100:
+          break
 
         # Gets the path for the  text files and extracts the input text
         original_text_path = os.path.join(
@@ -176,9 +178,6 @@ def create_json(wav_list, json_file, sample_rate):
             "label_phoneme": label_phoneme,
             "segment": True if "train" in json_file else False,
         }
-        temp_counter = temp_counter + 1
-        if temp_counter == 100:
-          break
 
 
     # Writes the dictionary to the json file
