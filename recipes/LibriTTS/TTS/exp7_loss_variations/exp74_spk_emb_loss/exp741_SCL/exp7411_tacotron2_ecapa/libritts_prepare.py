@@ -89,7 +89,7 @@ def prepare_libritts(
 
         # Collects all files matching the provided extension
         wav_list.extend(get_all_files(subset_folder, match_and=extension))
-        wav_list = wav_list[:25]
+        wav_list = wav_list[:15]
         
     logger.info(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
