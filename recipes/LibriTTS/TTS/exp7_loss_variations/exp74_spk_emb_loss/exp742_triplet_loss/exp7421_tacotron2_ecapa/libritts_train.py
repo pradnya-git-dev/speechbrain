@@ -54,7 +54,7 @@ class Tacotron2Brain(sb.Brain):
         )
 
         self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
-          source="/content/drive/MyDrive/ecapa_tdnn/mel_spec_input",
+          source="/workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80",
           run_opts={"device": self.device},
           freeze_params=True
         )
@@ -174,7 +174,6 @@ class Tacotron2Brain(sb.Brain):
         pos_spk_embs = pos_spk_embs.squeeze().detach()
         pos_spk_embs = pos_spk_embs.to(self.device, non_blocking=True).float()
 
-        # import pdb; pdb.set_trace()
         anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
         
         anchor_se_idx = anchor_se_idx.to(self.device, non_blocking=True).long()
