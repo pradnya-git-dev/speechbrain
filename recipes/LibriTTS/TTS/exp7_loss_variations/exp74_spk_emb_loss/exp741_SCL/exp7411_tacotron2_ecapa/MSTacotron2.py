@@ -1618,7 +1618,7 @@ def infer(model, text_sequences, input_lengths):
 
 
 LossStats = namedtuple(
-    "TacotronLoss", "loss mel_loss gate_loss attn_loss attn_weight"
+    "TacotronLoss", "loss mel_loss speaker_consistency_loss gate_loss attn_loss attn_weight"
 )
 
 
@@ -1671,6 +1671,7 @@ class Loss(nn.Module):
         guided_attention_sigma=None,
         gate_loss_weight=1.0,
         guided_attention_weight=1.0,
+        speaker_consistency_loss_weight=1.0,
         guided_attention_scheduler=None,
         guided_attention_hard_stop=None,
     ):
@@ -1683,13 +1684,16 @@ class Loss(nn.Module):
         self.guided_attention_loss = GuidedAttentionLoss(
             sigma=guided_attention_sigma
         )
+        self.cos_sim_loss = nn.CosineEmbeddingLoss()
+
         self.gate_loss_weight = gate_loss_weight
         self.guided_attention_weight = guided_attention_weight
         self.guided_attention_scheduler = guided_attention_scheduler
         self.guided_attention_hard_stop = guided_attention_hard_stop
+        self.scl_weight = speaker_consistency_loss_weight
 
     def forward(
-        self, model_output, targets, input_lengths, target_lengths, epoch
+        self, model_output, targets, input_lengths, target_lengths, scl_spk_embs, epoch
     ):
         """Computes the loss
 
@@ -1719,6 +1723,8 @@ class Loss(nn.Module):
         gate_target.requires_grad = False
         gate_target = gate_target.view(-1, 1)
 
+        target_spk_embs, preds_spk_embs = scl_spk_embs
+        
         mel_out, mel_out_postnet, gate_out, alignments = model_output
 
         gate_out = gate_out.view(-1, 1)
@@ -1729,9 +1735,18 @@ class Loss(nn.Module):
         attn_loss, attn_weight = self.get_attention_loss(
             alignments, input_lengths, target_lengths, epoch
         )
-        total_loss = mel_loss + gate_loss + attn_loss
+
+        speaker_consistency_loss = self.cos_sim_loss(
+          target_spk_embs,
+          preds_spk_embs,
+          torch.ones(len(target_spk_embs)).to(target_spk_embs.device)
+        )
+        
+        speaker_consistency_loss = self.scl_weight * speaker_consistency_loss
+
+        total_loss = mel_loss + speaker_consistency_loss + gate_loss + attn_loss
         return LossStats(
-            total_loss, mel_loss, gate_loss, attn_loss, attn_weight
+            total_loss, mel_loss, speaker_consistency_loss, gate_loss, attn_loss, attn_weight
         )
 
     def get_attention_loss(

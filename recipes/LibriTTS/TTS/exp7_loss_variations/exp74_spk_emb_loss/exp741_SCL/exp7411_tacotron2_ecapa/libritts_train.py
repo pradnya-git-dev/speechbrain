@@ -178,7 +178,7 @@ class Tacotron2Brain(sb.Brain):
         
 
         loss_stats = self.hparams.criterion(
-            predictions, targets, input_lengths, output_lengths, self.last_epoch
+            predictions, targets, input_lengths, output_lengths, scl_spk_embs, self.last_epoch
         )
         self.last_loss_stats[stage] = scalarize(loss_stats)
         return loss_stats.loss
