@@ -31,6 +31,7 @@ from speechbrain.pretrained import EncoderClassifier
 import pickle
 import random
 from spk_emb_pretrained_interfaces import MelSpectrogramEncoder
+import itertools
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 logger = logging.getLogger(__name__)
@@ -165,7 +166,6 @@ class Tacotron2Brain(sb.Brain):
           print("TEST PASSED")
         """
 
-        # import pdb; pdb.set_trace()
         anchor_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(target_mels)
         anchor_spk_embs = anchor_spk_embs.squeeze()
         anchor_spk_embs = anchor_spk_embs.to(self.device, non_blocking=True).float()
@@ -174,13 +174,15 @@ class Tacotron2Brain(sb.Brain):
         pos_spk_embs = pos_spk_embs.squeeze().detach()
         pos_spk_embs = pos_spk_embs.to(self.device, non_blocking=True).float()
 
-        neg_se_idx = list()
-        for i in range(len(spk_ids)):
-          for j in range((len(spk_ids))):
-            if spk_ids[i] != spk_ids[j]:
-              neg_se_idx.append(j)
-              break
+        # import pdb; pdb.set_trace()
+        anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
         
+        anchor_se_idx = anchor_se_idx.to(self.device, non_blocking=True).long()
+        pos_se_idx = pos_se_idx.to(self.device, non_blocking=True).long()
+        neg_se_idx = neg_se_idx.to(self.device, non_blocking=True).long()
+        
+        anchor_spk_embs = anchor_spk_embs[anchor_se_idx]
+        pos_spk_embs = pos_spk_embs[pos_se_idx]
         neg_spk_embs = pos_spk_embs[neg_se_idx]
 
         spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
@@ -524,6 +526,17 @@ class Tacotron2Brain(sb.Brain):
                     f"{stage}/inf_mel_pred", mel_out
                 )
 
+    def get_triplets(self, spk_ids):  
+      anchor_se_idx, pos_se_idx, neg_se_idx = None, None, None
+
+      # spk_idx = list(itertools.combinations(enumerate(spk_ids), 2))
+      spk_idx_pairs = list((i,j) for ((i,_),(j,_)) in itertools.combinations(enumerate(spk_ids), 2))
+
+      anchor_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
+      pos_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
+      neg_se_idx = torch.LongTensor([j for (i, j) in spk_idx_pairs])
+
+      return (anchor_se_idx, pos_se_idx, neg_se_idx)
 
 def dataio_prepare(hparams):
     # Define audio pipeline:

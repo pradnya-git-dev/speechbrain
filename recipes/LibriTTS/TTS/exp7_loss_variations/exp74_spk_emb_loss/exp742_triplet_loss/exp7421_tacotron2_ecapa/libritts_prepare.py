@@ -89,7 +89,7 @@ def prepare_libritts(
 
         # Collects all files matching the provided extension
         wav_list.extend(get_all_files(subset_folder, match_and=extension))
-        wav_list = wav_list[:250]
+        wav_list = wav_list[:50]
         
     logger.info(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
@@ -120,6 +120,7 @@ def create_json(wav_list, json_file, sample_rate):
     # Creates a resampler object with orig_freq set to LibriTTS sample rate (24KHz) and  new_freq set to SAMPLERATE
     resampler = Resample(orig_freq=24000, new_freq=sample_rate)
 
+    known_spk_ids = list()
     # Processes all the wav files in the list
     for wav_file in wav_list:
 
@@ -131,6 +132,15 @@ def create_json(wav_list, json_file, sample_rate):
         path_parts = wav_file.split(os.path.sep)
         uttid, _ = os.path.splitext(path_parts[-1])
         relative_path = os.path.join("{data_root}", *path_parts[-6:])
+
+        # Gets the speaker-id from the utterance-id
+        spk_id = uttid.split("_")[0]
+
+        if spk_id in known_spk_ids:
+          continue
+        # known_spk_ids.append(spk_id)
+        # if len(known_spk_ids) == 25:
+        #   break
 
         # Gets the path for the  text files and extracts the input text
         original_text_path = os.path.join(
@@ -153,8 +163,7 @@ def create_json(wav_list, json_file, sample_rate):
             os.unlink(wav_file)
             torchaudio.save(wav_file, resampled_signal, sample_rate=sample_rate)
 
-        # Gets the speaker-id from the utterance-id
-        spk_id = uttid.split("_")[0]
+        
 
         # Creates an entry for the utterance
         json_dict[uttid] = {
