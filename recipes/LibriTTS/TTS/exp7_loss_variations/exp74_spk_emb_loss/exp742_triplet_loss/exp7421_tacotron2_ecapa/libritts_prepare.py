@@ -27,6 +27,7 @@ def prepare_libritts(
     save_json_test,
     sample_rate,
     split_ratio=[80, 10, 10],
+    seed=1234,
 ):
     """
     Prepares the json files for the LibriTTS dataset.
@@ -53,6 +54,9 @@ def prepare_libritts(
     >>> data_folder = '/path/to/mini_librispeech'
     >>> prepare_mini_librispeech(data_folder, 'train.json', 'valid.json', 'test.json')
     """
+
+    # setting seeds for reproducible code.
+    random.seed(seed)
 
     # Checks if this phase is already done (if so, skips it)
     if skip(save_json_train, save_json_valid, save_json_test):

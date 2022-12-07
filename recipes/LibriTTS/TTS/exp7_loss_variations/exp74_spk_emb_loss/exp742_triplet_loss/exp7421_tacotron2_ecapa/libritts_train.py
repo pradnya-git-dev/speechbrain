@@ -54,7 +54,7 @@ class Tacotron2Brain(sb.Brain):
         )
 
         self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
-          source="/content/drive/MyDrive/ecapa_tdnn/mel_spec_input",
+          source="/workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80",
           run_opts={"device": self.device},
           freeze_params=True
         )
@@ -166,8 +166,6 @@ class Tacotron2Brain(sb.Brain):
           print("TEST PASSED")
         """
 
-
-        # import pdb; pdb.set_trace()
         target_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(target_mels)
         target_spk_embs = target_spk_embs.squeeze()
         target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
@@ -532,10 +530,6 @@ class Tacotron2Brain(sb.Brain):
 
     def get_triplets(self, spk_ids):  
       anchor_se_idx, pos_se_idx, neg_se_idx = None, None, None
-
-      # spk_idx = list(itertools.combinations(enumerate(spk_ids), 2))
-      # spk_idx_pairs = list((i,j) for ((i,_),(j,_)) in itertools.combinations(enumerate(spk_ids), 2))
-
       spk_idx_pairs = list()
       for i in range(len(spk_ids)):
         for j in range(i, len(spk_ids)):
@@ -624,6 +618,7 @@ if __name__ == "__main__":
             "save_json_test": hparams["test_json"],
             "sample_rate": hparams["sample_rate"],
             "split_ratio": hparams["split_ratio"],
+            "seed": hparams["seed"],
         },
     )
 
