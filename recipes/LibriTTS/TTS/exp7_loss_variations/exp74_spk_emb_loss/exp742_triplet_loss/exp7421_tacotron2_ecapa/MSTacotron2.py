@@ -1738,10 +1738,14 @@ class Loss(nn.Module):
             alignments, input_lengths, target_lengths, epoch
         )
 
-        spk_emb_triplet_loss = self.spk_emb_triplet_loss(anchor_spk_embs, pos_spk_embs, neg_spk_embs)
-        spk_emb_triplet_loss = self.triplet_loss_weight * spk_emb_triplet_loss
-
+        if anchor_spk_embs != None:
+          spk_emb_triplet_loss = self.spk_emb_triplet_loss(anchor_spk_embs, pos_spk_embs, neg_spk_embs)
+          spk_emb_triplet_loss = self.triplet_loss_weight * spk_emb_triplet_loss
+        else:
+          spk_emb_triplet_loss = torch.Tensor([0]).to(mel_loss.device)
+        
         total_loss = mel_loss + spk_emb_triplet_loss + gate_loss + attn_loss
+
         return LossStats(
             total_loss, mel_loss, spk_emb_triplet_loss, gate_loss, attn_loss, attn_weight
         )

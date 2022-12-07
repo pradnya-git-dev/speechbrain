@@ -89,13 +89,14 @@ spk_emb_sample_rate: 16000
 ################################
 learning_rate: 0.0001
 weight_decay: 0.000006
-batch_size: 16 #minimum 2
+batch_size: 8 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 75.0
 guided_attention_weight_half_life: 10.
 guided_attention_hard_stop: 50
 gate_loss_weight: 1.0
+triplet_loss_weight: 1.0
 
 train_dataloader_opts:
   batch_size: !ref <batch_size>
@@ -208,6 +209,7 @@ criterion: !new:MSTacotron2.Loss
   guided_attention_sigma: !ref <guided_attention_sigma>
   guided_attention_scheduler: !ref <guided_attention_scheduler>
   guided_attention_hard_stop: !ref <guided_attention_hard_stop>
+  triplet_loss_weight: !ref <triplet_loss_weight>
 
 modules:
   model: !ref <model>
@@ -255,4 +257,5 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
   loadables:
     model: !ref <model>
   paths:
-    model: /workspace/mstts_saved_models/6031_tacotron2_phoneme_film_mlp_ecapa_ljspeech/model.ckpt
+    # model: /workspace/mstts_saved_models/6031_tacotron2_phoneme_film_mlp_ecapa_ljspeech/model.ckpt
+    model: /content/drive/MyDrive/mstts_saved_models/TTS/exp6_SCL/exp60_base/exp603_phoneme_film_mlp/exp6031_tacotron2_ecapa/ljspeech_sr16000_e200/model.ckpt

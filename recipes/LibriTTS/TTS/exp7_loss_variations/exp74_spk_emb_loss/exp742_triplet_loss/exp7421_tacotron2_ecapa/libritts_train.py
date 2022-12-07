@@ -54,7 +54,7 @@ class Tacotron2Brain(sb.Brain):
         )
 
         self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
-          source="/workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80",
+          source="/content/drive/MyDrive/ecapa_tdnn/mel_spec_input",
           run_opts={"device": self.device},
           freeze_params=True
         )
@@ -166,27 +166,32 @@ class Tacotron2Brain(sb.Brain):
           print("TEST PASSED")
         """
 
-        anchor_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(target_mels)
-        anchor_spk_embs = anchor_spk_embs.squeeze()
-        anchor_spk_embs = anchor_spk_embs.to(self.device, non_blocking=True).float()
 
-        pos_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(pred_mels_postnet)
-        pos_spk_embs = pos_spk_embs.squeeze().detach()
-        pos_spk_embs = pos_spk_embs.to(self.device, non_blocking=True).float()
+        # import pdb; pdb.set_trace()
+        target_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(target_mels)
+        target_spk_embs = target_spk_embs.squeeze()
+        target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
+
+        pred_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(pred_mels_postnet)
+        pred_spk_embs = pred_spk_embs.squeeze().detach()
+        pred_spk_embs = pred_spk_embs.to(self.device, non_blocking=True).float()
 
         anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
         
-        anchor_se_idx = anchor_se_idx.to(self.device, non_blocking=True).long()
-        pos_se_idx = pos_se_idx.to(self.device, non_blocking=True).long()
-        neg_se_idx = neg_se_idx.to(self.device, non_blocking=True).long()
-        
-        anchor_spk_embs = anchor_spk_embs[anchor_se_idx]
-        pos_spk_embs = pos_spk_embs[pos_se_idx]
-        neg_spk_embs = pos_spk_embs[neg_se_idx]
+        spk_emb_triplets = (None, None, None)
 
-        spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
-        
+        if anchor_se_idx.shape[0] != 0:
 
+          anchor_se_idx = anchor_se_idx.to(self.device, non_blocking=True).long()
+          pos_se_idx = pos_se_idx.to(self.device, non_blocking=True).long()
+          neg_se_idx = neg_se_idx.to(self.device, non_blocking=True).long()
+          
+          anchor_spk_embs = target_spk_embs[anchor_se_idx]
+          pos_spk_embs = pred_spk_embs[pos_se_idx]
+          neg_spk_embs = pred_spk_embs[neg_se_idx]
+
+          spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
+        
         loss_stats = self.hparams.criterion(
             predictions, targets, input_lengths, output_lengths, spk_emb_triplets, self.last_epoch
         )
@@ -529,8 +534,14 @@ class Tacotron2Brain(sb.Brain):
       anchor_se_idx, pos_se_idx, neg_se_idx = None, None, None
 
       # spk_idx = list(itertools.combinations(enumerate(spk_ids), 2))
-      spk_idx_pairs = list((i,j) for ((i,_),(j,_)) in itertools.combinations(enumerate(spk_ids), 2))
+      # spk_idx_pairs = list((i,j) for ((i,_),(j,_)) in itertools.combinations(enumerate(spk_ids), 2))
 
+      spk_idx_pairs = list()
+      for i in range(len(spk_ids)):
+        for j in range(i, len(spk_ids)):
+          if spk_ids[i] != spk_ids[j]:
+            spk_idx_pairs.append((i, j))
+      
       anchor_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
       pos_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
       neg_se_idx = torch.LongTensor([j for (i, j) in spk_idx_pairs])
