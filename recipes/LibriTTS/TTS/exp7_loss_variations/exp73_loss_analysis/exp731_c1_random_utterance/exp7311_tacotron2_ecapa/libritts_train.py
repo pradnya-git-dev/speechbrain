@@ -94,7 +94,7 @@ class Tacotron2Brain(sb.Brain):
             detached loss
         """
         result = super().fit_batch(batch)
-        self.hparams.lr_annealing(self.optimizer)
+        self.hparams.lr_annealing([self.optimizer], self.hparams.epoch_counter.current, result.item())
         return result
 
     def compute_objectives(self, predictions, batch, stage):
