@@ -96,6 +96,7 @@ guided_attention_weight: 75.0
 guided_attention_weight_half_life: 10.
 guided_attention_hard_stop: 50
 gate_loss_weight: 1.0
+mel_loss_weight: 1.0
 triplet_loss_weight: 1.0
 
 train_dataloader_opts:
@@ -209,6 +210,7 @@ criterion: !new:MSTacotron2.Loss
   guided_attention_sigma: !ref <guided_attention_sigma>
   guided_attention_scheduler: !ref <guided_attention_scheduler>
   guided_attention_hard_stop: !ref <guided_attention_hard_stop>
+  mel_loss_weight: !ref <mel_loss_weight>
   triplet_loss_weight: !ref <triplet_loss_weight>
 
 modules:
