@@ -1747,7 +1747,7 @@ class Loss(nn.Module):
           spk_emb_triplet_loss = self.spk_emb_triplet_loss(anchor_spk_embs, pos_spk_embs, neg_spk_embs)
           spk_emb_triplet_loss = self.triplet_loss_weight * spk_emb_triplet_loss
         else:
-          spk_emb_triplet_loss = torch.Tensor([0]).to(mel_loss.device)
+          spk_emb_triplet_loss = torch.Tensor([0]).to(gate_loss.device)
         
         total_loss = spk_emb_triplet_loss + gate_loss + attn_loss
 
