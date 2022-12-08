@@ -1235,25 +1235,32 @@ class Decoder(nn.Module):
 
 class Tacotron2(nn.Module):
     """The Tactron2 text-to-speech model, based on the NVIDIA implementation.
+
     This class is the main entry point for the model, which is responsible
     for instantiating all submodules, which, in turn, manage the individual
     neural network layers
+
     Simplified STRUCTURE: input->word embedding ->encoder ->attention \
     ->decoder(+prenet) -> postnet ->output
+
     prenet(input is decoder previous time step) output is input to decoder
     concatenanted with the attention output
+
     Arguments
     ---------
     mask_padding: bool
         whether or not to mask pad-outputs of tacotron
+
     #mel generation parameter in data io
     n_mel_channels: int
         number of mel channels for constructing spectrogram
+
     #symbols
     n_symbols:  int=128
         number of accepted char symbols defined in textToSequence
     symbols_embedding_dim: int
         number of embeding dimension for symbols fed to nn.Embedding
+
     # Encoder parameters
     encoder_kernel_size: int
         size of kernel processing the embeddings
@@ -1262,6 +1269,7 @@ class Tacotron2(nn.Module):
     encoder_embedding_dim: int
         number of kernels in encoder, this is also the dimension
         of the bidirectional LSTM in the encoder
+
     # Attention parameters
     attention_rnn_dim: int
         input dimension
@@ -1272,6 +1280,7 @@ class Tacotron2(nn.Module):
         number of 1-D convulation filters in attention
     attention_location_kernel_size: int
         length of the 1-D convolution filters
+
     # Decoder parameters
     n_frames_per_step: int=1
         only 1 generated mel-frame per step is supported for the decoder as of now.
@@ -1285,12 +1294,15 @@ class Tacotron2(nn.Module):
         attention drop out probability
     p_decoder_dropout: float
         decoder drop  out probability
+
     gate_threshold: int
         cut off level any output probabilty above that is considered
         complete and stops genration so we have variable length outputs
     decoder_no_early_stopping: bool
         determines early stopping of decoder
         along with gate_threshold . The logical inverse of this is fed to the decoder
+
+
     #Mel-post processing network parameters
     postnet_embedding_dim: int
         number os postnet dfilters
@@ -1298,6 +1310,7 @@ class Tacotron2(nn.Module):
         1d size of posnet kernel
     postnet_n_convolutions: int
         number of convolution layers in postnet
+
     Example
     -------
     >>> import torch
@@ -1418,6 +1431,7 @@ class Tacotron2(nn.Module):
     def parse_output(self, outputs, output_lengths, alignments_dim=None):
         """
         Masks the padded part of output
+
         Arguments
         ---------
         outputs: list
@@ -1427,6 +1441,8 @@ class Tacotron2(nn.Module):
         alignments_dim: int
             the desired dimension of the alignments along the last axis
             Optional but needed for data-parallel training
+
+
         Returns
         -------
         result: tuple
@@ -1453,6 +1469,7 @@ class Tacotron2(nn.Module):
 
     def forward(self, inputs, spk_embs, alignments_dim=None):
         """Decoder forward pass for training
+
         Arguments
         ---------
         inputs: tuple
@@ -1460,6 +1477,7 @@ class Tacotron2(nn.Module):
         alignments_dim: int
             the desired dimension of the alignments along the last axis
             Optional but needed for data-parallel training
+
         Returns
         ---------
         mel_outputs: torch.Tensor
@@ -1506,12 +1524,16 @@ class Tacotron2(nn.Module):
 
     def infer(self, inputs, spk_embs, input_lengths):
         """Produces outputs
+
+
         Arguments
         ---------
         inputs: torch.tensor
             text or phonemes converted
+
         input_lengths: torch.tensor
             the lengths of input parameters
+
         Returns
         -------
         mel_outputs_postnet: torch.Tensor
@@ -1596,7 +1618,7 @@ def infer(model, text_sequences, input_lengths):
 
 
 LossStats = namedtuple(
-    "TacotronLoss", "loss mel_loss gate_loss attn_loss attn_weight"
+    "TacotronLoss", "loss mel_loss spk_emb_triplet_loss gate_loss attn_loss attn_weight"
 )
 
 
@@ -1649,10 +1671,10 @@ class Loss(nn.Module):
         guided_attention_sigma=None,
         gate_loss_weight=1.0,
         guided_attention_weight=1.0,
+        mel_loss_weight=1.0,
+        triplet_loss_weight=1.0,
         guided_attention_scheduler=None,
         guided_attention_hard_stop=None,
-        mel_loss_c2_weight=1.0,
-        mel_loss_c3_weight=1.0 
     ):
         super().__init__()
         if guided_attention_weight == 0:
@@ -1663,19 +1685,19 @@ class Loss(nn.Module):
         self.guided_attention_loss = GuidedAttentionLoss(
             sigma=guided_attention_sigma
         )
-        self.gate_loss_weight = gate_loss_weight
-        self.guided_attention_weight = guided_attention_weight
-        self.guided_attention_scheduler = guided_attention_scheduler
-        self.guided_attention_hard_stop = guided_attention_hard_stop
-        self.c2_weight = mel_loss_c2_weight
-        self.c3_weight = mel_loss_c3_weight
-
         self.spk_emb_triplet_loss = torch.nn.TripletMarginWithDistanceLoss(
           distance_function=lambda x, y: 1.0 - F.cosine_similarity(x, y)
         )
 
+        self.gate_loss_weight = gate_loss_weight
+        self.guided_attention_weight = guided_attention_weight
+        self.guided_attention_scheduler = guided_attention_scheduler
+        self.guided_attention_hard_stop = guided_attention_hard_stop
+        self.mel_loss_weight = mel_loss_weight
+        self.triplet_loss_weight = triplet_loss_weight
+
     def forward(
-        self, model_output, targets, input_lengths, target_lengths, scl_spk_embs, epoch
+        self, model_output, targets, input_lengths, target_lengths, spk_emb_triplets, epoch
     ):
         """Computes the loss
 
@@ -1705,54 +1727,34 @@ class Loss(nn.Module):
         gate_target.requires_grad = False
         gate_target = gate_target.view(-1, 1)
 
-        target_spk_embs, preds_spk_embs = scl_spk_embs
-        target_spk_embs.requires_grad = False
-
+        anchor_spk_embs, pos_spk_embs, neg_spk_embs = spk_emb_triplets
+        
         mel_out, mel_out_postnet, gate_out, alignments = model_output
 
         gate_out = gate_out.view(-1, 1)
 
-        # import pdb; pdb.set_trace()
-        batch_size = mel_out_postnet.shape[0]
-        idx1 = torch.arange(0, batch_size, step=3)
-        idx2 = torch.arange(1, batch_size, step=3)
-        idx3 = torch.arange(2, batch_size, step=3)
-
-        mel_loss_c1_1 = self.mse_loss(mel_out[idx1], mel_target[idx1]) + self.mse_loss(
-            mel_out_postnet[idx1], mel_target[idx1]
+        
+        mel_loss = self.mse_loss(mel_out, mel_target) + self.mse_loss(
+            mel_out_postnet, mel_target
         )
-
-        mel_loss_c1_2 = self.mse_loss(mel_out[idx2], mel_target[idx2]) + self.mse_loss(
-            mel_out_postnet[idx2], mel_target[idx2]
-        )
-
-        mel_loss_c1 = (mel_loss_c1_1 + mel_loss_c1_2) / 2
-
-        mel_loss_c2 = self.mse_loss(mel_out[idx1], mel_out[idx2]) + self.mse_loss(mel_out_postnet[idx1], mel_out_postnet[idx2])
-
-        mel_loss_c3 = self.mse_loss(mel_out[idx3], mel_target[idx3]) + self.mse_loss(mel_out_postnet[idx3], mel_target[idx3])
-        mel_loss_c3 = mel_loss_c1 / mel_loss_c3
-
-        mel_loss = mel_loss_c1 + self.c2_weight * mel_loss_c2 + self.c3_weight * mel_loss_c3
-
-
-        anchor_spk_embs = target_spk_embs[idx1]
-        positive_spk_embs_1 = preds_spk_embs[idx1]
-        positive_spk_embs_2 = preds_spk_embs[idx2]
-        negative_spk_embs = preds_spk_embs[idx3]
-
-        spk_emb_loss_1 = self.spk_emb_triplet_loss(anchor_spk_embs, positive_spk_embs_1, negative_spk_embs)
-        spk_emb_loss_2 = self.spk_emb_triplet_loss(anchor_spk_embs, positive_spk_embs_2, negative_spk_embs)
-
-        spk_emb_loss = (spk_emb_loss_1 + spk_emb_loss_2) / 2
-
+        mel_loss = self.mel_loss_weight * mel_loss
+        
+        
         gate_loss = self.gate_loss_weight * self.bce_loss(gate_out, gate_target)
         attn_loss, attn_weight = self.get_attention_loss(
             alignments, input_lengths, target_lengths, epoch
         )
-        total_loss = mel_loss + gate_loss + attn_loss
+
+        if anchor_spk_embs != None:
+          spk_emb_triplet_loss = self.spk_emb_triplet_loss(anchor_spk_embs, pos_spk_embs, neg_spk_embs)
+          spk_emb_triplet_loss = self.triplet_loss_weight * spk_emb_triplet_loss
+        else:
+          spk_emb_triplet_loss = torch.Tensor([0]).to(mel_loss.device)
+        
+        total_loss = mel_loss + spk_emb_triplet_loss + gate_loss + attn_loss
+
         return LossStats(
-            total_loss, mel_loss, gate_loss, attn_loss, attn_weight
+            total_loss, mel_loss, spk_emb_triplet_loss, gate_loss, attn_loss, attn_weight
         )
 
     def get_attention_loss(
@@ -1803,10 +1805,12 @@ class Loss(nn.Module):
 
 class TextMelCollate:
     """ Zero-pads model inputs and targets based on number of frames per step
+
     Arguments
     ---------
     n_frames_per_step: int
         the number of output frames per step
+
     Returns
     -------
     result: tuple
@@ -1826,7 +1830,6 @@ class TextMelCollate:
       n_frames_per_step=1,):
         self.n_frames_per_step = n_frames_per_step
         self.speaker_embeddings_pickle = speaker_embeddings_pickle
-        # self.n_random_uttrances = n_random_uttrances
         
     # TODO: Make this more intuitive, use the pipeline
     def __call__(self, batch):
@@ -1849,15 +1852,13 @@ class TextMelCollate:
         input_lengths, ids_sorted_decreasing = torch.sort(
             torch.LongTensor([len(x[0]) for x in batch]), dim=0, descending=True
         )
-        input_lengths = torch.LongTensor([e for e in input_lengths for i in range(3)])
         max_input_len = input_lengths[0]
 
-        text_padded = torch.LongTensor(len(batch) * 3, max_input_len)
+        text_padded = torch.LongTensor(len(batch), max_input_len)
         text_padded.zero_()
         for i in range(len(ids_sorted_decreasing)):
             text = batch[ids_sorted_decreasing[i]][0]
-            for j in range(3):
-                text_padded[i * 3 + j, : text.size(0)] = text
+            text_padded[i, : text.size(0)] = text
 
         # Right zero-pad mel-spec
         num_mels = batch[0][1].size(0)
@@ -1869,45 +1870,34 @@ class TextMelCollate:
             assert max_target_len % self.n_frames_per_step == 0
 
         # include mel padded and gate padded
-        mel_padded = torch.FloatTensor(len(batch) * 3, num_mels, max_target_len)
+        mel_padded = torch.FloatTensor(len(batch), num_mels, max_target_len)
         mel_padded.zero_()
-        gate_padded = torch.FloatTensor(len(batch) * 3, max_target_len)
+        gate_padded = torch.FloatTensor(len(batch), max_target_len)
         gate_padded.zero_()
-        output_lengths = torch.LongTensor(len(batch) * 3)
-        labels, wavs, spk_embs_list = [], [], []
+        output_lengths = torch.LongTensor(len(batch))
+        labels, wavs, spk_embs_list, spk_ids = [], [], [], []
         with open(self.speaker_embeddings_pickle, "rb") as speaker_embeddings_file:
             speaker_embeddings = pickle.load(speaker_embeddings_file)
 
         for i in range(len(ids_sorted_decreasing)):
             idx = ids_sorted_decreasing[i]
             mel = batch[idx][1]
-            spk_emb_samples = None
-            if len(speaker_embeddings[raw_batch[idx]["spk_id"]]) >= 2:
-                spk_emb_samples = random.sample(speaker_embeddings[raw_batch[idx]["spk_id"]], k=2)
-            else:
-                spk_emb_samples = random.choices(speaker_embeddings[raw_batch[idx]["spk_id"]], k=2)
-            for j in range(3):
-                mel_padded[i * 3 + j, :, : mel.size(1)] = mel
-                gate_padded[i * 3 + j, mel.size(1) - 1 :] = 1
-                output_lengths[i * 3 + j] = mel.size(1)
-                labels.append(raw_batch[idx]["label"])
-                wavs.append(raw_batch[idx]["wav"])
-                if j != 2:
-                  spk_embs_list.append(spk_emb_samples[j])
-                else:
-                  available_spk_ids = speaker_embeddings.keys()
-                  diff_spk_id = random.choice([entry for entry in available_spk_ids if entry != raw_batch[idx]["spk_id"]])
-                  diff_spk_emb = random.choice(speaker_embeddings[diff_spk_id])
-                  spk_embs_list.append(diff_spk_emb)
-        
+            mel_padded[i, :, : mel.size(1)] = mel
+            gate_padded[i, mel.size(1) - 1 :] = 1
+            output_lengths[i] = mel.size(1)
+            labels.append(raw_batch[idx]["label"])
+            wavs.append(raw_batch[idx]["wav"])
+
+            spk_emb = speaker_embeddings[raw_batch[idx]["uttid"]]
+            spk_embs_list.append(spk_emb)
+
+            spk_ids.append(raw_batch[idx]["uttid"].split("_")[0])
+
         spk_embs = torch.stack(spk_embs_list)
 
         # count number of items - characters in text
-        len_x = [x[2] for x in batch for i in range(3)]
+        len_x = [x[2] for x in batch]
         len_x = torch.Tensor(len_x)
-
-        # import pdb; pdb.set_trace()
-
         return (
             text_padded,
             input_lengths,
@@ -1917,9 +1907,9 @@ class TextMelCollate:
             len_x,
             labels,
             wavs,
-            spk_embs
+            spk_embs,
+            spk_ids
         )
-
 
 
 def dynamic_range_compression(x, C=1, clip_val=1e-5):

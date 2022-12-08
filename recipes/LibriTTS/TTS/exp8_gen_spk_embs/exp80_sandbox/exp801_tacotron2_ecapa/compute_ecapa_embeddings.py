@@ -111,8 +111,7 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     spk_emb_encoder = MelSpectrogramEncoder.from_hparams(
           source="/content/drive/MyDrive/ecapa_tdnn/mel_spec_input",
-          run_opts={"device": device},
-          freeze_params=True
+          run_opts={"device": device}
         )
 
     # spk_emb_encoder = MelSpectrogramEncoder.from_hparams(
@@ -162,10 +161,7 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
             spk_emb = spk_emb.squeeze()
             spk_emb = spk_emb.detach()
 
-            if utt_data["spk_id"] not in speaker_embeddings.keys():
-              speaker_embeddings[utt_data["spk_id"]] = list()
-
-            speaker_embeddings[utt_data["spk_id"]].append(spk_emb.cpu())
+            speaker_embeddings[utt_id] = spk_emb.cpu()
 
         with open(output_file_paths[i], "wb") as output_file:
             pickle.dump(speaker_embeddings, output_file, protocol=pickle.HIGHEST_PROTOCOL)

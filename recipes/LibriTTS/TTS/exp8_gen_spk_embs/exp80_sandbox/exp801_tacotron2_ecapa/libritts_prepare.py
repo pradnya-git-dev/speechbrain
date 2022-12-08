@@ -27,7 +27,7 @@ def prepare_libritts(
     save_json_test,
     sample_rate,
     split_ratio=[80, 10, 10],
-    seed=1234
+    seed=1234,
 ):
     """
     Prepares the json files for the LibriTTS dataset.
@@ -54,6 +54,7 @@ def prepare_libritts(
     >>> data_folder = '/path/to/mini_librispeech'
     >>> prepare_mini_librispeech(data_folder, 'train.json', 'valid.json', 'test.json')
     """
+
     # setting seeds for reproducible code.
     random.seed(seed)
 
@@ -92,7 +93,7 @@ def prepare_libritts(
 
         # Collects all files matching the provided extension
         wav_list.extend(get_all_files(subset_folder, match_and=extension))
-        # wav_list = wav_list[:150]
+        wav_list = wav_list[:300]
         
     logger.info(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
@@ -122,8 +123,7 @@ def create_json(wav_list, json_file, sample_rate):
     json_dict = {}
     # Creates a resampler object with orig_freq set to LibriTTS sample rate (24KHz) and  new_freq set to SAMPLERATE
     resampler = Resample(orig_freq=24000, new_freq=sample_rate)
-    
-    temp_counter = 0
+
     # Processes all the wav files in the list
     for wav_file in wav_list:
 
@@ -135,18 +135,6 @@ def create_json(wav_list, json_file, sample_rate):
         path_parts = wav_file.split(os.path.sep)
         uttid, _ = os.path.splitext(path_parts[-1])
         relative_path = os.path.join("{data_root}", *path_parts[-6:])
-
-        # Gets the speaker-id from the utterance-id
-        spk_id = uttid.split("_")[0]
-
-        if spk_id == "1993" or spk_id == "3000":
-          temp_counter = temp_counter + 1
-          print(spk_id)
-        else:
-          continue
-          
-        if temp_counter == 100:
-          break
 
         # Gets the path for the  text files and extracts the input text
         original_text_path = os.path.join(
@@ -169,6 +157,9 @@ def create_json(wav_list, json_file, sample_rate):
             os.unlink(wav_file)
             torchaudio.save(wav_file, resampled_signal, sample_rate=sample_rate)
 
+        # Gets the speaker-id from the utterance-id
+        spk_id = uttid.split("_")[0]
+
         # Creates an entry for the utterance
         json_dict[uttid] = {
             "uttid": uttid,
@@ -178,7 +169,6 @@ def create_json(wav_list, json_file, sample_rate):
             "label_phoneme": label_phoneme,
             "segment": True if "train" in json_file else False,
         }
-
 
     # Writes the dictionary to the json file
     with open(json_file, mode="w") as json_f:
