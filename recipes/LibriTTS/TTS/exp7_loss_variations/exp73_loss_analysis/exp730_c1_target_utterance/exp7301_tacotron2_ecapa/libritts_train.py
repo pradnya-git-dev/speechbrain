@@ -554,6 +554,7 @@ if __name__ == "__main__":
             "save_json_test": hparams["test_json"],
             "sample_rate": hparams["sample_rate"],
             "split_ratio": hparams["split_ratio"],
+            "seed": hparams["seed"],
         },
     )
 

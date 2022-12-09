@@ -12,7 +12,7 @@ from speechbrain.pretrained import GraphemeToPhoneme
 logger = logging.getLogger(__name__)
 # Change the entries in the following "LIBRITTS_SUBSETS" to modify the downloaded subsets for LibriTTS
 # Used subsets ["dev-clean", "train-clean-100", "train-clean-360"]
-LIBRITTS_SUBSETS = ["dev-clean"]
+LIBRITTS_SUBSETS = ["train-clean-100"]
 LIBRITTS_URL_PREFIX = "https://www.openslr.org/resources/60/"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 g2p = GraphemeToPhoneme.from_hparams(
@@ -27,6 +27,7 @@ def prepare_libritts(
     save_json_test,
     sample_rate,
     split_ratio=[80, 10, 10],
+    seed=1234,
 ):
     """
     Prepares the json files for the LibriTTS dataset.
@@ -53,6 +54,9 @@ def prepare_libritts(
     >>> data_folder = '/path/to/mini_librispeech'
     >>> prepare_mini_librispeech(data_folder, 'train.json', 'valid.json', 'test.json')
     """
+
+    # setting seeds for reproducible code.
+    random.seed(seed)
 
     # Checks if this phase is already done (if so, skips it)
     if skip(save_json_train, save_json_valid, save_json_test):
