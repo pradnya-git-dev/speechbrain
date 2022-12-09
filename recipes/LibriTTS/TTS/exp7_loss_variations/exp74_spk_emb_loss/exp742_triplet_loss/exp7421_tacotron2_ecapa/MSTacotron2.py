@@ -1460,12 +1460,14 @@ class Tacotron2(nn.Module):
             mel_outputs.clone().masked_fill_(mask, 0.0)
             mel_outputs_postnet.masked_fill_(mask, 0.0)
             gate_outputs.masked_fill_(mask[:, 0, :], 1e3)  # gate energies
+
+            mel_lens = output_lengths
         if alignments_dim is not None:
             alignments = F.pad(
                 alignments, (0, alignments_dim - alignments.size(-1))
             )
 
-        return mel_outputs, mel_outputs_postnet, gate_outputs, alignments
+        return mel_outputs, mel_outputs_postnet, gate_outputs, alignments, mel_lens
 
     def forward(self, inputs, spk_embs, alignments_dim=None):
         """Decoder forward pass for training
@@ -1727,7 +1729,7 @@ class Loss(nn.Module):
 
         anchor_spk_embs, pos_spk_embs, neg_spk_embs = spk_emb_triplets
         
-        mel_out, mel_out_postnet, gate_out, alignments = model_output
+        mel_out, mel_out_postnet, gate_out, alignments, mel_lens = model_output
 
         gate_out = gate_out.view(-1, 1)
         mel_loss = self.mse_loss(mel_out, mel_target) + self.mse_loss(

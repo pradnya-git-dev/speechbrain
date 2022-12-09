@@ -101,21 +101,39 @@ triplet_loss_weight: 1.0
 train_dataloader_opts:
   batch_size: !ref <batch_size>
   drop_last: False  #True #False
-  num_workers: 8
+  num_workers: 0
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <train_speaker_embeddings_pickle>
 
 valid_dataloader_opts:
   batch_size: !ref <batch_size>
-  num_workers: 8
+  num_workers: 0
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <valid_speaker_embeddings_pickle>
 
 test_dataloader_opts:
   batch_size: !ref <batch_size>
-  num_workers: 8
+  num_workers: 0
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <test_speaker_embeddings_pickle>
+
+
+###########################
+# Speaker embedding model #
+###########################
+mean_var_norm: !new:speechbrain.processing.features.InputNormalization
+    norm_type: sentence
+    std_norm: False
+
+spk_embedding_model: !new:speechbrain.lobes.models.ECAPA_TDNN.ECAPA_TDNN
+    input_size: !ref <n_mel_channels>
+    channels: [1024, 1024, 1024, 1024, 3072]
+    kernel_sizes: [5, 3, 3, 3, 1]
+    dilations: [1, 2, 3, 4, 1]
+    groups: [1, 1, 1, 1, 1]
+    attention_channels: 128
+    lin_neurons: 192
+
 
 ################################
 # Model Parameters and model   #
@@ -213,6 +231,9 @@ criterion: !new:MSTacotron2.Loss
 
 modules:
   model: !ref <model>
+  spk_embedding_model: !ref <spk_embedding_model>
+  mean_var_norm: !ref <mean_var_norm>
+
 
 #optimizer
 opt_class: !name:torch.optim.Adam
@@ -256,5 +277,10 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
   collect_in: !ref <save_folder>
   loadables:
     model: !ref <model>
+    spk_embedding_model: !ref <spk_embedding_model>
+    mean_var_norm: !ref <mean_var_norm>
   paths:
-    model: /workspace/mstts_saved_models/6031_tacotron2_phoneme_film_mlp_ecapa_ljspeech/model.ckpt
+    # model: /workspace/mstts_saved_models/6031_tacotron2_phoneme_film_mlp_ecapa_ljspeech/model.ckpt
+    model: /content/drive/MyDrive/mstts_saved_models/TTS/exp6_SCL/exp60_base/exp603_phoneme_film_mlp/exp6031_tacotron2_ecapa/ljspeech_sr16000_e200/model.ckpt
+    spk_embedding_model: /content/drive/MyDrive/ecapa_tdnn/mel_spec_input/embedding_model.ckpt
+    mean_var_norm: /content/drive/MyDrive/ecapa_tdnn/mel_spec_input/normalizer.ckpt

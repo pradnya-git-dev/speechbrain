@@ -53,13 +53,36 @@ class Tacotron2Brain(sb.Brain):
             run_opts={"device": self.device},
         )
 
-        self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
-          source="/workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80",
-          run_opts={"device": self.device},
-          freeze_params=True
-        )
+        """
+        for name, param in self.modules.mean_var_norm.named_parameters():
+          if param.requires_grad:
+              param.requires_grad = False
 
-        self.spk_emb_mel_spec_encoder.eval()
+        param_counter = 0
+        for name, param in self.modules.spk_embedding_model.named_parameters():
+          if param.requires_grad:
+              # print(name)
+              param_counter = param_counter + 1
+              param.requires_grad = False
+        if param_counter == 0:
+          print("TEST PASSED")
+        else:
+          print("TEST FAILED")
+
+        self.modules.mean_var_norm.eval()
+        self.modules.spk_embedding_model.eval()
+
+        param_counter = 0
+        for name, param in self.modules.spk_embedding_model.named_parameters():
+          if param.requires_grad:
+              # print(name)
+              param_counter = param_counter + 1
+        if param_counter == 0:
+          print("TEST PASSED")
+        else:
+          print("TEST FAILED")
+        """
+
         
         self.last_loss_stats = {}
         return super().on_fit_start()
@@ -150,34 +173,34 @@ class Tacotron2Brain(sb.Brain):
         """
         inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
-        
+
+        self.modules.mean_var_norm.eval()
+        self.modules.spk_embedding_model.eval()
         
         target_mels = targets[0]
+        target_mel_rel_lens = targets[2] / torch.max(targets[2]).item()
         pred_mels_postnet = predictions[1]
+        pred_mel_rel_lens = predictions[4] / torch.max(predictions[4]).item()
 
-        """
-        print("Speaker embedding model test: ")
-        param_counter = 0
-        for name, param in self.spk_emb_mel_spec_encoder.named_parameters():
-          if param.requires_grad:
-              print(name, param.data)
-              param_counter = param_counter + 1
-        if param_counter == 0:
-          print("TEST PASSED")
-        """
 
-        target_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(target_mels)
-        target_spk_embs = target_spk_embs.squeeze()
+        # import pdb; pdb.set_trace()
+        target_mels = torch.transpose(target_mels, 1, 2)
+        target_feats = self.modules.mean_var_norm(target_mels, target_mel_rel_lens)
+        target_spk_embs = self.modules.spk_embedding_model(target_feats)
+        target_spk_embs = target_spk_embs.squeeze().detach()
         target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
 
-        pred_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(pred_mels_postnet)
+        pred_mels_postnet = torch.transpose(pred_mels_postnet, 1, 2)
+        pred_mels_postnet_feats = self.modules.mean_var_norm(pred_mels_postnet, pred_mel_rel_lens)
+        pred_spk_embs = self.modules.spk_embedding_model(pred_mels_postnet_feats)
         pred_spk_embs = pred_spk_embs.squeeze().detach()
         pred_spk_embs = pred_spk_embs.to(self.device, non_blocking=True).float()
 
         anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
-        
+
         spk_emb_triplets = (None, None, None)
 
+        
         if anchor_se_idx.shape[0] != 0:
 
           anchor_se_idx = anchor_se_idx.to(self.device, non_blocking=True).long()
@@ -208,8 +231,8 @@ class Tacotron2Brain(sb.Brain):
         """
         inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
-        mel_target, _ = targets
-        mel_out, mel_out_postnet, gate_out, alignments = predictions
+        mel_target, _, _ = targets
+        mel_out, mel_out_postnet, gate_out, alignments, mel_lens = predictions
         alignments_max = (
             alignments[0]
             .max(dim=-1)
@@ -277,7 +300,7 @@ class Tacotron2Brain(sb.Brain):
             self.device, non_blocking=True
         ).long()
         x = (text_padded, input_lengths, mel_padded, max_len, output_lengths)
-        y = (mel_padded, gate_padded)
+        y = (mel_padded, gate_padded, output_lengths)
         len_x = torch.sum(output_lengths)
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
         return (x, y, len_x, labels, wavs, spk_embs, spk_ids)
