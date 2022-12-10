@@ -32,6 +32,9 @@ import pickle
 import random
 from spk_emb_pretrained_interfaces import MelSpectrogramEncoder
 import itertools
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D 
+import numpy as np
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 logger = logging.getLogger(__name__)
@@ -53,38 +56,30 @@ class Tacotron2Brain(sb.Brain):
             run_opts={"device": self.device},
         )
 
-        """
-        for name, param in self.modules.mean_var_norm.named_parameters():
-          if param.requires_grad:
-              param.requires_grad = False
-
-        param_counter = 0
-        for name, param in self.modules.spk_embedding_model.named_parameters():
-          if param.requires_grad:
-              # print(name)
-              param_counter = param_counter + 1
-              param.requires_grad = False
-        if param_counter == 0:
-          print("TEST PASSED")
-        else:
-          print("TEST FAILED")
-
-        self.modules.mean_var_norm.eval()
-        self.modules.spk_embedding_model.eval()
-
-        param_counter = 0
-        for name, param in self.modules.spk_embedding_model.named_parameters():
-          if param.requires_grad:
-              # print(name)
-              param_counter = param_counter + 1
-        if param_counter == 0:
-          print("TEST PASSED")
-        else:
-          print("TEST FAILED")
-        """
+        self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
+          source="/workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80",
+          run_opts={"device": self.device},
+          freeze_params=True
+        )
 
         
+        # self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
+        #   source="/content/drive/MyDrive/ecapa_tdnn/mel_spec_input",
+        #   run_opts={"device": self.device},
+        #   freeze_params=True
+        # )
+        
+
+        # self.spk_emb_mel_spec_encoder.training = True
+        # [param.requires_grad for param in self.spk_emb_mel_spec_encoder.parameters()] = list of all False
+        # [param for param in self.spk_emb_mel_spec_encoder.parameters()] 0.0765, -0.0379,  0.0422,  0.0343
         self.last_loss_stats = {}
+
+        self.grad_records = {
+          "ave_grads": list(),
+          "max_grads": list(),
+          "layers": list()
+        }
         return super().on_fit_start()
 
     def compute_forward(self, batch, stage):
@@ -127,6 +122,7 @@ class Tacotron2Brain(sb.Brain):
         """
         result = super().fit_batch(batch)
         self.hparams.lr_annealing(self.optimizer)
+        self.record_grad_flow(self.modules.model.named_parameters())
         return result
 
     def compute_objectives(self, predictions, batch, stage):
@@ -173,30 +169,37 @@ class Tacotron2Brain(sb.Brain):
         """
         inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
-
-        self.modules.mean_var_norm.eval()
-        self.modules.spk_embedding_model.eval()
+        
+        
+        self.spk_emb_mel_spec_encoder.eval()
+        # Epoch 1
+        # self.spk_emb_mel_spec_encoder.training = False
+        # [param.requires_grad for param in self.spk_emb_mel_spec_encoder.parameters()] = list of all False
+        # [param for param in self.spk_emb_mel_spec_encoder.parameters()] 0.0765, -0.0379,  0.0422,  0.0343
+        
         
         target_mels = targets[0]
-        target_mel_rel_lens = targets[2] / torch.max(targets[2]).item()
         pred_mels_postnet = predictions[1]
-        pred_mel_rel_lens = predictions[4] / torch.max(predictions[4]).item()
 
+        
+        param_counter = 0
+        for param in self.spk_emb_mel_spec_encoder.parameters():
+          if param.requires_grad:
+              # print(param.data)
+              param_counter = param_counter + 1
+        if param_counter != 0:
+          print("TEST FAILED")
 
-        # import pdb; pdb.set_trace()
-        target_mels = torch.transpose(target_mels, 1, 2)
-        target_feats = self.modules.mean_var_norm(target_mels, target_mel_rel_lens)
-        target_spk_embs = self.modules.spk_embedding_model(target_feats)
+        target_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(target_mels)
         target_spk_embs = target_spk_embs.squeeze().detach()
         target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
 
-        pred_mels_postnet = torch.transpose(pred_mels_postnet, 1, 2)
-        pred_mels_postnet_feats = self.modules.mean_var_norm(pred_mels_postnet, pred_mel_rel_lens)
-        pred_spk_embs = self.modules.spk_embedding_model(pred_mels_postnet_feats)
+        pred_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(pred_mels_postnet)
         pred_spk_embs = pred_spk_embs.squeeze().detach()
         pred_spk_embs = pred_spk_embs.to(self.device, non_blocking=True).float()
 
         anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
+        
 
         spk_emb_triplets = (None, None, None)
 
@@ -213,6 +216,7 @@ class Tacotron2Brain(sb.Brain):
 
           spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
         
+
         loss_stats = self.hparams.criterion(
             predictions, targets, input_lengths, output_lengths, spk_emb_triplets, self.last_epoch
         )
@@ -231,8 +235,8 @@ class Tacotron2Brain(sb.Brain):
         """
         inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
-        mel_target, _, _ = targets
-        mel_out, mel_out_postnet, gate_out, alignments, mel_lens = predictions
+        mel_target, _ = targets
+        mel_out, mel_out_postnet, gate_out, alignments = predictions
         alignments_max = (
             alignments[0]
             .max(dim=-1)
@@ -300,7 +304,7 @@ class Tacotron2Brain(sb.Brain):
             self.device, non_blocking=True
         ).long()
         x = (text_padded, input_lengths, mel_padded, max_len, output_lengths)
-        y = (mel_padded, gate_padded, output_lengths)
+        y = (mel_padded, gate_padded)
         len_x = torch.sum(output_lengths)
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
         return (x, y, len_x, labels, wavs, spk_embs, spk_ids)
@@ -565,6 +569,45 @@ class Tacotron2Brain(sb.Brain):
 
       return (anchor_se_idx, pos_se_idx, neg_se_idx)
 
+    def record_grad_flow(self, named_parameters):
+      '''Plots the gradients flowing through different layers in the net during training.
+      Can be used for checking for possible gradient vanishing / exploding problems.
+      
+      Usage: Plug this function in Trainer class after loss.backwards() as 
+      "plot_grad_flow(self.model.named_parameters())" to visualize the gradient flow'''
+
+      for n, p in named_parameters:
+          if(p.requires_grad) and ("bias" not in n):
+              self.grad_records["layers"].append(n)
+              self.grad_records["ave_grads"].append(p.grad.abs().mean().cpu())
+              self.grad_records["max_grads"].append(p.grad.abs().max().cpu())
+      
+
+
+def plot_grad_flow(grad_records):
+
+  max_grads = grad_records["max_grads"]
+  ave_grads = grad_records["ave_grads"]
+  layers = grad_records["layers"]
+
+  plt.bar(np.arange(len(max_grads)), max_grads, alpha=0.1, lw=1, color="c")
+  plt.bar(np.arange(len(max_grads)), ave_grads, alpha=0.1, lw=1, color="b")
+  plt.hlines(0, 0, len(ave_grads)+1, lw=2, color="k" )
+  plt.xticks(range(0,len(ave_grads), 1), layers, rotation="vertical")
+  plt.xlim(left=0, right=len(ave_grads))
+  plt.ylim(bottom = -0.001, top=0.02) # zoom in on the lower gradient regions
+  plt.xlabel("Layers")
+  plt.ylabel("average gradient")
+  plt.title("Gradient flow")
+  plt.grid(True)
+  plt.legend([Line2D([0], [0], color="c", lw=4),
+              Line2D([0], [0], color="b", lw=4),
+              Line2D([0], [0], color="k", lw=4)], ['max-gradient', 'mean-gradient', 'zero-gradient'])
+
+  plt.savefig("grad_flow_record.png", dpi=300)
+  plt.show()
+
+
 def dataio_prepare(hparams):
     # Define audio pipeline:
 
@@ -650,10 +693,9 @@ if __name__ == "__main__":
     sb.utils.distributed.run_on_main(
         compute_speaker_embeddings,
         kwargs={
-            "input_filepaths": [hparams["train_json"], hparams["valid_json"]],
+            "input_filepaths": [hparams["train_json"]],
             "output_file_paths": [
                 hparams["train_speaker_embeddings_pickle"],
-                hparams["valid_speaker_embeddings_pickle"],
             ],
             "data_folder": hparams["data_folder"],
             "audio_sr": hparams["sample_rate"],
@@ -709,7 +751,7 @@ if __name__ == "__main__":
     tacotron2_brain.fit(
         tacotron2_brain.hparams.epoch_counter,
         train_set=datasets["train"],
-        valid_set=datasets["valid"],
+        valid_set=datasets["train"],
         train_loader_kwargs=hparams["train_dataloader_opts"],
         valid_loader_kwargs=hparams["valid_dataloader_opts"],
     )
@@ -717,6 +759,10 @@ if __name__ == "__main__":
     # Test
     if "test" in datasets:
         tacotron2_brain.evaluate(
-            datasets["test"],
+            datasets["train"],
             test_loader_kwargs=hparams["test_dataloader_opts"],
         )
+
+    print("tacotron2_brain.grad_records: ", tacotron2_brain.grad_records)
+
+    plot_grad_flow(tacotron2_brain.grad_records)
