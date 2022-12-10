@@ -1671,6 +1671,7 @@ class Loss(nn.Module):
         guided_attention_sigma=None,
         gate_loss_weight=1.0,
         guided_attention_weight=1.0,
+        mel_loss_weight=1.0,
         speaker_consistency_loss_weight=1.0,
         guided_attention_scheduler=None,
         guided_attention_hard_stop=None,
@@ -1690,6 +1691,7 @@ class Loss(nn.Module):
         self.guided_attention_weight = guided_attention_weight
         self.guided_attention_scheduler = guided_attention_scheduler
         self.guided_attention_hard_stop = guided_attention_hard_stop
+        self.mel_loss_weight = mel_loss_weight
         self.scl_weight = speaker_consistency_loss_weight
 
     def forward(
@@ -1731,6 +1733,9 @@ class Loss(nn.Module):
         mel_loss = self.mse_loss(mel_out, mel_target) + self.mse_loss(
             mel_out_postnet, mel_target
         )
+
+        mel_loss = self.mel_loss_weight * mel_loss
+        
         gate_loss = self.gate_loss_weight * self.bce_loss(gate_out, gate_target)
         attn_loss, attn_weight = self.get_attention_loss(
             alignments, input_lengths, target_lengths, epoch

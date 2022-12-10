@@ -58,7 +58,7 @@ class Tacotron2Brain(sb.Brain):
           freeze_params=True
         )
 
-        self.spk_emb_mel_spec_encoder.eval()
+        # self.spk_emb_mel_spec_encoder.eval()
         
         self.last_loss_stats = {}
         return super().on_fit_start()
@@ -149,25 +149,25 @@ class Tacotron2Brain(sb.Brain):
         """
         inputs, targets, num_items, labels, wavs, spk_embs = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
+
+        self.spk_emb_mel_spec_encoder.eval()
         
         
         target_mels = targets[0]
         pred_mels_postnet = predictions[1]
 
-        """
-        print("Speaker embedding model test: ")
         param_counter = 0
-        for name, param in self.spk_emb_mel_spec_encoder.named_parameters():
+        for param in self.spk_emb_mel_spec_encoder.parameters():
           if param.requires_grad:
-              print(name, param.data)
+              # print(param.data)
               param_counter = param_counter + 1
-        if param_counter == 0:
-          print("TEST PASSED")
-        """
+        if param_counter != 0:
+          print("TEST FAILED")
+
 
         # import pdb; pdb.set_trace()
         target_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(target_mels)
-        target_spk_embs = target_spk_embs.squeeze()
+        target_spk_embs = target_spk_embs.squeeze().detach()
         target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
 
         preds_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(pred_mels_postnet)
