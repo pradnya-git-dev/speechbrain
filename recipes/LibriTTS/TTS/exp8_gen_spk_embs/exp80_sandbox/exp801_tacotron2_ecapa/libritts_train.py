@@ -169,41 +169,38 @@ class Tacotron2Brain(sb.Brain):
         """
         inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
-        
-        """
-        self.spk_emb_mel_spec_encoder.eval()
-        # Epoch 1
-        # self.spk_emb_mel_spec_encoder.training = False
-        # [param.requires_grad for param in self.spk_emb_mel_spec_encoder.parameters()] = list of all False
-        # [param for param in self.spk_emb_mel_spec_encoder.parameters()] 0.0765, -0.0379,  0.0422,  0.0343
-        
-        
+
+
         target_mels = targets[0]
         pred_mels_postnet = predictions[1]
 
-        
         param_counter = 0
-        for param in self.spk_emb_mel_spec_encoder.parameters():
+        for param in self.modules.speaker_embedding_model.parameters():
           if param.requires_grad:
               # print(param.data)
               param_counter = param_counter + 1
         if param_counter != 0:
-          print("TEST FAILED")
+          print("speaker embedding model parameters have requires_grad = True")
 
-        target_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(target_mels)
-        target_spk_embs = target_spk_embs.squeeze().detach()
+
+        target_mels = torch.transpose(target_mels, 1, 2)
+        target_feats = self.modules.mean_var_norm(target_mels, torch.ones(target_mels.shape[0], device=self.device))
+        target_spk_embs = self.modules.speaker_embedding_model(target_feats)
+        target_spk_embs = target_spk_embs.squeeze()
         target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
 
-        pred_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(pred_mels_postnet)
-        pred_spk_embs = pred_spk_embs.squeeze().detach()
+        pred_mels = torch.transpose(pred_mels_postnet, 1, 2)
+        pred_feats = self.modules.mean_var_norm(pred_mels, torch.ones(pred_mels.shape[0], device=self.device))
+        pred_spk_embs = self.modules.speaker_embedding_model(pred_feats)
+        pred_spk_embs = pred_spk_embs.squeeze()
         pred_spk_embs = pred_spk_embs.to(self.device, non_blocking=True).float()
 
+
         anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
-        """
+
 
         spk_emb_triplets = (None, None, None)
 
-        """
         if anchor_se_idx.shape[0] != 0:
 
           anchor_se_idx = anchor_se_idx.to(self.device, non_blocking=True).long()
@@ -215,7 +212,6 @@ class Tacotron2Brain(sb.Brain):
           neg_spk_embs = pred_spk_embs[neg_se_idx]
 
           spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
-        """
 
         loss_stats = self.hparams.criterion(
             predictions, targets, input_lengths, output_lengths, spk_emb_triplets, self.last_epoch
@@ -693,10 +689,9 @@ if __name__ == "__main__":
     sb.utils.distributed.run_on_main(
         compute_speaker_embeddings,
         kwargs={
-            "input_filepaths": [hparams["train_json"], hparams["valid_json"]],
+            "input_filepaths": [hparams["train_json"]],
             "output_file_paths": [
                 hparams["train_speaker_embeddings_pickle"],
-                hparams["valid_speaker_embeddings_pickle"],
             ],
             "data_folder": hparams["data_folder"],
             "audio_sr": hparams["sample_rate"],
@@ -752,7 +747,7 @@ if __name__ == "__main__":
     tacotron2_brain.fit(
         tacotron2_brain.hparams.epoch_counter,
         train_set=datasets["train"],
-        valid_set=datasets["valid"],
+        valid_set=datasets["train"],
         train_loader_kwargs=hparams["train_dataloader_opts"],
         valid_loader_kwargs=hparams["valid_dataloader_opts"],
     )
@@ -760,7 +755,7 @@ if __name__ == "__main__":
     # Test
     if "test" in datasets:
         tacotron2_brain.evaluate(
-            datasets["test"],
+            datasets["train"],
             test_loader_kwargs=hparams["test_dataloader_opts"],
         )
 
