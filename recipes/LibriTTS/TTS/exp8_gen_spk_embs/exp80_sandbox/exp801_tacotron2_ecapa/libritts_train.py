@@ -414,9 +414,6 @@ class Tacotron2Brain(sb.Brain):
         inputs, targets, _, labels, wavs, spk_embs = self.last_batch
         text_padded, input_lengths, _, _, _ = inputs
 
-        self.modules.mean_var_norm.eval()
-        self.modules.speaker_embedding_model.eval()
-
         target_mels = inputs[2]
 
         target_mels = torch.transpose(target_mels, 1, 2)
@@ -582,9 +579,10 @@ if __name__ == "__main__":
     sb.utils.distributed.run_on_main(
         compute_speaker_embeddings,
         kwargs={
-            "input_filepaths": [hparams["train_json"]],
+            "input_filepaths": [hparams["train_json"], hparams["valid_json"]],
             "output_file_paths": [
                 hparams["train_speaker_embeddings_pickle"],
+                hparams["valid_speaker_embeddings_pickle"],
             ],
             "data_folder": hparams["data_folder"],
             "audio_sr": hparams["sample_rate"],
@@ -640,7 +638,7 @@ if __name__ == "__main__":
     tacotron2_brain.fit(
         tacotron2_brain.hparams.epoch_counter,
         train_set=datasets["train"],
-        valid_set=datasets["train"],
+        valid_set=datasets["valid"],
         train_loader_kwargs=hparams["train_dataloader_opts"],
         valid_loader_kwargs=hparams["valid_dataloader_opts"],
     )
@@ -648,6 +646,6 @@ if __name__ == "__main__":
     # Test
     if "test" in datasets:
         tacotron2_brain.evaluate(
-            datasets["train"],
+            datasets["test"],
             test_loader_kwargs=hparams["test_dataloader_opts"],
         )
