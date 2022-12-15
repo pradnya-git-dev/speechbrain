@@ -1803,10 +1803,8 @@ class TextMelCollate:
     """
 
     def __init__(self,
-      speaker_embeddings_pickle,
       n_frames_per_step=1,):
         self.n_frames_per_step = n_frames_per_step
-        self.speaker_embeddings_pickle = speaker_embeddings_pickle
         
     # TODO: Make this more intuitive, use the pipeline
     def __call__(self, batch):
@@ -1852,9 +1850,7 @@ class TextMelCollate:
         gate_padded = torch.FloatTensor(len(batch), max_target_len)
         gate_padded.zero_()
         output_lengths = torch.LongTensor(len(batch))
-        labels, wavs, spk_embs_list = [], [], []
-        with open(self.speaker_embeddings_pickle, "rb") as speaker_embeddings_file:
-            speaker_embeddings = pickle.load(speaker_embeddings_file)
+        labels, wavs = [], []
 
         for i in range(len(ids_sorted_decreasing)):
             idx = ids_sorted_decreasing[i]
@@ -1864,11 +1860,6 @@ class TextMelCollate:
             output_lengths[i] = mel.size(1)
             labels.append(raw_batch[idx]["label"])
             wavs.append(raw_batch[idx]["wav"])
-
-            spk_emb = speaker_embeddings[raw_batch[idx]["uttid"]]
-            spk_embs_list.append(spk_emb)
-
-        spk_embs = torch.stack(spk_embs_list)
 
         # count number of items - characters in text
         len_x = [x[2] for x in batch]
@@ -1881,8 +1872,7 @@ class TextMelCollate:
             output_lengths,
             len_x,
             labels,
-            wavs,
-            spk_embs
+            wavs
         )
 
 

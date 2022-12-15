@@ -70,7 +70,7 @@ class Tacotron2Brain(sb.Brain):
         the model output
         """
         effective_batch = self.batch_to_device(batch)
-        inputs, y, num_items, _, _, spk_embs = effective_batch
+        inputs, y, num_items, _, _ = effective_batch
 
         _, input_lengths, _, _, _ = inputs
 
@@ -147,7 +147,7 @@ class Tacotron2Brain(sb.Brain):
         loss: torch.Tensor
             the loss value
         """
-        inputs, targets, num_items, labels, wavs, spk_embs = batch
+        inputs, targets, num_items, labels, wavs = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         loss_stats = self.hparams.criterion(
             predictions, targets, input_lengths, output_lengths, self.last_epoch
@@ -165,7 +165,7 @@ class Tacotron2Brain(sb.Brain):
         predictions: tuple
             predictions (raw output of the Tacotron model)
         """
-        inputs, targets, num_items, labels, wavs, spk_embs = batch
+        inputs, targets, num_items, labels, wavs = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         mel_target, _ = targets
         mel_out, mel_out_postnet, gate_out, alignments = predictions
@@ -194,8 +194,7 @@ class Tacotron2Brain(sb.Brain):
                     "gate_out": gate_out,
                     "alignments": alignments,
                     "labels": labels,
-                    "wavs": wavs,
-                    "spk_embs": spk_embs,
+                    "wavs": wavs
                 }
             ),
         )
@@ -221,8 +220,7 @@ class Tacotron2Brain(sb.Brain):
             output_lengths,
             len_x,
             labels,
-            wavs,
-            spk_embs,
+            wavs
         ) = batch
         text_padded = text_padded.to(self.device, non_blocking=True).long()
         input_lengths = input_lengths.to(self.device, non_blocking=True).long()
@@ -236,8 +234,7 @@ class Tacotron2Brain(sb.Brain):
         x = (text_padded, input_lengths, mel_padded, max_len, output_lengths)
         y = (mel_padded, gate_padded)
         len_x = torch.sum(output_lengths)
-        spk_embs = spk_embs.to(self.device, non_blocking=True).float()
-        return (x, y, len_x, labels, wavs, spk_embs)
+        return (x, y, len_x, labels, wavs)
 
     def _get_spectrogram_sample(self, raw):
         """Converts a raw spectrogram to one that can be saved as an image
@@ -286,7 +283,7 @@ class Tacotron2Brain(sb.Brain):
             if not os.path.exists(train_sample_path):
                 os.makedirs(train_sample_path)
 
-            _, targets, _, labels, wavs, spk_embs = self.last_batch
+            _, targets, _, labels, wavs = self.last_batch
 
             # Extra lines
             # _, mel_out_postnet, _, _ = self.last_preds
@@ -411,7 +408,7 @@ class Tacotron2Brain(sb.Brain):
         samples and can be useful because"""
         if self.last_batch is None:
             return
-        inputs, targets, _, labels, wavs, spk_embs = self.last_batch
+        inputs, targets, _, labels, wavs = self.last_batch
         text_padded, input_lengths, _, _, _ = inputs
 
         target_mels = inputs[2]
@@ -531,7 +528,7 @@ def dataio_prepare(hparams):
                 json_path=data_info[dataset],
                 replacements={"data_root": hparams["data_folder"]},
                 dynamic_items=[audio_pipeline],
-                output_keys=["mel_text_pair", "wav", "label", "uttid"],
+                output_keys=["mel_text_pair", "wav", "label"],
             )
     except Exception as ex:
         print("SECOND EXCEPTION: ", ex)
@@ -571,36 +568,6 @@ if __name__ == "__main__":
             "sample_rate": hparams["sample_rate"],
             "split_ratio": hparams["split_ratio"],
             "seed": hparams["seed"],
-        },
-    )
-
-    from compute_ecapa_embeddings import compute_speaker_embeddings
-
-    sb.utils.distributed.run_on_main(
-        compute_speaker_embeddings,
-        kwargs={
-            "input_filepaths": [hparams["train_json"], hparams["valid_json"]],
-            "output_file_paths": [
-                hparams["train_speaker_embeddings_pickle"],
-                hparams["valid_speaker_embeddings_pickle"],
-            ],
-            "data_folder": hparams["data_folder"],
-            "audio_sr": hparams["sample_rate"],
-            "spk_emb_sr": hparams["spk_emb_sample_rate"],
-            "mel_spec_params": {
-              "sample_rate": hparams["sample_rate"],
-              "hop_length": hparams["hop_length"],
-              "win_length": hparams["win_length"],
-              "n_mel_channels": hparams["n_mel_channels"],
-              "n_fft": hparams["n_fft"],
-              "mel_fmin": hparams["mel_fmin"],
-              "mel_fmax": hparams["mel_fmax"],
-              "mel_normalized": hparams["mel_normalized"],
-              "power": hparams["power"],
-              "norm": hparams["norm"],
-              "mel_scale": hparams["mel_scale"],
-              "dynamic_range_compression": hparams["dynamic_range_compression"]
-            }
         },
     )
 
