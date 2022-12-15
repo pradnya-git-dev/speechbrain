@@ -30,11 +30,6 @@ import torchaudio
 from speechbrain.pretrained import EncoderClassifier
 import pickle
 import random
-from spk_emb_pretrained_interfaces import MelSpectrogramEncoder
-import itertools
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D 
-import numpy as np
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 logger = logging.getLogger(__name__)
@@ -56,30 +51,8 @@ class Tacotron2Brain(sb.Brain):
             run_opts={"device": self.device},
         )
 
-        # self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
-        #   source="/workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80",
-        #   run_opts={"device": self.device},
-        #   freeze_params=True
-        # )
-
-        """
-        self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
-          source="/content/drive/MyDrive/ecapa_tdnn/mel_spec_input",
-          run_opts={"device": self.device},
-          freeze_params=True
-        )
-        """
-
-        # self.spk_emb_mel_spec_encoder.training = True
-        # [param.requires_grad for param in self.spk_emb_mel_spec_encoder.parameters()] = list of all False
-        # [param for param in self.spk_emb_mel_spec_encoder.parameters()] 0.0765, -0.0379,  0.0422,  0.0343
+        
         self.last_loss_stats = {}
-
-        self.grad_records = {
-          "ave_grads": list(),
-          "max_grads": list(),
-          "layers": list()
-        }
         return super().on_fit_start()
 
     def compute_forward(self, batch, stage):
@@ -97,11 +70,19 @@ class Tacotron2Brain(sb.Brain):
         the model output
         """
         effective_batch = self.batch_to_device(batch)
-        inputs, y, num_items, _, _, spk_embs, _ = effective_batch
+        inputs, y, num_items, _, _, spk_embs = effective_batch
 
         _, input_lengths, _, _, _ = inputs
 
         max_input_length = input_lengths.max().item()
+
+        target_mels = inputs[2]
+
+        target_mels = torch.transpose(target_mels, 1, 2)
+        target_feats = self.modules.mean_var_norm(target_mels, torch.ones(target_mels.shape[0], device=self.device))
+        spk_embs = self.modules.speaker_embedding_model(target_feats)
+        spk_embs = spk_embs.squeeze()
+        spk_embs = spk_embs.to(self.device, non_blocking=True).float()
 
         return self.modules.model(
             inputs, spk_embs, alignments_dim=max_input_length
@@ -122,7 +103,6 @@ class Tacotron2Brain(sb.Brain):
         """
         result = super().fit_batch(batch)
         self.hparams.lr_annealing(self.optimizer)
-        self.record_grad_flow(self.modules.model.named_parameters())
         return result
 
     def compute_objectives(self, predictions, batch, stage):
@@ -167,54 +147,10 @@ class Tacotron2Brain(sb.Brain):
         loss: torch.Tensor
             the loss value
         """
-        inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
+        inputs, targets, num_items, labels, wavs, spk_embs = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
-
-
-        target_mels = targets[0]
-        pred_mels_postnet = predictions[1]
-
-        param_counter = 0
-        for param in self.modules.speaker_embedding_model.parameters():
-          if param.requires_grad:
-              # print(param.data)
-              param_counter = param_counter + 1
-        if param_counter != 0:
-          print("speaker embedding model parameters have requires_grad = True")
-
-
-        target_mels = torch.transpose(target_mels, 1, 2)
-        target_feats = self.modules.mean_var_norm(target_mels, torch.ones(target_mels.shape[0], device=self.device))
-        target_spk_embs = self.modules.speaker_embedding_model(target_feats)
-        target_spk_embs = target_spk_embs.squeeze()
-        target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
-
-        pred_mels = torch.transpose(pred_mels_postnet, 1, 2)
-        pred_feats = self.modules.mean_var_norm(pred_mels, torch.ones(pred_mels.shape[0], device=self.device))
-        pred_spk_embs = self.modules.speaker_embedding_model(pred_feats)
-        pred_spk_embs = pred_spk_embs.squeeze()
-        pred_spk_embs = pred_spk_embs.to(self.device, non_blocking=True).float()
-
-
-        anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
-
-
-        spk_emb_triplets = (None, None, None)
-
-        if anchor_se_idx.shape[0] != 0:
-
-          anchor_se_idx = anchor_se_idx.to(self.device, non_blocking=True).long()
-          pos_se_idx = pos_se_idx.to(self.device, non_blocking=True).long()
-          neg_se_idx = neg_se_idx.to(self.device, non_blocking=True).long()
-          
-          anchor_spk_embs = target_spk_embs[anchor_se_idx]
-          pos_spk_embs = pred_spk_embs[pos_se_idx]
-          neg_spk_embs = pred_spk_embs[neg_se_idx]
-
-          spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
-
         loss_stats = self.hparams.criterion(
-            predictions, targets, input_lengths, output_lengths, spk_emb_triplets, self.last_epoch
+            predictions, targets, input_lengths, output_lengths, self.last_epoch
         )
         self.last_loss_stats[stage] = scalarize(loss_stats)
         return loss_stats.loss
@@ -229,7 +165,7 @@ class Tacotron2Brain(sb.Brain):
         predictions: tuple
             predictions (raw output of the Tacotron model)
         """
-        inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
+        inputs, targets, num_items, labels, wavs, spk_embs = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         mel_target, _ = targets
         mel_out, mel_out_postnet, gate_out, alignments = predictions
@@ -260,7 +196,6 @@ class Tacotron2Brain(sb.Brain):
                     "labels": labels,
                     "wavs": wavs,
                     "spk_embs": spk_embs,
-                    "spk_ids": spk_ids,
                 }
             ),
         )
@@ -288,7 +223,6 @@ class Tacotron2Brain(sb.Brain):
             labels,
             wavs,
             spk_embs,
-            spk_ids,
         ) = batch
         text_padded = text_padded.to(self.device, non_blocking=True).long()
         input_lengths = input_lengths.to(self.device, non_blocking=True).long()
@@ -303,7 +237,7 @@ class Tacotron2Brain(sb.Brain):
         y = (mel_padded, gate_padded)
         len_x = torch.sum(output_lengths)
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
-        return (x, y, len_x, labels, wavs, spk_embs, spk_ids)
+        return (x, y, len_x, labels, wavs, spk_embs)
 
     def _get_spectrogram_sample(self, raw):
         """Converts a raw spectrogram to one that can be saved as an image
@@ -352,7 +286,7 @@ class Tacotron2Brain(sb.Brain):
             if not os.path.exists(train_sample_path):
                 os.makedirs(train_sample_path)
 
-            _, targets, _, labels, wavs, spk_embs, _ = self.last_batch
+            _, targets, _, labels, wavs, spk_embs = self.last_batch
 
             # Extra lines
             # _, mel_out_postnet, _, _ = self.last_preds
@@ -477,8 +411,19 @@ class Tacotron2Brain(sb.Brain):
         samples and can be useful because"""
         if self.last_batch is None:
             return
-        inputs, targets, _, labels, wavs, spk_embs, _ = self.last_batch
+        inputs, targets, _, labels, wavs, spk_embs = self.last_batch
         text_padded, input_lengths, _, _, _ = inputs
+
+        self.modules.mean_var_norm.eval()
+        self.modules.speaker_embedding_model.eval()
+
+        target_mels = inputs[2]
+
+        target_mels = torch.transpose(target_mels, 1, 2)
+        target_feats = self.modules.mean_var_norm(target_mels, torch.ones(target_mels.shape[0], device=self.device))
+        spk_embs = self.modules.speaker_embedding_model(target_feats)
+        spk_embs = spk_embs.squeeze()
+        spk_embs = spk_embs.to(self.device, non_blocking=True).float()
 
         mel_out, _, _ = self.hparams.model.infer(
             text_padded[:1], spk_embs[:1], input_lengths[:1]
@@ -550,58 +495,6 @@ class Tacotron2Brain(sb.Brain):
                 self.tensorboard_logger.log_figure(
                     f"{stage}/inf_mel_pred", mel_out
                 )
-
-    def get_triplets(self, spk_ids):  
-      anchor_se_idx, pos_se_idx, neg_se_idx = None, None, None
-      spk_idx_pairs = list()
-      for i in range(len(spk_ids)):
-        for j in range(i, len(spk_ids)):
-          if spk_ids[i] != spk_ids[j]:
-            spk_idx_pairs.append((i, j))
-      
-      anchor_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
-      pos_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
-      neg_se_idx = torch.LongTensor([j for (i, j) in spk_idx_pairs])
-
-      return (anchor_se_idx, pos_se_idx, neg_se_idx)
-
-    def record_grad_flow(self, named_parameters):
-      '''Plots the gradients flowing through different layers in the net during training.
-      Can be used for checking for possible gradient vanishing / exploding problems.
-      
-      Usage: Plug this function in Trainer class after loss.backwards() as 
-      "plot_grad_flow(self.model.named_parameters())" to visualize the gradient flow'''
-
-      for n, p in named_parameters:
-          if(p.requires_grad) and ("bias" not in n):
-              self.grad_records["layers"].append(n)
-              self.grad_records["ave_grads"].append(p.grad.abs().mean().cpu())
-              self.grad_records["max_grads"].append(p.grad.abs().max().cpu())
-      
-
-
-def plot_grad_flow(grad_records):
-
-  max_grads = grad_records["max_grads"]
-  ave_grads = grad_records["ave_grads"]
-  layers = grad_records["layers"]
-
-  plt.bar(np.arange(len(max_grads)), max_grads, alpha=0.1, lw=1, color="c")
-  plt.bar(np.arange(len(max_grads)), ave_grads, alpha=0.1, lw=1, color="b")
-  plt.hlines(0, 0, len(ave_grads)+1, lw=2, color="k" )
-  plt.xticks(range(0,len(ave_grads), 1), layers, rotation="vertical")
-  plt.xlim(left=0, right=len(ave_grads))
-  plt.ylim(bottom = -0.001, top=0.02) # zoom in on the lower gradient regions
-  plt.xlabel("Layers")
-  plt.ylabel("average gradient")
-  plt.title("Gradient flow")
-  plt.grid(True)
-  plt.legend([Line2D([0], [0], color="c", lw=4),
-              Line2D([0], [0], color="b", lw=4),
-              Line2D([0], [0], color="k", lw=4)], ['max-gradient', 'mean-gradient', 'zero-gradient'])
-
-  plt.savefig("grad_flow_record.png", dpi=300)
-  plt.show()
 
 
 def dataio_prepare(hparams):
@@ -758,7 +651,3 @@ if __name__ == "__main__":
             datasets["train"],
             test_loader_kwargs=hparams["test_dataloader_opts"],
         )
-
-    print("tacotron2_brain.grad_records: ", tacotron2_brain.grad_records)
-
-    plot_grad_flow(tacotron2_brain.grad_records)
