@@ -118,7 +118,6 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
           source="/workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80",
           run_opts={"device": device}
         )
-    spk_emb_encoder.eval()
 
     resampler = None
     resample_audio = False
