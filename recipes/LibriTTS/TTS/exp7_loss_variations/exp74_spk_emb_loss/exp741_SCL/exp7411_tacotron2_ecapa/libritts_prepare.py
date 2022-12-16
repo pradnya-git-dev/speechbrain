@@ -98,6 +98,10 @@ def prepare_libritts(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
     )
 
+    if len(split_ratio) == 1:
+      create_json(wav_list, save_json_train, sample_rate)
+      return
+
     # Random split the signal list into train, valid, and test sets.
     data_split = split_sets(wav_list, split_ratio)
     # Creating json files
@@ -137,7 +141,7 @@ def create_json(wav_list, json_file, sample_rate):
 
         # Gets the path for the  text files and extracts the input text
         original_text_path = os.path.join(
-            "/", *path_parts[:-1], uttid + ".original.txt"
+            "/", *path_parts[:-1], uttid + ".normalized.txt"
         )
         with open(original_text_path) as f:
             original_text = f.read()

@@ -53,12 +53,11 @@ class Tacotron2Brain(sb.Brain):
         )
 
         self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
-          source="/workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80",
+          source="/content/drive/MyDrive/ecapa_tdnn/mel_spec_input",
           run_opts={"device": self.device},
           freeze_params=True
         )
 
-        # self.spk_emb_mel_spec_encoder.eval()
         
         self.last_loss_stats = {}
         return super().on_fit_start()
@@ -150,32 +149,21 @@ class Tacotron2Brain(sb.Brain):
         inputs, targets, num_items, labels, wavs, spk_embs = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
 
-        self.spk_emb_mel_spec_encoder.eval()
-        
-        
-        target_mels = targets[0]
-        pred_mels_postnet = predictions[1]
-
-        param_counter = 0
-        for param in self.spk_emb_mel_spec_encoder.parameters():
-          if param.requires_grad:
-              # print(param.data)
-              param_counter = param_counter + 1
-        if param_counter != 0:
-          print("TEST FAILED")
-
-
         # import pdb; pdb.set_trace()
+        self.spk_emb_mel_spec_encoder.eval()
+
+        target_mels = targets[0].detach().clone()
+        pred_mels_postnet = predictions[1].detach().clone()
+
         target_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(target_mels)
-        target_spk_embs = target_spk_embs.squeeze().detach()
+        target_spk_embs = target_spk_embs.squeeze()
         target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
 
         preds_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(pred_mels_postnet)
-        preds_spk_embs = preds_spk_embs.squeeze().detach()
+        preds_spk_embs = preds_spk_embs.squeeze()
         preds_spk_embs = preds_spk_embs.to(self.device, non_blocking=True).float()
 
         scl_spk_embs = (target_spk_embs, preds_spk_embs)
-        
 
         loss_stats = self.hparams.criterion(
             predictions, targets, input_lengths, output_lengths, scl_spk_embs, self.last_epoch
@@ -599,10 +587,9 @@ if __name__ == "__main__":
     sb.utils.distributed.run_on_main(
         compute_speaker_embeddings,
         kwargs={
-            "input_filepaths": [hparams["train_json"], hparams["valid_json"]],
+            "input_filepaths": [hparams["train_json"]],
             "output_file_paths": [
                 hparams["train_speaker_embeddings_pickle"],
-                hparams["valid_speaker_embeddings_pickle"],
             ],
             "data_folder": hparams["data_folder"],
             "audio_sr": hparams["sample_rate"],
@@ -658,7 +645,7 @@ if __name__ == "__main__":
     tacotron2_brain.fit(
         tacotron2_brain.hparams.epoch_counter,
         train_set=datasets["train"],
-        valid_set=datasets["valid"],
+        valid_set=datasets["train"],
         train_loader_kwargs=hparams["train_dataloader_opts"],
         valid_loader_kwargs=hparams["valid_dataloader_opts"],
     )
@@ -666,6 +653,6 @@ if __name__ == "__main__":
     # Test
     if "test" in datasets:
         tacotron2_brain.evaluate(
-            datasets["test"],
+            datasets["train"],
             test_loader_kwargs=hparams["test_dataloader_opts"],
         )

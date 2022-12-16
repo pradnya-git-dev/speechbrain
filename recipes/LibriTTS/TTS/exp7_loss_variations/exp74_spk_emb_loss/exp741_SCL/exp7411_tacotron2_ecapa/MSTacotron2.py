@@ -1670,9 +1670,9 @@ class Loss(nn.Module):
         self,
         guided_attention_sigma=None,
         gate_loss_weight=1.0,
-        guided_attention_weight=1.0,
         mel_loss_weight=1.0,
-        speaker_consistency_loss_weight=1.0,
+        sc_loss_weight=1.0,
+        guided_attention_weight=1.0,
         guided_attention_scheduler=None,
         guided_attention_hard_stop=None,
     ):
@@ -1680,6 +1680,10 @@ class Loss(nn.Module):
         if guided_attention_weight == 0:
             guided_attention_weight = None
         self.guided_attention_weight = guided_attention_weight
+        self.mel_loss_weight = mel_loss_weight
+        self.sc_loss_weight = sc_loss_weight
+
+
         self.mse_loss = nn.MSELoss()
         self.bce_loss = nn.BCEWithLogitsLoss()
         self.guided_attention_loss = GuidedAttentionLoss(
@@ -1691,8 +1695,6 @@ class Loss(nn.Module):
         self.guided_attention_weight = guided_attention_weight
         self.guided_attention_scheduler = guided_attention_scheduler
         self.guided_attention_hard_stop = guided_attention_hard_stop
-        self.mel_loss_weight = mel_loss_weight
-        self.scl_weight = speaker_consistency_loss_weight
 
     def forward(
         self, model_output, targets, input_lengths, target_lengths, scl_spk_embs, epoch
@@ -1725,9 +1727,8 @@ class Loss(nn.Module):
         gate_target.requires_grad = False
         gate_target = gate_target.view(-1, 1)
 
-        target_spk_embs, preds_spk_embs = scl_spk_embs
-        
         mel_out, mel_out_postnet, gate_out, alignments = model_output
+        target_spk_embs, preds_spk_embs = scl_spk_embs
 
         gate_out = gate_out.view(-1, 1)
         mel_loss = self.mse_loss(mel_out, mel_target) + self.mse_loss(
@@ -1735,7 +1736,7 @@ class Loss(nn.Module):
         )
 
         mel_loss = self.mel_loss_weight * mel_loss
-        
+
         gate_loss = self.gate_loss_weight * self.bce_loss(gate_out, gate_target)
         attn_loss, attn_weight = self.get_attention_loss(
             alignments, input_lengths, target_lengths, epoch
@@ -1746,8 +1747,8 @@ class Loss(nn.Module):
           preds_spk_embs,
           torch.ones(len(target_spk_embs)).to(target_spk_embs.device)
         )
-        
-        speaker_consistency_loss = self.scl_weight * speaker_consistency_loss
+
+        speaker_consistency_loss = self.sc_loss_weight * speaker_consistency_loss
 
         total_loss = mel_loss + speaker_consistency_loss + gate_loss + attn_loss
         return LossStats(
