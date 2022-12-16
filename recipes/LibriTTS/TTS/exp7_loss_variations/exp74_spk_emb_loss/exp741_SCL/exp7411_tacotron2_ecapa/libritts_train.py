@@ -53,7 +53,7 @@ class Tacotron2Brain(sb.Brain):
         )
 
         self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
-          source="/content/drive/MyDrive/ecapa_tdnn/mel_spec_input",
+          source="/workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80",
           run_opts={"device": self.device},
           freeze_params=True
         )
@@ -149,7 +149,6 @@ class Tacotron2Brain(sb.Brain):
         inputs, targets, num_items, labels, wavs, spk_embs = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
 
-        # import pdb; pdb.set_trace()
         self.spk_emb_mel_spec_encoder.eval()
 
         target_mels = targets[0].detach().clone()
@@ -587,9 +586,10 @@ if __name__ == "__main__":
     sb.utils.distributed.run_on_main(
         compute_speaker_embeddings,
         kwargs={
-            "input_filepaths": [hparams["train_json"]],
+            "input_filepaths": [hparams["train_json"], hparams["valid_json"]],
             "output_file_paths": [
                 hparams["train_speaker_embeddings_pickle"],
+                hparams["valid_speaker_embeddings_pickle"],
             ],
             "data_folder": hparams["data_folder"],
             "audio_sr": hparams["sample_rate"],
@@ -645,7 +645,7 @@ if __name__ == "__main__":
     tacotron2_brain.fit(
         tacotron2_brain.hparams.epoch_counter,
         train_set=datasets["train"],
-        valid_set=datasets["train"],
+        valid_set=datasets["valid"],
         train_loader_kwargs=hparams["train_dataloader_opts"],
         valid_loader_kwargs=hparams["valid_dataloader_opts"],
     )
@@ -653,6 +653,6 @@ if __name__ == "__main__":
     # Test
     if "test" in datasets:
         tacotron2_brain.evaluate(
-            datasets["train"],
+            datasets["test"],
             test_loader_kwargs=hparams["test_dataloader_opts"],
         )

@@ -1680,6 +1680,7 @@ class Loss(nn.Module):
         if guided_attention_weight == 0:
             guided_attention_weight = None
         self.guided_attention_weight = guided_attention_weight
+        self.gate_loss_weight = gate_loss_weight
         self.mel_loss_weight = mel_loss_weight
         self.sc_loss_weight = sc_loss_weight
 
@@ -1690,9 +1691,7 @@ class Loss(nn.Module):
             sigma=guided_attention_sigma
         )
         self.cos_sim_loss = nn.CosineEmbeddingLoss()
-
-        self.gate_loss_weight = gate_loss_weight
-        self.guided_attention_weight = guided_attention_weight
+        
         self.guided_attention_scheduler = guided_attention_scheduler
         self.guided_attention_hard_stop = guided_attention_hard_stop
 
