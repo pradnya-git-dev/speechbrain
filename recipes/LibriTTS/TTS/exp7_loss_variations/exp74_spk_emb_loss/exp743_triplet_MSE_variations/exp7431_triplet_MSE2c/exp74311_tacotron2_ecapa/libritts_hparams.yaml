@@ -49,14 +49,11 @@ valid_json: !ref <save_folder>/valid.json
 test_json: !ref <save_folder>/test.json
 
 train_speaker_embeddings_pickle: !ref <save_folder>/train_speaker_embeddings.pickle
-valid_speaker_embeddings_pickle: !ref <save_folder>/train_speaker_embeddings.pickle
-test_speaker_embeddings_pickle: !ref <save_folder>/train_speaker_embeddings.pickle
+valid_speaker_embeddings_pickle: !ref <save_folder>/valid_speaker_embeddings.pickle
+test_speaker_embeddings_pickle: !ref <save_folder>/test_speaker_embeddings.pickle
 
-# splits: ["train", "valid"]
-# split_ratio: [90, 10]
-
-splits: ["train"]
-split_ratio: [100]
+splits: ["train", "valid"]
+split_ratio: [90, 10]
 
 skip_prep: False
 
@@ -92,7 +89,7 @@ spk_emb_sample_rate: 16000
 ################################
 learning_rate: 0.0001
 weight_decay: 0.000006
-batch_size: 2 #minimum 2
+batch_size: 8 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 75.0
@@ -105,19 +102,19 @@ triplet_loss_weight: 1.0
 train_dataloader_opts:
   batch_size: !ref <batch_size>
   drop_last: False  #True #False
-  num_workers: 0
+  num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <train_speaker_embeddings_pickle>
 
 valid_dataloader_opts:
   batch_size: !ref <batch_size>
-  num_workers: 0
+  num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <valid_speaker_embeddings_pickle>
 
 test_dataloader_opts:
   batch_size: !ref <batch_size>
-  num_workers: 0
+  num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <test_speaker_embeddings_pickle>
 
@@ -262,5 +259,5 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
   loadables:
     model: !ref <model>
   paths:
-    # model: /workspace/mstts_saved_models/6031_tacotron2_phoneme_film_mlp_ecapa_ljspeech/model.ckpt
-    model: /content/drive/MyDrive/mstts_saved_models/TTS/exp6_SCL/exp60_base/exp603_phoneme_film_mlp/exp6031_tacotron2_ecapa/ljspeech_sr16000_e200/model.ckpt
+    model: /workspace/mstts_saved_models/6031_tacotron2_phoneme_film_mlp_ecapa_ljspeech/model.ckpt
+    # model: /content/drive/MyDrive/mstts_saved_models/TTS/exp6_SCL/exp60_base/exp603_phoneme_film_mlp/exp6031_tacotron2_ecapa/ljspeech_sr16000_e200/model.ckpt

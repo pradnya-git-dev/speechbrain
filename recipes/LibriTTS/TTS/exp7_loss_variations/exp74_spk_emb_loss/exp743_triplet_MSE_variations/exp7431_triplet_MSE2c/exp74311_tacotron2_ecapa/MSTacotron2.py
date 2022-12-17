@@ -1901,7 +1901,10 @@ class TextMelCollate:
               for a in range(self.n_uttrances - 1):
                 spk_emb_samples.append(speaker_embeddings[sample_spk_id][sample_utt_id])
             else:
+              # ToDo: improve this for generic case where n != 2
               random_spk_emb = random.sample(other_spk_embs, k=(self.n_uttrances - 1))
+              spk_emb_samples.extend(random_spk_emb)
+
 
             for j in range(self.n_uttrances):
                 mel_padded[i * self.n_uttrances + j, :, : mel.size(1)] = mel
@@ -1915,8 +1918,10 @@ class TextMelCollate:
 
         spk_embs = torch.stack(spk_embs_list)
 
+        # import pdb; pdb.set_trace()
+
         # count number of items - characters in text
-        len_x = [x[2] for x in batch]
+        len_x = [x[2] for x in batch for i in range(self.n_uttrances)]
         len_x = torch.Tensor(len_x)
         return (
             text_padded,

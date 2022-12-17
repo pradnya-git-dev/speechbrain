@@ -98,9 +98,9 @@ def prepare_libritts(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
     )
 
-    if len(split_ratio) == 1:
-      create_json(wav_list, save_json_train, sample_rate)
-      return
+    # if len(split_ratio) == 1:
+    #   create_json(wav_list, save_json_train, sample_rate)
+    #   return
 
     # Random split the signal list into train, valid, and test sets.
     data_split = split_sets(wav_list, split_ratio)
