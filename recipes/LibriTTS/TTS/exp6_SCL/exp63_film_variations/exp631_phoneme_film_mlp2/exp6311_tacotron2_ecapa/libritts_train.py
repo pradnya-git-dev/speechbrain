@@ -367,12 +367,16 @@ class Tacotron2Brain(sb.Brain):
                     waveform_ss.squeeze(1),
                     self.hparams.sample_rate,
                 )
-                self.tensorboard_logger.log_figure(
-                    f"{stage}/train_mel_target", targets[0][0]
-                )
-                self.tensorboard_logger.log_figure(
-                    f"{stage}/train_mel_pred", mel_out_postnet[0]
-                )
+
+                try:
+                  self.tensorboard_logger.log_figure(
+                      f"{stage}/train_mel_target", targets[0][0]
+                  )
+                  self.tensorboard_logger.log_figure(
+                      f"{stage}/train_mel_pred", mel_out_postnet[0]
+                  )
+                except Exception as ex:
+                  pass
 
         # Store the train loss until the validation stage.
 
@@ -510,12 +514,16 @@ class Tacotron2Brain(sb.Brain):
                     waveform_ss.squeeze(1),
                     self.hparams.sample_rate,
                 )
-                self.tensorboard_logger.log_figure(
-                    f"{stage}/inf_mel_target", targets[0][0]
-                )
-                self.tensorboard_logger.log_figure(
-                    f"{stage}/inf_mel_pred", mel_out
-                )
+
+                try:
+                  self.tensorboard_logger.log_figure(
+                      f"{stage}/inf_mel_target", targets[0][0]
+                  )
+                  self.tensorboard_logger.log_figure(
+                      f"{stage}/inf_mel_pred", mel_out
+                  )
+                except Exception as ex:
+                  pass
 
 
     def get_triplets(self, spk_ids):  
