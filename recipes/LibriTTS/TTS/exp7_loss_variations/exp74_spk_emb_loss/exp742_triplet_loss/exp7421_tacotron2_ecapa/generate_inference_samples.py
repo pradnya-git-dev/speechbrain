@@ -104,7 +104,7 @@ spk_emb_resampler = Resample(orig_freq=ORIGINAL_AUDIO_SR, new_freq=SPK_EMB_SR)
 mel_spec_resampler = Resample(orig_freq=ORIGINAL_AUDIO_SR, new_freq=EXP_AUDIO_SR)
 
 # Intialize TTS (tacotron2) and Vocoder (HiFIGAN)
-tacotron2_ms = MSTacotron2.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/TTS/exp7_loss_variations/exp74_spk_emb_loss/exp742_triplet_loss/exp7421_tacotron2_ecapa/libritts_dev_clean/epoch85",
+tacotron2_ms = MSTacotron2.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/TTS/exp7_loss_variations/exp74_spk_emb_loss/exp742_triplet_loss/exp7421_tacotron2_ecapa/libritts_dev_clean/epoch100",
                                         hparams_file="/content/speechbrain/recipes/LibriTTS/TTS/exp7_loss_variations/exp74_spk_emb_loss/exp742_triplet_loss/exp7421_tacotron2_ecapa/tacotron2_inf_hparams.yaml",
                                         run_opts={"device": DEVICE})
 
@@ -203,5 +203,5 @@ with open(COS_SIM_SCORES_FILE, "w+") as cs_f:
     cs_cp_syntheseized = cos_sim_score(target_emb, cp_synthesized_emb).item()
     # import pdb; pdb.set_trace()
 
-    print("{} {:.3f}, {:.3f}\n".format(uttid, cs_synthesized, cs_cp_syntheseized))
-    cs_f.write("{} {:.3f}, {:.3f}\n".format(uttid, cs_synthesized, cs_cp_syntheseized))
+    print("{} {:.3f} {:.3f}\n".format(uttid, cs_synthesized, cs_cp_syntheseized))
+    cs_f.write("{} {:.3f} {:.3f}\n".format(uttid, cs_synthesized, cs_cp_syntheseized))
