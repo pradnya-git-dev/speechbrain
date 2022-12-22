@@ -66,6 +66,7 @@ max_f0: 2093 #(torchaudio pyin values)
 
 spk_emb_size: 192
 spk_emb_sample_rate: 16000
+spk_emb_inject_method: film
 
 ################################
 # Optimization Hyperparameters #
@@ -146,6 +147,8 @@ model: !new:FastSpeech2.FastSpeech2
     pitch_pred_kernel_size: !ref <pitch_pred_kernel_size>
     energy_pred_kernel_size: !ref <energy_pred_kernel_size>
     variance_predictor_dropout: !ref <variance_predictor_dropout>
+    spk_emb_size: !ref <spk_emb_size>
+    spk_emb_inject_method: !ref <spk_emb_inject_method>
 
 mel_spectogram: !name:FastSpeech2.mel_spectogram
     sample_rate: !ref <sample_rate>
