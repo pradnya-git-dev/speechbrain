@@ -345,6 +345,8 @@ def prepare_json(
     None
     """
 
+    seg_lst = seg_lst[:10]
+
     print("preparing %s..." % (json_file))
     if compute_pitch:
         print("Computing pitch as well. This takes several minutes...")
@@ -356,6 +358,7 @@ def prepare_json(
         if use_custom_cleaner:
             label = custom_clean(label)
         json_dict[id] = {
+            "uttid": id,
             "wav": wav,
             "label": label,
             "segment": True if "train" in json_file else False,

@@ -14,6 +14,7 @@ from Transformer import (
     get_key_padding_mask,
 )
 from speechbrain.nnet.normalization import LayerNorm
+import pickle
 
 
 class PositionalEmbedding(nn.Module):
@@ -626,6 +627,10 @@ class TextMelCollate:
         )
     """
 
+    def __init__(self,
+      speaker_embeddings_pickle,):
+        self.speaker_embeddings_pickle = speaker_embeddings_pickle
+
     # TODO: Make this more intuitive, use the pipeline
     def __call__(self, batch):
         """Collate's training batch from normalized text and mel-spectrogram
@@ -673,7 +678,11 @@ class TextMelCollate:
         energy_padded = torch.FloatTensor(len(batch), max_target_len)
         energy_padded.zero_()
         output_lengths = torch.LongTensor(len(batch))
-        labels, wavs = [], []
+        labels, wavs, spk_embs_list = [], [], []
+
+        with open(self.speaker_embeddings_pickle, "rb") as speaker_embeddings_file:
+            speaker_embeddings = pickle.load(speaker_embeddings_file)
+
         for i in range(len(ids_sorted_decreasing)):
 
             idx = ids_sorted_decreasing[i]
@@ -686,6 +695,13 @@ class TextMelCollate:
             output_lengths[i] = mel.size(1)
             labels.append(raw_batch[idx]["label"])
             wavs.append(raw_batch[idx]["wav"])
+
+            spk_emb = speaker_embeddings[raw_batch[idx]["uttid"]]
+            spk_embs_list.append(spk_emb)
+
+        spk_embs = torch.stack(spk_embs_list)
+
+
         # count number of items - characters in text
         len_x = [x[5] for x in batch]
         len_x = torch.Tensor(len_x)
@@ -701,6 +717,7 @@ class TextMelCollate:
             len_x,
             labels,
             wavs,
+            spk_embs,
         )
 
 

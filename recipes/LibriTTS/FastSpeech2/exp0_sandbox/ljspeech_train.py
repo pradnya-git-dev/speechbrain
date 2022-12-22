@@ -17,7 +17,8 @@ import logging
 import torchaudio
 import numpy as np
 import speechbrain as sb
-from speechbrain.pretrained import HIFIGAN
+# from speechbrain.pretrained import HIFIGAN
+from fs2_pretrained_interfaces import HIFIGAN
 from pathlib import Path
 from hyperpyyaml import load_hyperpyyaml
 from speechbrain.utils.data_utils import scalarize
@@ -277,6 +278,7 @@ class FastSpeech2Brain(sb.Brain):
             len_x,
             labels,
             wavs,
+            spk_embs,
         ) = batch
 
         durations = durations.to(self.device, non_blocking=True).long()
@@ -286,8 +288,11 @@ class FastSpeech2Brain(sb.Brain):
         pitch = pitch_padded.to(self.device, non_blocking=True).float()
         energy = energy_padded.to(self.device, non_blocking=True).float()
         mel_lengths = output_lengths.to(self.device, non_blocking=True).long()
+        spk_embs = spk_embs.to(self.device, non_blocking=True).float()
+
         x = (phonemes, durations, pitch, energy)
         y = (spectogram, durations, pitch, energy, mel_lengths, input_lengths)
+
         metadata = (labels, wavs)
         if return_metadata:
             return x, y, metadata
@@ -328,7 +333,7 @@ def dataio_prepare(hparams):
             json_path=hparams[f"{dataset}_json"],
             replacements={"data_root": hparams["data_folder"]},
             dynamic_items=[audio_pipeline],
-            output_keys=["mel_text_pair", "wav", "label", "durations", "pitch"],
+            output_keys=["mel_text_pair", "wav", "label", "durations", "pitch", "uttid"],
         )
     return datasets
 
