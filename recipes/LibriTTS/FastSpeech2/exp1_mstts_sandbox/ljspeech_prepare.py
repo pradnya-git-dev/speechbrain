@@ -345,7 +345,7 @@ def prepare_json(
     None
     """
 
-    seg_lst = seg_lst[:10]
+    # seg_lst = seg_lst[:10]
 
     print("preparing %s..." % (json_file))
     if compute_pitch:
