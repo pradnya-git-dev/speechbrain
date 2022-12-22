@@ -15,6 +15,7 @@ from Transformer import (
 )
 from speechbrain.nnet.normalization import LayerNorm
 import pickle
+from torch.nn import functional as F
 
 
 class PositionalEmbedding(nn.Module):
@@ -254,6 +255,86 @@ class DurationPredictor(nn.Module):
         return self.linear(x)
 
 
+class LinearNorm(torch.nn.Module):
+    """A linear layer with Xavier initialization
+    Arguments
+    ---------
+    in_dim: int
+        the input dimension
+    out_dim: int
+        the output dimension
+    bias: bool
+        whether or not to use a bias
+    w_init_gain: linear
+        the weight initialization gain type (see torch.nn.init.calculate_gain)
+    Example
+    -------
+    >>> import torch
+    >>> from speechbrain.lobes.models.Tacotron2 import Tacotron2
+    >>> layer = LinearNorm(in_dim=5, out_dim=3)
+    >>> x = torch.randn(3, 5)
+    >>> y = layer(x)
+    >>> y.shape
+    torch.Size([3, 3])
+    """
+
+    def __init__(self, in_dim, out_dim, bias=True, w_init_gain="linear"):
+        super().__init__()
+        self.linear_layer = torch.nn.Linear(in_dim, out_dim, bias=bias)
+
+        torch.nn.init.xavier_uniform_(
+            self.linear_layer.weight,
+            gain=torch.nn.init.calculate_gain(w_init_gain),
+        )
+
+    def forward(self, x):
+        """Computes the forward pass
+        Arguments
+        ---------
+        x: torch.Tensor
+            a (batch, features) input tensor
+        Returns
+        -------
+        output: torch.Tensor
+            the linear layer output
+        """
+        return self.linear_layer(x)
+
+
+class FiLM(nn.Module):
+  def __init__(
+    self,
+    spk_emb_size,
+    hidden_state_dim
+  ):
+    super().__init__()
+
+    
+    self.ms_film_hidden_size = int((spk_emb_size + hidden_state_dim) / 2)
+    self.ms_film_hidden = LinearNorm(spk_emb_size, self.ms_film_hidden_size)
+    self.ms_film_h = LinearNorm(self.ms_film_hidden_size, hidden_state_dim)
+    self.ms_film_g = LinearNorm(self.ms_film_hidden_size, hidden_state_dim)
+
+
+  def forward(self, hidden_states, spk_embs):
+
+    spk_embs_shared_1 = F.relu(self.ms_film_hidden(spk_embs))
+        
+    spk_embs_h1 = F.relu(self.ms_film_h(spk_embs_shared_1))
+
+    if len(hidden_states.size()) != len(spk_embs.size()):
+      diff_sz = hidden_states.size()[1]
+      spk_embs_h1 = torch.unsqueeze(spk_embs_h1, 1).repeat(1, diff_sz, 1)
+    hidden_states = hidden_states * spk_embs_h1
+
+    spk_embs_g1 = F.relu(self.ms_film_g(spk_embs_shared_1))
+    if len(hidden_states.size()) != len(spk_embs.size()):
+      diff_sz = hidden_states.size()[1]
+      spk_embs_g1 = torch.unsqueeze(spk_embs_g1, 1).repeat(1, diff_sz, 1)
+    hidden_states = hidden_states + spk_embs_g1
+
+    return hidden_states
+
 class FastSpeech2(nn.Module):
     """The FastSpeech2 text-to-speech model.
     This class is the main entry point for the model, which is responsible
@@ -407,6 +488,8 @@ class FastSpeech2(nn.Module):
         pitch_pred_kernel_size,
         energy_pred_kernel_size,
         variance_predictor_dropout,
+        spk_emb_size,
+        spk_emb_inject_method,
     ):
         super().__init__()
         self.enc_num_head = enc_num_head
@@ -492,6 +575,13 @@ class FastSpeech2(nn.Module):
             postnet_dropout=postnet_dropout,
         )
 
+        self.spk_emb_inject_method = spk_emb_inject_method
+
+        self.film = FiLM(
+          spk_emb_size,
+          enc_d_model
+        )
+
     def forward(
         self, tokens, spk_embs, durations=None, pitch=None, energy=None, pace=1.0
     ):
@@ -526,6 +616,10 @@ class FastSpeech2(nn.Module):
             token_feats, src_mask=attn_mask, src_key_padding_mask=srcmask
         )
         token_feats = token_feats * srcmask_inverted
+
+        # import pdb; pdb.set_trace()
+        token_feats = self.inject_spk_embs(token_feats, spk_embs)
+
         predict_durations = self.durPred(token_feats).squeeze()
 
         if predict_durations.dim() == 1:
@@ -571,12 +665,22 @@ class FastSpeech2(nn.Module):
         # import pdb; pdb.set_trace()
         spec_feats = torch.add(spec_feats, pos) * srcmask_inverted
 
+        spec_feats = self.inject_spk_embs(spec_feats, spk_embs)
+
         output_mel_feats, memory, *_ = self.decoder(
             spec_feats, src_mask=attn_mask, src_key_padding_mask=srcmask
         )
         mel_post = self.linear(output_mel_feats) * srcmask_inverted
         postnet_output = self.postnet(mel_post) + mel_post
         return mel_post, postnet_output, predict_durations, predict_pitch, predict_energy, torch.tensor(mel_lens)
+
+
+    def inject_spk_embs(self, hidden_states, spk_embs):
+
+      # import pdb; pdb.set_trace()
+      if self.spk_emb_inject_method == "film":
+        return self.film(hidden_states, spk_embs)
+
 
 
 def upsample(feats, durs, pace=1.0, padding_value=0.0):
