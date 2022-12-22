@@ -32,6 +32,10 @@ train_json: !ref <save_folder>/train.json
 valid_json: !ref <save_folder>/valid.json
 test_json: !ref <save_folder>/test.json
 
+train_speaker_embeddings_pickle: !ref <save_folder>/train_speaker_embeddings.pickle
+valid_speaker_embeddings_pickle: !ref <save_folder>/valid_speaker_embeddings.pickle
+test_speaker_embeddings_pickle: !ref <save_folder>/test_speaker_embeddings.pickle
+
 splits: ["train", "valid"]
 split_ratio: [90, 10]
 
@@ -55,6 +59,13 @@ mel_normalized: False
 min_max_energy_norm: True
 min_f0: 65  #(torchaudio pyin values)
 max_f0: 2093 #(torchaudio pyin values)
+
+################################
+# Speaker Embedding Parameters #
+################################
+
+spk_emb_size: 192
+spk_emb_sample_rate: 16000
 
 ################################
 # Optimization Hyperparameters #
