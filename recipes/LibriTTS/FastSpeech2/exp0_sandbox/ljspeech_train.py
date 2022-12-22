@@ -82,8 +82,8 @@ class FastSpeech2Brain(sb.Brain):
             A one-element tensor used for backpropagating the gradient.
         """
         x, y, metadata = self.batch_to_device(batch, return_metadata=True)
-        self.last_batch = [x[0], y[-1], y[-2], predictions[0], *metadata]
-        self._remember_sample([x[0], *y, *metadata], predictions)
+        self.last_batch = [x[0], x[1], y[-1], y[-2], predictions[0], *metadata]
+        self._remember_sample([x[0], x[1], *y, *metadata], predictions)
         loss = self.hparams.criterion(predictions, y)
         self.last_loss_stats[stage] = scalarize(loss)
         return loss["total_loss"]
@@ -100,6 +100,7 @@ class FastSpeech2Brain(sb.Brain):
         """
         (
             tokens,
+            spk_embs,
             spectogram,
             durations,
             pitch,
@@ -131,6 +132,7 @@ class FastSpeech2Brain(sb.Brain):
                     "predict_durations": predict_durations,
                     "labels": labels,
                     "wavs": wavs,
+                    "spk_embs": spk_embs,
                 }
             ),
         )
@@ -207,9 +209,9 @@ class FastSpeech2Brain(sb.Brain):
         """
         if self.last_batch is None:
             return
-        tokens, *_ = self.last_batch
+        tokens, spk_embs, *_ = self.last_batch
 
-        _, postnet_mel_out, _, _, _, predict_mel_lens =  self.hparams.model(tokens)
+        _, postnet_mel_out, _, _, _, predict_mel_lens =  self.hparams.model(tokens, spk_embs)
         self.hparams.progress_sample_logger.remember(
             infer_output=self.process_mel(postnet_mel_out, [len(postnet_mel_out[0])])
         )
@@ -290,7 +292,7 @@ class FastSpeech2Brain(sb.Brain):
         mel_lengths = output_lengths.to(self.device, non_blocking=True).long()
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
 
-        x = (phonemes, durations, pitch, energy)
+        x = (phonemes, spk_embs, durations, pitch, energy)
         y = (spectogram, durations, pitch, energy, mel_lengths, input_lengths)
 
         metadata = (labels, wavs)

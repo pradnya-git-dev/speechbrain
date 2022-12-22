@@ -493,7 +493,7 @@ class FastSpeech2(nn.Module):
         )
 
     def forward(
-        self, tokens, durations=None, pitch=None, energy=None, pace=1.0
+        self, tokens, spk_embs, durations=None, pitch=None, energy=None, pace=1.0
     ):
         """forward pass for training and inference
         Arguments
@@ -567,6 +567,8 @@ class FastSpeech2(nn.Module):
             energy = self.energyEmbed(predict_energy.permute(0, 2, 1))
         energy = energy.permute(0, 2, 1)
         spec_feats = spec_feats.add(energy)
+
+        # import pdb; pdb.set_trace()
         spec_feats = torch.add(spec_feats, pos) * srcmask_inverted
 
         output_mel_feats, memory, *_ = self.decoder(
@@ -596,6 +598,8 @@ def upsample(feats, durs, pace=1.0, padding_value=0.0):
     predict_durations: torch.Tensor
         predicted durations for each token
     """
+
+    # import pdb; pdb.set_trace()
     upsampled_mels = [
         torch.repeat_interleave(feats[i], (pace * durs[i]).long(), dim=0)
         for i in range(len(durs))
