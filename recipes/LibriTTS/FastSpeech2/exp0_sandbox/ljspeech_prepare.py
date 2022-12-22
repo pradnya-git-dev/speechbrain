@@ -20,7 +20,7 @@ from speechbrain.dataio.dataio import load_pkl, save_pkl, load_data_json
 
 logger = logging.getLogger(__name__)
 OPT_FILE = "opt_ljspeech_prepare.pkl"
-METADATA_CSV = "metadata.csv"
+METADATA_CSV = "metadata_mfa_g2p_phoneme_16000.csv"
 TRAIN_JSON = "train.json"
 VALID_JSON = "valid.json"
 TEST_JSON = "test.json"
@@ -345,7 +345,7 @@ def prepare_json(
     None
     """
 
-    seg_lst = seg_lst[:10]
+    # seg_lst = seg_lst[:10]
 
     print("preparing %s..." % (json_file))
     if compute_pitch:
