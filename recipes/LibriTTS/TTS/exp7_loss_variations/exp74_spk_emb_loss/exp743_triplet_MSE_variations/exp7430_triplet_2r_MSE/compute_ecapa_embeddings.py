@@ -161,8 +161,12 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
             spk_emb = spk_emb.squeeze()
             spk_emb = spk_emb.detach()
 
-            speaker_embeddings[utt_id] = spk_emb.cpu()
+            if utt_data["spk_id"] not in speaker_embeddings.keys():
+              speaker_embeddings[utt_data["spk_id"]] = dict()
 
+            speaker_embeddings[utt_data["spk_id"]][utt_id] = spk_emb.cpu()
+
+            
         with open(output_file_paths[i], "wb") as output_file:
             pickle.dump(speaker_embeddings, output_file, protocol=pickle.HIGHEST_PROTOCOL)
 

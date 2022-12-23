@@ -1826,6 +1826,7 @@ class TextMelCollate:
       speaker_embeddings_pickle,
       n_frames_per_step=1,):
         self.n_frames_per_step = n_frames_per_step
+        self.n_uttrances = 2
         self.speaker_embeddings_pickle = speaker_embeddings_pickle
         
     # TODO: Make this more intuitive, use the pipeline
@@ -1849,13 +1850,15 @@ class TextMelCollate:
         input_lengths, ids_sorted_decreasing = torch.sort(
             torch.LongTensor([len(x[0]) for x in batch]), dim=0, descending=True
         )
+        input_lengths = torch.LongTensor([e for e in input_lengths for i in range(self.n_uttrances)])
         max_input_len = input_lengths[0]
 
-        text_padded = torch.LongTensor(len(batch), max_input_len)
+        text_padded = torch.LongTensor(len(batch) * self.n_uttrances, max_input_len)
         text_padded.zero_()
         for i in range(len(ids_sorted_decreasing)):
             text = batch[ids_sorted_decreasing[i]][0]
-            text_padded[i, : text.size(0)] = text
+            for j in range(self.n_uttrances):
+                text_padded[i * self.n_uttrances + j, : text.size(0)] = text
 
         # Right zero-pad mel-spec
         num_mels = batch[0][1].size(0)
@@ -1867,33 +1870,53 @@ class TextMelCollate:
             assert max_target_len % self.n_frames_per_step == 0
 
         # include mel padded and gate padded
-        mel_padded = torch.FloatTensor(len(batch), num_mels, max_target_len)
+        mel_padded = torch.FloatTensor(len(batch) * self.n_uttrances, num_mels, max_target_len)
         mel_padded.zero_()
-        gate_padded = torch.FloatTensor(len(batch), max_target_len)
+        gate_padded = torch.FloatTensor(len(batch) * self.n_uttrances, max_target_len)
         gate_padded.zero_()
-        output_lengths = torch.LongTensor(len(batch))
+        output_lengths = torch.LongTensor(len(batch) * self.n_uttrances)
+
         labels, wavs, spk_embs_list, spk_ids = [], [], [], []
         with open(self.speaker_embeddings_pickle, "rb") as speaker_embeddings_file:
             speaker_embeddings = pickle.load(speaker_embeddings_file)
 
+        # import pdb; pdb.set_trace()
+
         for i in range(len(ids_sorted_decreasing)):
             idx = ids_sorted_decreasing[i]
             mel = batch[idx][1]
-            mel_padded[i, :, : mel.size(1)] = mel
-            gate_padded[i, mel.size(1) - 1 :] = 1
-            output_lengths[i] = mel.size(1)
-            labels.append(raw_batch[idx]["label"])
-            wavs.append(raw_batch[idx]["wav"])
 
-            spk_emb = speaker_embeddings[raw_batch[idx]["uttid"]]
-            spk_embs_list.append(spk_emb)
+            sample_spk_id = raw_batch[idx]["spk_id"]
+            sample_utt_id = raw_batch[idx]["uttid"]
+            spk_emb_samples = [speaker_embeddings[sample_spk_id][sample_utt_id]]
 
-            spk_ids.append(raw_batch[idx]["uttid"].split("_")[0])
+            other_spk_embs = [speaker_embeddings[sample_spk_id][utt_id] for utt_id in speaker_embeddings[sample_spk_id].keys() if utt_id != sample_utt_id]
+
+            if len(other_spk_embs) == 0:
+              for a in range(self.n_uttrances - 1):
+                spk_emb_samples.append(speaker_embeddings[sample_spk_id][sample_utt_id])
+            else:
+              # ToDo: improve this for generic case where n != 2
+              random_spk_emb = random.sample(other_spk_embs, k=(self.n_uttrances - 1))
+              spk_emb_samples.extend(random_spk_emb)
+
+
+            for j in range(self.n_uttrances):
+                mel_padded[i * self.n_uttrances + j, :, : mel.size(1)] = mel
+                gate_padded[i * self.n_uttrances + j, mel.size(1) - 1 :] = 1
+                output_lengths[i * self.n_uttrances + j] = mel.size(1)
+                labels.append(raw_batch[idx]["label"])
+                wavs.append(raw_batch[idx]["wav"])
+                spk_embs_list.append(spk_emb_samples[j])
+
+                spk_ids.append(sample_spk_id)
 
         spk_embs = torch.stack(spk_embs_list)
 
+        # import pdb; pdb.set_trace()
+
         # count number of items - characters in text
-        len_x = [x[2] for x in batch]
+        len_x = [x[2] for x in batch for i in range(self.n_uttrances)]
         len_x = torch.Tensor(len_x)
         return (
             text_padded,

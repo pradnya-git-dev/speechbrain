@@ -151,12 +151,12 @@ class Tacotron2Brain(sb.Brain):
 
         self.spk_emb_mel_spec_encoder.eval()
 
-        target_mels = targets[0].detach().clone()
+        # target_mels = targets[0].detach().clone()
         pred_mels_postnet = predictions[1].detach().clone()
 
-        target_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(target_mels)
-        target_spk_embs = target_spk_embs.squeeze()
-        target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
+        # target_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(target_mels)
+        # target_spk_embs = target_spk_embs.squeeze()
+        # target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
 
         preds_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(pred_mels_postnet)
         preds_spk_embs = preds_spk_embs.squeeze()
@@ -164,6 +164,7 @@ class Tacotron2Brain(sb.Brain):
 
         anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
 
+        
         spk_emb_triplets = (None, None, None)
 
         if anchor_se_idx.shape[0] != 0:
@@ -172,7 +173,7 @@ class Tacotron2Brain(sb.Brain):
           pos_se_idx = pos_se_idx.to(self.device, non_blocking=True).long()
           neg_se_idx = neg_se_idx.to(self.device, non_blocking=True).long()
           
-          anchor_spk_embs = target_spk_embs[anchor_se_idx]
+          anchor_spk_embs = preds_spk_embs[anchor_se_idx]
           pos_spk_embs = preds_spk_embs[pos_se_idx]
           neg_spk_embs = preds_spk_embs[neg_se_idx]
 
@@ -520,15 +521,17 @@ class Tacotron2Brain(sb.Brain):
 
     def get_triplets(self, spk_ids):  
       anchor_se_idx, pos_se_idx, neg_se_idx = None, None, None
-      spk_idx_pairs = list()
-      for i in range(len(spk_ids)):
-        for j in range(i, len(spk_ids)):
-          if spk_ids[i] != spk_ids[j]:
-            spk_idx_pairs.append((i, j))
+      spk_idx_tuples = list()
+      for i in range(len(spk_ids) - 1):
+        for j in range(i + 1, len(spk_ids)):
+          if spk_ids[i] == spk_ids[j]:
+            for k in range(len(spk_ids)):
+              if spk_ids[j] != spk_ids[k]:
+                spk_idx_tuples.append((i, j, k))
       
-      anchor_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
-      pos_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
-      neg_se_idx = torch.LongTensor([j for (i, j) in spk_idx_pairs])
+      anchor_se_idx = torch.LongTensor([i for (i, j, k) in spk_idx_tuples])
+      pos_se_idx = torch.LongTensor([j for (i, j, k) in spk_idx_tuples])
+      neg_se_idx = torch.LongTensor([k for (i, j, k) in spk_idx_tuples])
 
       return (anchor_se_idx, pos_se_idx, neg_se_idx)
 
@@ -570,7 +573,7 @@ def dataio_prepare(hparams):
                 json_path=data_info[dataset],
                 replacements={"data_root": hparams["data_folder"]},
                 dynamic_items=[audio_pipeline],
-                output_keys=["mel_text_pair", "wav", "label", "uttid"],
+                output_keys=["mel_text_pair", "wav", "label", "spk_id", "uttid"],
             )
     except Exception as ex:
         print("SECOND EXCEPTION: ", ex)
