@@ -656,6 +656,9 @@ class TextMelCollate:
         )
         max_input_len = input_lengths[0]
 
+        num_mels = batch[0][2].size(0)
+        max_target_len = max([x[2].size(1) for x in batch])
+
         text_padded = torch.LongTensor(len(batch), max_input_len)
         dur_padded = torch.LongTensor(len(batch), max_input_len)
         text_padded.zero_()
@@ -666,13 +669,16 @@ class TextMelCollate:
 
             dur = batch[ids_sorted_decreasing[i]][1]
             # print(text, dur)
+            if i == 0:
+              dur = torch.round(dur)
+              dur_diff = max_target_len - torch.sum(dur)
+              dur[-1] = dur[-1] + dur_diff
             dur_padded[i, : dur.size(0)] = dur
             text_padded[i, : text.size(0)] = text
             # print(dur_padded, text_padded)
 
         # Right zero-pad mel-spec
-        num_mels = batch[0][2].size(0)
-        max_target_len = max([x[2].size(1) for x in batch])
+        
 
         # include mel padded and gate padded
         mel_padded = torch.FloatTensor(len(batch), num_mels, max_target_len)
