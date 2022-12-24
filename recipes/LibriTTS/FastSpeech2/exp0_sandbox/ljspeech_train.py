@@ -283,7 +283,7 @@ class FastSpeech2Brain(sb.Brain):
             spk_embs,
         ) = batch
 
-        durations = durations.to(self.device, non_blocking=True).long()
+        durations = durations.to(self.device, non_blocking=True).float()
         phonemes = text_padded.to(self.device, non_blocking=True).long()
         input_lengths = input_lengths.to(self.device, non_blocking=True).long()
         spectogram = mel_padded.to(self.device, non_blocking=True).float()
@@ -316,9 +316,12 @@ def dataio_prepare(hparams):
     @sb.utils.data_pipeline.provides("mel_text_pair")
     def audio_pipeline(wav, label, dur, pitch):
         durs = np.load(dur)
-        durs_seq = torch.from_numpy(durs).int()
+        durs_seq = torch.from_numpy(durs).float()
         label = label.strip()
-        text_seq = input_encoder.encode_sequence_torch(label.lower()).int()
+
+        # import pdb; pdb.set_trace()
+
+        text_seq = input_encoder.encode_sequence_torch(label.split()).int()
         assert len(text_seq) == len(durs), f'{len(text_seq)}, {len(durs), len(label)}, ({label})'  # ensure every token has a duration
         audio = sb.dataio.dataio.read_audio(wav)
         mel, energy = hparams["mel_spectogram"](audio=audio)
