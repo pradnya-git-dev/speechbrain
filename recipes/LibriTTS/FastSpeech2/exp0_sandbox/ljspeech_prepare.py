@@ -142,6 +142,7 @@ def prepare_ljspeech(
     logger.info(msg)
 
     data_split, meta_csv = split_sets(data_folder, splits, split_ratio)
+    json_files = list()
 
     if "train" in splits:
         prepare_json(
@@ -158,6 +159,7 @@ def prepare_ljspeech(
             pitch_max_f0,
             use_custom_cleaner,
         )
+        json_files.append(save_json_train)
     if "valid" in splits:
         prepare_json(
             data_split["valid"],
@@ -173,6 +175,7 @@ def prepare_ljspeech(
             pitch_max_f0,
             use_custom_cleaner,
         )
+        json_files.append(save_json_valid)
     if "test" in splits:
         prepare_json(
             data_split["test"],
@@ -188,8 +191,9 @@ def prepare_ljspeech(
             pitch_max_f0,
             use_custom_cleaner,
         )
+        json_files.append(save_json_test)
     if create_symbol_list:
-        create_symbol_file(save_folder, save_json_train)
+        create_symbol_file(save_folder, json_files)
     save_pkl(conf, save_opt)
 
 
@@ -345,7 +349,7 @@ def prepare_json(
     None
     """
 
-    # seg_lst = seg_lst[:10]
+    # seg_lst = seg_lst[:2]
 
     print("preparing %s..." % (json_file))
     if compute_pitch:
@@ -392,17 +396,20 @@ def prepare_json(
     logger.info(f"{json_file} successfully created!")
 
 
-def create_symbol_file(save_folder, save_json_train):
+def create_symbol_file(save_folder, json_files):
     lexicon_path = os.path.join(save_folder, "lexicon")
     if os.path.exists(lexicon_path):
         logger.info("Symbols file present")
     else:
         logger.info("Symbols file not present, creating from training data.")
-        data = load_data_json(save_json_train)
         char_set = set()
-        for id in data:
-            line = data[id]["label"]
-            char_set.update(*line.lower())
+
+        for json_file in json_files:
+          data = load_data_json(json_file)
+          for id in data:
+              line = data[id]["label"]
+              char_set.update(line.split())
+
         with open(lexicon_path, "w") as f:
             f.write("\t".join(char_set))
 
