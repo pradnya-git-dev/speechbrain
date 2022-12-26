@@ -1491,7 +1491,7 @@ class Tacotron2(nn.Module):
         output_legnths: torch.Tensor
             length of the output without padding
         """
-        inputs, input_lengths, targets, max_len, output_lengths = inputs
+        inputs, input_lengths, targets, max_len, output_lengths, spk_ids = inputs
         input_lengths, output_lengths = input_lengths.data, output_lengths.data
 
         embedded_inputs = self.embedding(inputs).transpose(1, 2)
@@ -1670,6 +1670,7 @@ class Loss(nn.Module):
         self,
         guided_attention_sigma=None,
         gate_loss_weight=1.0,
+        mel_loss_weight=1.0,
         guided_attention_weight=1.0,
         guided_attention_scheduler=None,
         guided_attention_hard_stop=None,
@@ -1678,18 +1679,21 @@ class Loss(nn.Module):
         if guided_attention_weight == 0:
             guided_attention_weight = None
         self.guided_attention_weight = guided_attention_weight
+        self.gate_loss_weight = gate_loss_weight
+        self.mel_loss_weight = mel_loss_weight
+
+
         self.mse_loss = nn.MSELoss()
         self.bce_loss = nn.BCEWithLogitsLoss()
         self.guided_attention_loss = GuidedAttentionLoss(
             sigma=guided_attention_sigma
         )
-        self.gate_loss_weight = gate_loss_weight
-        self.guided_attention_weight = guided_attention_weight
+        
         self.guided_attention_scheduler = guided_attention_scheduler
         self.guided_attention_hard_stop = guided_attention_hard_stop
 
     def forward(
-        self, model_output, targets, input_lengths, target_lengths, epoch
+        self, model_output, targets, input_lengths, target_lengths, spk_ids, epoch
     ):
         """Computes the loss
 
@@ -1719,16 +1723,20 @@ class Loss(nn.Module):
         gate_target.requires_grad = False
         gate_target = gate_target.view(-1, 1)
 
-        mel_out, mel_out_postnet, gate_out, alignments = model_output
+        mel_out, mel_out_postnet, gate_out, alignments, spk_embs = model_output
 
         gate_out = gate_out.view(-1, 1)
         mel_loss = self.mse_loss(mel_out, mel_target) + self.mse_loss(
             mel_out_postnet, mel_target
         )
+
+        mel_loss = self.mel_loss_weight * mel_loss
+
         gate_loss = self.gate_loss_weight * self.bce_loss(gate_out, gate_target)
         attn_loss, attn_weight = self.get_attention_loss(
             alignments, input_lengths, target_lengths, epoch
         )
+
         total_loss = mel_loss + gate_loss + attn_loss
         return LossStats(
             total_loss, mel_loss, gate_loss, attn_loss, attn_weight
@@ -1782,12 +1790,10 @@ class Loss(nn.Module):
 
 class TextMelCollate:
     """ Zero-pads model inputs and targets based on number of frames per step
-
     Arguments
     ---------
     n_frames_per_step: int
         the number of output frames per step
-
     Returns
     -------
     result: tuple
@@ -1850,7 +1856,7 @@ class TextMelCollate:
         gate_padded = torch.FloatTensor(len(batch), max_target_len)
         gate_padded.zero_()
         output_lengths = torch.LongTensor(len(batch))
-        labels, wavs = [], []
+        labels, wavs, spk_ids = [], [], []
 
         for i in range(len(ids_sorted_decreasing)):
             idx = ids_sorted_decreasing[i]
@@ -1860,6 +1866,7 @@ class TextMelCollate:
             output_lengths[i] = mel.size(1)
             labels.append(raw_batch[idx]["label"])
             wavs.append(raw_batch[idx]["wav"])
+            spk_ids.append(raw_batch[idx]["spk_id"])
 
         # count number of items - characters in text
         len_x = [x[2] for x in batch]
@@ -1872,8 +1879,10 @@ class TextMelCollate:
             output_lengths,
             len_x,
             labels,
-            wavs
+            wavs,
+            spk_ids
         )
+
 
 
 def dynamic_range_compression(x, C=1, clip_val=1e-5):

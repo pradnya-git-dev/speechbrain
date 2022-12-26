@@ -15,7 +15,7 @@ __set_seed: !apply:torch.manual_seed [!ref <seed>]
 output_folder: !ref ./results/tacotron2/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
-epochs: 200
+epochs: 250
 keep_checkpoint_interval: 50
 use_tensorboard: True
 device: cuda
@@ -81,13 +81,13 @@ dynamic_range_compression: True
 # Speaker Embedding Parameters #
 ################################
 
-spk_emb_size: 512
+spk_emb_size: 192
 spk_emb_sample_rate: 16000
 
 ################################
 # Optimization Hyperparameters #
 ################################
-learning_rate: 0.0001
+learning_rate: 0.001
 weight_decay: 0.000006
 batch_size: 16 #minimum 2
 mask_padding: True
@@ -121,14 +121,14 @@ mean_var_norm: !new:speechbrain.processing.features.InputNormalization
     std_norm: False
 
 # Modules
-speaker_embedding_model: !new:speechbrain.lobes.models.Xvector.Xvector
-    in_channels: !ref <n_mel_channels>
-    activation: !name:torch.nn.LeakyReLU
-    tdnn_blocks: 5
-    tdnn_channels: [512, 512, 512, 512, 1500]
-    tdnn_kernel_sizes: [5, 3, 3, 1, 1]
-    tdnn_dilations: [1, 2, 3, 1, 1]
-    lin_neurons: 512
+speaker_embedding_model: !new:speechbrain.lobes.models.ECAPA_TDNN.ECAPA_TDNN
+    input_size: !ref <n_mel_channels>
+    channels: [1024, 1024, 1024, 1024, 3072]
+    kernel_sizes: [5, 3, 3, 3, 1]
+    dilations: [1, 2, 3, 4, 1]
+    groups: [1, 1, 1, 1, 1]
+    attention_channels: 128
+    lin_neurons: 192
 
 ################################
 # Model Parameters and model   #
@@ -244,11 +244,11 @@ train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
 lr_annealing: !new:speechbrain.nnet.schedulers.IntervalScheduler
   intervals:
     - steps: 6000
-      lr: 0.00005
+      lr: 0.0005
     - steps: 8000
-      lr: 0.00003
+      lr: 0.0003
     - steps: 10000
-      lr: 0.00001
+      lr: 0.0001
 
 #checkpointer
 checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
@@ -271,7 +271,4 @@ progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
 pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
   collect_in: !ref <save_folder>
   loadables:
-    model: !ref <model>
   paths:
-    model: /workspace/mstts_saved_models/6032_tacotron2_phoneme_film_mlp_xvector_ljspeech/model.ckpt
-    # model: /content/drive/MyDrive/mstts_saved_models/TTS/exp6_SCL/exp60_base/exp603_phoneme_film_mlp/exp6031_tacotron2_ecapa/ljspeech_sr16000_e200/model.ckpt
