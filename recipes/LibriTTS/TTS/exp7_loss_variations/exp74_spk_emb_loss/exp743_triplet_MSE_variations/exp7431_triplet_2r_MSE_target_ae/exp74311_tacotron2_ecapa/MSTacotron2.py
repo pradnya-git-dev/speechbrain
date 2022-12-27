@@ -1618,7 +1618,7 @@ def infer(model, text_sequences, input_lengths):
 
 
 LossStats = namedtuple(
-    "TacotronLoss", "loss mel_loss mel_loss_c1 mel_loss_c2 spk_emb_triplet_loss gate_loss attn_loss attn_weight"
+    "TacotronLoss", "loss mel_loss spk_emb_triplet_loss gate_loss attn_loss attn_weight"
 )
 
 
@@ -1698,7 +1698,7 @@ class Loss(nn.Module):
         self.guided_attention_hard_stop = guided_attention_hard_stop
 
     def forward(
-        self, model_output, targets, input_lengths, target_lengths, mse2c_idx, spk_emb_triplets, epoch
+        self, model_output, targets, input_lengths, target_lengths, spk_emb_triplets, epoch
     ):
         """Computes the loss
 
@@ -1730,17 +1730,12 @@ class Loss(nn.Module):
 
         mel_out, mel_out_postnet, gate_out, alignments = model_output
         anchor_spk_embs, pos_spk_embs, neg_spk_embs = spk_emb_triplets
-        i1 = mse2c_idx[0]
-        i2 = mse2c_idx[1]
 
         gate_out = gate_out.view(-1, 1)
-        mel_loss_c1 = self.mse_loss(mel_out, mel_target) + self.mse_loss(
+        mel_loss = self.mse_loss(mel_out, mel_target) + self.mse_loss(
             mel_out_postnet, mel_target
         )
 
-        mel_loss_c2 = self.mse_loss(mel_out[i1], mel_out[i2]) + self.mse_loss(mel_out_postnet[i1], mel_out_postnet[i2])
-
-        mel_loss = mel_loss_c1 + mel_loss_c2
         mel_loss = self.mel_loss_weight * mel_loss
 
         gate_loss = self.gate_loss_weight * self.bce_loss(gate_out, gate_target)
@@ -1756,7 +1751,7 @@ class Loss(nn.Module):
 
         total_loss = mel_loss + spk_emb_triplet_loss + gate_loss + attn_loss
         return LossStats(
-            total_loss, mel_loss, mel_loss_c1, mel_loss_c2, spk_emb_triplet_loss, gate_loss, attn_loss, attn_weight
+            total_loss, mel_loss, spk_emb_triplet_loss, gate_loss, attn_loss, attn_weight
         )
 
     def get_attention_loss(

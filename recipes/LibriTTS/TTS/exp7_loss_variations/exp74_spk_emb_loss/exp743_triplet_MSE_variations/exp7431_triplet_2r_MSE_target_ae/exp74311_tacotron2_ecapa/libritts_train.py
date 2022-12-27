@@ -162,13 +162,9 @@ class Tacotron2Brain(sb.Brain):
         preds_spk_embs = preds_spk_embs.squeeze()
         preds_spk_embs = preds_spk_embs.to(self.device, non_blocking=True).float()
 
-        loss_idx_dict = self.get_loss_idx_combos(spk_ids)
+        anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
 
-        # import pdb; pdb.set_trace()
         
-        mse2c_idx = loss_idx_dict["mse_2c_idx"]
-
-        anchor_se_idx, pos_se_idx, neg_se_idx = loss_idx_dict["triplet_loss_idx"]
         spk_emb_triplets = (None, None, None)
 
         if anchor_se_idx.shape[0] != 0:
@@ -184,9 +180,8 @@ class Tacotron2Brain(sb.Brain):
           spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
 
         
-
         loss_stats = self.hparams.criterion(
-            predictions, targets, input_lengths, output_lengths, mse2c_idx, spk_emb_triplets, self.last_epoch
+            predictions, targets, input_lengths, output_lengths, spk_emb_triplets, self.last_epoch
         )
         self.last_loss_stats[stage] = scalarize(loss_stats)
         return loss_stats.loss
@@ -373,12 +368,15 @@ class Tacotron2Brain(sb.Brain):
                     waveform_ss.squeeze(1),
                     self.hparams.sample_rate,
                 )
-                self.tensorboard_logger.log_figure(
-                    f"{stage}/train_mel_target", targets[0][0]
-                )
-                self.tensorboard_logger.log_figure(
-                    f"{stage}/train_mel_pred", mel_out_postnet[0]
-                )
+                try:
+                  self.tensorboard_logger.log_figure(
+                      f"{stage}/train_mel_target", targets[0][0]
+                  )
+                  self.tensorboard_logger.log_figure(
+                      f"{stage}/train_mel_pred", mel_out_postnet[0]
+                  )
+                except Exception as ex:
+                  pass
 
         # Store the train loss until the validation stage.
 
@@ -516,39 +514,30 @@ class Tacotron2Brain(sb.Brain):
                     waveform_ss.squeeze(1),
                     self.hparams.sample_rate,
                 )
-                self.tensorboard_logger.log_figure(
-                    f"{stage}/inf_mel_target", targets[0][0]
-                )
-                self.tensorboard_logger.log_figure(
-                    f"{stage}/inf_mel_pred", mel_out
-                )
+                try:
+                  self.tensorboard_logger.log_figure(
+                      f"{stage}/inf_mel_target", targets[0][0]
+                  )
+                  self.tensorboard_logger.log_figure(
+                      f"{stage}/inf_mel_pred", mel_out
+                  )
+                except Exception as ex:
+                  pass
 
 
-    def get_loss_idx_combos(self, spk_ids):  
+    def get_triplets(self, spk_ids):  
       anchor_se_idx, pos_se_idx, neg_se_idx = None, None, None
-      triplet_loss_spk_idx_pairs = list()
-      mse_2c_spk_idx_pairs = list()
-
-      for i in range(len(spk_ids) - 1):
-        for j in range(i + 1, len(spk_ids)):
+      spk_idx_pairs = list()
+      for i in range(len(spk_ids)):
+        for j in range(i, len(spk_ids)):
           if spk_ids[i] != spk_ids[j]:
-            triplet_loss_spk_idx_pairs.append((i, j))
-          if spk_ids[i] == spk_ids[j]:
-            mse_2c_spk_idx_pairs.append((i, j))
-
-      # import pdb; pdb.set_trace()
+            spk_idx_pairs.append((i, j))
       
-      anchor_se_idx = torch.LongTensor([i for (i, j) in triplet_loss_spk_idx_pairs])
-      pos_se_idx = torch.LongTensor([i for (i, j) in triplet_loss_spk_idx_pairs])
-      neg_se_idx = torch.LongTensor([j for (i, j) in triplet_loss_spk_idx_pairs])
+      anchor_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
+      pos_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
+      neg_se_idx = torch.LongTensor([j for (i, j) in spk_idx_pairs])
 
-      mse2c_idx1 = torch.LongTensor([i for (i, j) in mse_2c_spk_idx_pairs])
-      mse2c_idx2 = torch.LongTensor([j for (i, j) in mse_2c_spk_idx_pairs])
-
-      return {
-        "triplet_loss_idx": (anchor_se_idx, pos_se_idx, neg_se_idx),
-        "mse_2c_idx": (mse2c_idx1, mse2c_idx2)
-      }
+      return (anchor_se_idx, pos_se_idx, neg_se_idx)
 
 
 def dataio_prepare(hparams):
