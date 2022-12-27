@@ -1671,7 +1671,6 @@ class Loss(nn.Module):
         guided_attention_sigma=None,
         gate_loss_weight=1.0,
         mel_loss_weight=1.0,
-        triplet_loss_weight=1.0,
         guided_attention_weight=1.0,
         guided_attention_scheduler=None,
         guided_attention_hard_stop=None,
@@ -1682,16 +1681,12 @@ class Loss(nn.Module):
         self.guided_attention_weight = guided_attention_weight
         self.gate_loss_weight = gate_loss_weight
         self.mel_loss_weight = mel_loss_weight
-        self.triplet_loss_weight = triplet_loss_weight
 
 
         self.mse_loss = nn.MSELoss()
         self.bce_loss = nn.BCEWithLogitsLoss()
         self.guided_attention_loss = GuidedAttentionLoss(
             sigma=guided_attention_sigma
-        )
-        self.spk_emb_triplet_loss = torch.nn.TripletMarginWithDistanceLoss(
-          distance_function=lambda x, y: 1.0 - F.cosine_similarity(x, y)
         )
         
         self.guided_attention_scheduler = guided_attention_scheduler
