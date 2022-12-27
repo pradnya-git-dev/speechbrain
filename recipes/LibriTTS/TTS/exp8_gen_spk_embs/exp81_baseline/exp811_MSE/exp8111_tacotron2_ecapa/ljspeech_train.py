@@ -83,8 +83,6 @@ class Tacotron2Brain(sb.Brain):
         spk_embs = spk_embs.squeeze()
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
 
-        # ToDo: return speaker embeddings along with predictions
-        # import pdb; pdb.set_trace()
         mel_outputs, mel_outputs_postnet, gate_outputs, alignments = self.modules.model(
             inputs, spk_embs, alignments_dim=max_input_length
         )
@@ -585,6 +583,7 @@ if __name__ == "__main__":
         },
     )
 
+    
     datasets = dataio_prepare(hparams)
 
     

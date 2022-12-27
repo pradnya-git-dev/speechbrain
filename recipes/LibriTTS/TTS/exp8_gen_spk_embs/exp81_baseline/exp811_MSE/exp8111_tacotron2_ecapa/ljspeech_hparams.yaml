@@ -2,7 +2,7 @@
 # Model: Tacotron2
 # Tokens: Raw characters (English text)
 # losses: Transducer
-# Training: LibriTTS
+# Training: LJSpeech
 # Authors: Georges Abous-Rjeili, Artem Ploujnikov, Yingzhi Wang
 # ############################################################################
 
@@ -18,7 +18,7 @@ train_log: !ref <output_folder>/train_log.txt
 epochs: 250
 keep_checkpoint_interval: 50
 use_tensorboard: True
-device: cuda
+device: cuda:0
 
 ###################################
 # Progress Samples                #
@@ -47,10 +47,6 @@ data_folder: !PLACEHOLDER # e.g, /localscratch/ljspeech
 train_json: !ref <save_folder>/train.json
 valid_json: !ref <save_folder>/valid.json
 test_json: !ref <save_folder>/test.json
-
-train_speaker_embeddings_pickle: !ref <save_folder>/train_speaker_embeddings.pickle
-valid_speaker_embeddings_pickle: !ref <save_folder>/valid_speaker_embeddings.pickle
-test_speaker_embeddings_pickle: !ref <save_folder>/test_speaker_embeddings.pickle
 
 splits: ["train", "valid"]
 split_ratio: [90, 10]
@@ -89,13 +85,15 @@ spk_emb_sample_rate: 16000
 ################################
 learning_rate: 0.001
 weight_decay: 0.000006
-batch_size: 16 #minimum 2
+batch_size: 64 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 75.0
 guided_attention_weight_half_life: 10.
 guided_attention_hard_stop: 50
 gate_loss_weight: 1.0
+mel_loss_weight: 1.0
+sc_loss_weight: 1.0
 
 train_dataloader_opts:
   batch_size: !ref <batch_size>
@@ -129,6 +127,7 @@ speaker_embedding_model: !new:speechbrain.lobes.models.ECAPA_TDNN.ECAPA_TDNN
     groups: [1, 1, 1, 1, 1]
     attention_channels: 128
     lin_neurons: 192
+
 
 ################################
 # Model Parameters and model   #
@@ -222,6 +221,7 @@ criterion: !new:MSTacotron2.Loss
   guided_attention_sigma: !ref <guided_attention_sigma>
   guided_attention_scheduler: !ref <guided_attention_scheduler>
   guided_attention_hard_stop: !ref <guided_attention_hard_stop>
+  mel_loss_weight: !ref <mel_loss_weight>
 
 modules:
   model: !ref <model>
@@ -259,7 +259,6 @@ checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
     scheduler: !ref <lr_annealing>
     speaker_embedding_model: !ref <speaker_embedding_model>
     mean_var_norm: !ref <mean_var_norm>
-
 
 progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
   output_path: !ref <progress_sample_path>
