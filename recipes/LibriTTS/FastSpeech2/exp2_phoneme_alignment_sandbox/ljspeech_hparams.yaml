@@ -13,7 +13,7 @@ __set_seed: !apply:torch.manual_seed [!ref <seed>]
 output_folder: !ref results/fastspeech2/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
-epochs: 50 # Note: 100 epochs are enough for good quality
+epochs: 100 # Note: 100 epochs are enough for good quality
 progress_samples: True
 progress_sample_path: !ref <output_folder>/samples
 progress_samples_min_run: 10
@@ -181,13 +181,13 @@ modules:
 train_dataloader_opts:
     batch_size: !ref <batch_size>
     drop_last: False  #True #False
-    num_workers: 0
+    num_workers: 16
     shuffle: True
     collate_fn: !new:FastSpeech2.TextMelCollate
 
 valid_dataloader_opts:
     batch_size: !ref <batch_size>
-    num_workers: 0
+    num_workers: 4
     shuffle: False
     collate_fn: !new:FastSpeech2.TextMelCollate
 
