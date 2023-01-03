@@ -17,6 +17,7 @@ import numpy as np
 from tqdm import tqdm
 from speechbrain.utils.data_utils import download_file
 from speechbrain.dataio.dataio import load_pkl, save_pkl, load_data_json
+import tgt
 
 logger = logging.getLogger(__name__)
 OPT_FILE = "opt_ljspeech_prepare.pkl"
@@ -121,6 +122,7 @@ def prepare_ljspeech(
     save_json_valid = os.path.join(save_folder, VALID_JSON)
     save_json_test = os.path.join(save_folder, TEST_JSON)
 
+    """
     # Download duration folder
     if duration_link is not None:
         if not os.path.exists(os.path.join(duration_folder, "durations/LJ001-0001.npy")):
@@ -129,6 +131,13 @@ def prepare_ljspeech(
                 duration_link, duration_folder + "/durations.zip", unpack=True,
             )
         duration_folder = duration_folder + "/durations"
+    """
+
+    duration_folder = os.path.join(data_folder, "durations")
+    if not os.path.exists(duration_folder):
+      os.makedirs(duration_folder)
+    phoneme_alignments_folder = os.path.join(data_folder, "TextGrid", "LJSpeech")
+
     # Check if this phase is already done (if so, skip it)
     if skip(splits, save_folder, conf):
         logger.info("Skipping preparation, completed in previous run.")
@@ -150,6 +159,7 @@ def prepare_ljspeech(
             save_json_train,
             wavs_folder,
             meta_csv,
+            phoneme_alignments_folder,
             duration_folder,
             compute_pitch,
             pitch_folder,
@@ -166,6 +176,7 @@ def prepare_ljspeech(
             save_json_valid,
             wavs_folder,
             meta_csv,
+            phoneme_alignments_folder,
             duration_folder,
             compute_pitch,
             pitch_folder,
@@ -182,6 +193,7 @@ def prepare_ljspeech(
             save_json_test,
             wavs_folder,
             meta_csv,
+            phoneme_alignments_folder,
             duration_folder,
             compute_pitch,
             pitch_folder,
@@ -307,6 +319,7 @@ def prepare_json(
     json_file,
     wavs_folder,
     csv_reader,
+    phoneme_alignments_folder,
     durations_folder,
     compute_pitch,
     pitch_folder,
@@ -361,23 +374,58 @@ def prepare_json(
         label = list(csv_reader)[index][2]
         if use_custom_cleaner:
             label = custom_clean(label)
+
+        audio, fs = torchaudio.load(wav)
+
+        # import pdb; pdb.set_trace()
+
+        textgrid_path = os.path.join(
+            phoneme_alignments_folder, f"{id}.TextGrid"
+        )
+
+        # Get alignments
+        textgrid = tgt.io.read_textgrid(textgrid_path)
+        phone, duration, start, end = get_alignment(
+            textgrid.get_tier_by_name("phones"),
+            fs,
+            pitch_hop_length
+        )
+        label = " ".join(phone)
+        if start >= end:
+            continue
+
+        duration_file_path = os.path.join(durations_folder, f"{id}.npy")
+        np.save(duration_file_path, duration)
+
+        audio = audio[
+            int(fs * start) : int(fs * end)
+        ]
+
+        # import pdb; pdb.set_trace()
+
         json_dict[id] = {
             "uttid": id,
             "wav": wav,
             "label": label,
             "segment": True if "train" in json_file else False,
+            "start": start,
+            "end": end,
+            "durations": duration_file_path,
         }
+
+        """
         if durations_folder is not None:
             duration_path = os.path.join(durations_folder, id + ".npy")
             json_dict[id].update({"durations": duration_path})
-
+        """
+        
         # Pitch Computation
         if compute_pitch:
             pitch_file = wav.replace(".wav", ".npy").replace(
                 wavs_folder, pitch_folder
             )
             if not os.path.isfile(pitch_file):
-                audio, fs = torchaudio.load(wav)
+                
                 pitch = torchaudio.functional.compute_kaldi_pitch(
                     waveform=audio,
                     sample_rate=fs,
@@ -386,6 +434,7 @@ def prepare_json(
                     min_f0=pitch_min_f0,
                     max_f0=pitch_max_f0,
                 )[0, :, 0]
+                pitch = pitch[: sum(duration)]
                 np.save(pitch_file, pitch)
             json_dict[id].update({"pitch": pitch_file})
 
@@ -394,6 +443,46 @@ def prepare_json(
         json.dump(json_dict, json_f, indent=2)
 
     logger.info(f"{json_file} successfully created!")
+
+def get_alignment(tier, sampling_rate, hop_length):
+  sil_phones = ["sil", "sp", "spn"]
+
+  phones = []
+  durations = []
+  start_time = 0
+  end_time = 0
+  end_idx = 0
+  for t in tier._objects:
+      s, e, p = t.start_time, t.end_time, t.text
+
+      # Trim leading silences
+      if phones == []:
+          if p in sil_phones:
+              continue
+          else:
+              start_time = s
+
+      if p not in sil_phones:
+          # For ordinary phones
+          phones.append(p)
+          end_time = e
+          end_idx = len(phones)
+      else:
+          # For silent phones
+          phones.append(p)
+
+      durations.append(
+          int(
+              np.round(e * sampling_rate / hop_length)
+              - np.round(s * sampling_rate / hop_length)
+          )
+      )
+
+  # Trim tailing silences
+  phones = phones[:end_idx]
+  durations = durations[:end_idx]
+
+  return phones, durations, start_time, end_time
 
 
 def create_symbol_file(save_folder, json_files):

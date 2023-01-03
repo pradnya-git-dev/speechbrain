@@ -306,16 +306,25 @@ def dataio_prepare(hparams):
     input_encoder.update_from_iterable(lexicon, sequence_input=False)
     # load audio, text and durations on the fly; encode audio and text.
 
-    @sb.utils.data_pipeline.takes("wav", "label", "durations", "pitch")
+    @sb.utils.data_pipeline.takes("wav", "label", "durations", "pitch", "start", "end")
     @sb.utils.data_pipeline.provides("mel_text_pair")
-    def audio_pipeline(wav, label, dur, pitch):
+    def audio_pipeline(wav, label, dur, pitch, start, end):
         durs = np.load(dur)
         durs_seq = torch.from_numpy(durs).int()
         label = label.strip()
-        text_seq = input_encoder.encode_sequence_torch(label.lower()).int()
+        text_seq = input_encoder.encode_sequence_torch(label.split()).int()
         assert len(text_seq) == len(durs), f'{len(text_seq)}, {len(durs), len(label)}, ({label})'  # ensure every token has a duration
-        audio = sb.dataio.dataio.read_audio(wav)
+        audio, fs = torchaudio.load(wav)
+        
+        # import pdb; pdb.set_trace()
+        audio = audio.squeeze()
+        audio = audio[
+            int(fs * start) : int(fs * end)
+        ]
+        
         mel, energy = hparams["mel_spectogram"](audio=audio)
+        mel = mel[:, : sum(durs)]
+        energy = energy[: sum(durs)]
         pitch = np.load(pitch)
         pitch = torch.from_numpy(pitch)
         pitch = pitch[: mel.shape[-1]]
