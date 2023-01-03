@@ -392,6 +392,7 @@ def prepare_json(
         )
         label = " ".join(phone)
         if start >= end:
+            print(f"Skipping {id}")
             continue
 
         duration_file_path = os.path.join(durations_folder, f"{id}.npy")
@@ -403,16 +404,6 @@ def prepare_json(
 
         # import pdb; pdb.set_trace()
 
-        json_dict[id] = {
-            "uttid": id,
-            "wav": wav,
-            "label": label,
-            "segment": True if "train" in json_file else False,
-            "start": start,
-            "end": end,
-            "durations": duration_file_path,
-        }
-
         """
         if durations_folder is not None:
             duration_path = os.path.join(durations_folder, id + ".npy")
@@ -421,6 +412,7 @@ def prepare_json(
         
         # Pitch Computation
         if compute_pitch:
+          try:
             pitch_file = wav.replace(".wav", ".npy").replace(
                 wavs_folder, pitch_folder
             )
@@ -436,7 +428,21 @@ def prepare_json(
                 )[0, :, 0]
                 pitch = pitch[: sum(duration)]
                 np.save(pitch_file, pitch)
-            json_dict[id].update({"pitch": pitch_file})
+          except Exception as ex:
+            print(f"Skipping {id} due to {ex}")
+            continue
+
+        
+        json_dict[id] = {
+            "uttid": id,
+            "wav": wav,
+            "label": label,
+            "segment": True if "train" in json_file else False,
+            "start": start,
+            "end": end,
+            "durations": duration_file_path,
+            "pitch": pitch_file
+        }
 
     # Writing the dictionary to the json file
     with open(json_file, mode="w") as json_f:
