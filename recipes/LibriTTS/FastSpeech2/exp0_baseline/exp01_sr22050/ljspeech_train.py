@@ -300,11 +300,14 @@ def dataio_prepare(hparams):
     with open(os.path.join(hparams["save_folder"], "lexicon"), "r") as f:
         lexicon = f.read().split("\t")
     input_encoder = hparams.get("input_encoder")
+
+    import pdb; pdb.set_trace()
     # input_encoder.add_unk()
 
     # add a dummy symbol for idx 0 - used for padding.
     lexicon = ["@@"] + lexicon
     input_encoder.update_from_iterable(lexicon, sequence_input=False)
+    n_symbols = input_encoder.__len__()
     # load audio, text and durations on the fly; encode audio and text.
 
     @sb.utils.data_pipeline.takes("wav", "label", "durations", "pitch", "start", "end")
@@ -341,7 +344,7 @@ def dataio_prepare(hparams):
             dynamic_items=[audio_pipeline],
             output_keys=["mel_text_pair", "wav", "label", "durations", "pitch"],
         )
-    return datasets
+    return datasets, n_symbols
 
 
 def main():
@@ -380,7 +383,9 @@ def main():
             "use_custom_cleaner":True,
         },
     )
-    datasets = dataio_prepare(hparams)
+    datasets, n_symbols = dataio_prepare(hparams)
+
+    hparams["n_symbols"] = n_symbols
 
     # Brain class initialization
     fastspeech2_brain = FastSpeech2Brain(
