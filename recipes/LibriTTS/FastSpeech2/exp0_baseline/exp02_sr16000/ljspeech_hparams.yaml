@@ -44,7 +44,7 @@ skip_prep: False
 ################################
 # Audio Parameters             #
 ################################
-sample_rate: 22050
+sample_rate: 16000
 hop_length: 256
 win_length: null
 n_mel_channels: 80
@@ -73,12 +73,12 @@ spk_emb_sample_rate: 16000
 learning_rate: 0.0001
 weight_decay: 0.000000001
 max_grad_norm: 1.0
-batch_size: 32 #minimum 2
+batch_size: 64 #minimum 2
 betas: [0.98, 0.99]
 ################################
 # Model Parameters and model   #
 ################################
-n_symbols: 62 #fixed deppending on symbols in textToSequence
+n_symbols: 500 #fixed deppending on symbols in textToSequence
 padding_idx: 0
 
 # Encoder parameters
@@ -172,7 +172,7 @@ criterion: !new:FastSpeech2.Loss
 
 vocoder: "hifi-gan"
 pretrained_vocoder: True
-vocoder_source: speechbrain/tts-hifigan-ljspeech
+vocoder_source: speechbrain/tts-hifigan-libritts-16kHz
 vocoder_download_path: tmpdir_vocoder
 
 modules:
