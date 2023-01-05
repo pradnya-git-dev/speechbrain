@@ -14,7 +14,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 # Change the entries in the following "LIBRITTS_SUBSETS" to modify the downloaded subsets for LibriTTS
 # Used subsets ["dev-clean", "train-clean-100", "train-clean-360"]
-LIBRITTS_SUBSETS = ["train-clean-100"]
+LIBRITTS_SUBSETS = ["dev-clean"]
 LIBRITTS_URL_PREFIX = "https://www.openslr.org/resources/60/"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -196,9 +196,9 @@ def create_json(wav_list,
 
         # Reads the signal
         signal, sig_sr = torchaudio.load(wav_file)
-        signal = signal.squeeze(0)
+        # signal = signal.squeeze(0)
 
-        duration = signal.shape[0] / sig_sr
+        duration = signal.shape[1] / sig_sr
         if duration > 10.10:
             # print(signal.shape, duration, wav_file)
             continue
@@ -210,7 +210,7 @@ def create_json(wav_list,
 
         # Resamples the audio file if required
         if sig_sr != sample_rate:
-            signal = signal.unsqueeze(0)
+            # signal = signal.unsqueeze(0)
             resampled_signal = resampler(signal)
             os.unlink(wav_file)
             torchaudio.save(wav_file, resampled_signal, sample_rate=sample_rate)
@@ -220,7 +220,7 @@ def create_json(wav_list,
 
         # Gets the path for the  text files and extracts the input text
         textgrid_path = os.path.join(
-            phoneme_alignments_folder, spk_id, f"{uttid}.TextGrid"
+            phoneme_alignments_folder, f"{uttid}.TextGrid"
         )
         if not os.path.exists(textgrid_path):
           print("Skipping because this does not exist: ", textgrid_path)
@@ -280,7 +280,7 @@ def create_json(wav_list,
 
 
 def get_alignment(tier, sampling_rate, hop_length):
-  sil_phones = ["sil", "sp", "spn"]
+  sil_phones = ["sil", "sp", "spn", ""]
 
   phones = []
   durations = []
@@ -383,8 +383,10 @@ def create_symbol_file(save_folder, json_files):
         logger.info("Symbols file not present, creating from training data.")
         char_set = set()
 
+        import pdb; pdb.set_trace()
         for json_file in json_files:
-          data = load_data_json(json_file)
+          with open(json_file) as f:
+            data = json.load(f)
           for id in data:
               line = data[id]["label"]
               char_set.update(line.split())
