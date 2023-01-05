@@ -93,7 +93,7 @@ guided_attention_weight_half_life: 10.
 guided_attention_hard_stop: 50
 gate_loss_weight: 1.0
 mel_loss_weight: 1.0
-triplet_loss_weight: 10.0
+triplet_loss_weight: 1.0
 
 train_dataloader_opts:
   batch_size: !ref <batch_size>
