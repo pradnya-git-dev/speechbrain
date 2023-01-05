@@ -80,6 +80,7 @@ class EncoderPreNet(nn.Module):
 
     def __init__(self, n_vocab, blank_id, out_channels=512):
         super().__init__()
+
         self.token_embedding = Embedding(
             num_embeddings=n_vocab,
             embedding_dim=out_channels,
@@ -509,7 +510,10 @@ class FastSpeech2(nn.Module):
         predict_durations: torch.Tensor
             predicted durations for each token
         """
+
         token_feats = self.encPreNet(tokens)
+
+
         srcmask = get_key_padding_mask(tokens, pad_idx=self.padding_idx)
         srcmask_inverted = (~srcmask).unsqueeze(-1)
         pos = self.sinusoidal_positional_embed_encoder(

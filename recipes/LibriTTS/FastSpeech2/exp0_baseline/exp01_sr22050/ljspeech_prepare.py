@@ -362,7 +362,7 @@ def prepare_json(
     None
     """
 
-    seg_lst = seg_lst[:50]
+    # seg_lst = seg_lst[:50]
 
     print("preparing %s..." % (json_file))
     if compute_pitch:
@@ -376,8 +376,6 @@ def prepare_json(
             label = custom_clean(label)
 
         audio, fs = torchaudio.load(wav)
-
-        # import pdb; pdb.set_trace()
 
         textgrid_path = os.path.join(
             phoneme_alignments_folder, f"{id}.TextGrid"
@@ -401,8 +399,6 @@ def prepare_json(
         audio = audio[:,
             int(fs * start) : int(fs * end)
         ]
-
-        # import pdb; pdb.set_trace()
 
         """
         if durations_folder is not None:
