@@ -13,7 +13,7 @@ __set_seed: !apply:torch.manual_seed [!ref <seed>]
 output_folder: !ref results/fastspeech2/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
-epochs: 100 # Note: 100 epochs are enough for good quality
+epochs: 500 # Note: 100 epochs are enough for good quality
 progress_samples: True
 progress_sample_path: !ref <output_folder>/samples
 progress_samples_min_run: 10
@@ -74,7 +74,7 @@ spk_emb_inject_method: film
 learning_rate: 0.0001
 weight_decay: 0.000000001
 max_grad_norm: 1.0
-batch_size: 32 #minimum 2
+batch_size: 64 #minimum 2
 betas: [0.98, 0.99]
 ################################
 # Model Parameters and model   #
