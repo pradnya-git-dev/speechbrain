@@ -304,7 +304,10 @@ def get_alignment(tier, sampling_rate, hop_length):
           end_idx = len(phones)
       else:
           # For silent phones
-          phones.append(p)
+          if p == "":
+            phones.append("sp")
+          else:
+            phones.append(p)
 
       durations.append(
           int(

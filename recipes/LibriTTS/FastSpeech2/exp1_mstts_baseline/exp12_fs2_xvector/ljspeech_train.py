@@ -304,12 +304,12 @@ class FastSpeech2Brain(sb.Brain):
 
 def dataio_prepare(hparams):
     # read saved lexicon
-    with open(os.path.join(hparams["save_folder"], "lexicon"), "r") as f:
+    with open(os.path.join(hparams["data_folder"], "lexicon"), "r") as f:
         lexicon = f.read().split("\t")
     input_encoder = hparams.get("input_encoder")
 
     # import pdb; pdb.set_trace()
-    # input_encoder.add_unk()
+    input_encoder.add_unk()
 
     # add a dummy symbol for idx 0 - used for padding.
     lexicon = ["@@"] + lexicon
