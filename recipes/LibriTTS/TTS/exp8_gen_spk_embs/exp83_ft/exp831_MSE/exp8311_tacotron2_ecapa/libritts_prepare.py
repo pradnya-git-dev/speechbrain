@@ -135,9 +135,9 @@ def create_json(wav_list, json_file, sample_rate):
         signal = signal.squeeze(0)
 
         duration = signal.shape[0] / sig_sr
-        if duration > 10.10:
+        # if duration > 10.10:
             # print(signal.shape, duration, wav_file)
-            continue
+        #     continue
 
         # Manipulates path to get relative path and uttid
         path_parts = wav_file.split(os.path.sep)
@@ -161,8 +161,13 @@ def create_json(wav_list, json_file, sample_rate):
         phoneme_text_path = os.path.join(
             "/", *path_parts[:-1], uttid + ".normalized_phoneme.txt"
         )
+        if os.path.exists(phoneme_text_path):
+            continue
+        
         with open(phoneme_text_path, "w+") as ph_f:
           ph_f.write(label_phoneme)
+        
+        print("Creating: ", duration, phoneme_text_path)
         
         # Resamples the audio file if required
         if sig_sr != sample_rate:
