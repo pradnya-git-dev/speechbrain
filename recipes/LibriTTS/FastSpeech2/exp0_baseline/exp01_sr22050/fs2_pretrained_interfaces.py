@@ -3,6 +3,7 @@ from speechbrain.pretrained import Pretrained
 from speechbrain.utils.text_to_sequence import text_to_sequence
 import torch
 from speechbrain.dataio.dataio import length_to_mask
+import os
 
 
 class HIFIGAN(Pretrained):
@@ -115,3 +116,81 @@ class HIFIGAN(Pretrained):
     def forward(self, spectrogram):
         "Decodes the input spectrograms"
         return self.decode_batch(spectrogram)
+
+
+class FastSpeech2(Pretrained):
+    """
+    A ready-to-use wrapper for Fastspeech2 (text -> mel_spec).
+    Arguments
+    ---------
+    hparams
+        Hyperparameters (from HyperPyYAML)
+    Example
+    -------
+    >>> tmpdir_tts = getfixture('tmpdir') / "tts"
+    >>> fastspeech2 = Fastspeech2.from_hparams(source="speechbrain/tts-fastspeecg2-ljspeech", savedir=tmpdir_tts)
+    >>> mel_outputs, durations, pitch, energy = fastspeech2.encode_text("Mary had a little lamb")
+    >>> items = [
+    ...   "A quick brown fox jumped over the lazy dog",
+    ...   "How much wood would a woodchuck chuck?",
+    ...   "Never odd or even"
+    ... ]
+    >>> mel_outputs, durations, pitch, energy = fastspeech2.encode_batch(items)
+    >>>
+    >>> # One can combine the TTS model with a vocoder (that generates the final waveform)
+    >>> # Intialize the Vocoder (HiFIGAN)
+    >>> tmpdir_vocoder = getfixture('tmpdir') / "vocoder"
+    >>> hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir=tmpdir_vocoder)
+    >>> # Running the TTS
+    >>> mel_output, mel_length, alignment = fastspeech2.encode_text("Mary had a little lamb")
+    >>> # Running Vocoder (spectrogram-to-waveform)
+    >>> waveforms = hifi_gan.decode_batch(mel_output)
+    """
+
+    HPARAMS_NEEDED = ["model", "input_encoder"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        with open("lexicon", "r") as f:
+          lexicon = f.read().split("\t")
+        lexicon = ["@@"] + lexicon
+        self.input_encoder = self.hparams.input_encoder
+        self.input_encoder.update_from_iterable(lexicon, sequence_input=False)
+
+    def encode_batch(self, texts):
+        """Computes mel-spectrogram for a list of texts
+        Texts must be sorted in decreasing order on their lengths
+        Arguments
+        ---------
+        text: List[str]
+            texts to be encoded into spectrogram
+        Returns
+        -------
+        tensors of output spectrograms, output lengths and alignments
+        """
+        with torch.no_grad():
+            inputs = [
+                {
+                    "text_sequences": self.input_encoder.encode_sequence_torch(
+                        item.split()
+                    ).int()
+                }
+                for item in texts
+            ]
+            inputs = speechbrain.dataio.batch.PaddedBatch(inputs)
+            mel_outputs, _, durations, pitch, energy, _ = self.hparams.model(
+                inputs.text_sequences.data, pace=1.1
+            )
+
+            # Transpose to make in compliant with HiFI GAN expected format
+            mel_outputs = mel_outputs.transpose(-1, 1)
+
+        return mel_outputs, durations, pitch, energy
+
+    def encode_text(self, text):
+        """Runs inference for a single text str"""
+        return self.encode_batch([text])
+
+    def forward(self, texts):
+        "Encodes the input texts."
+        return self.encode_batch(texts)

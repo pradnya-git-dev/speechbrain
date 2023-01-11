@@ -179,7 +179,7 @@ class FastSpeech2(Pretrained):
             ]
             inputs = speechbrain.dataio.batch.PaddedBatch(inputs)
             mel_outputs, _, durations, pitch, energy, _ = self.hparams.model(
-                inputs.text_sequences.data
+                inputs.text_sequences.data, pace=1.1
             )
 
             # Transpose to make in compliant with HiFI GAN expected format
