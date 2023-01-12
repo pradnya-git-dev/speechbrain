@@ -156,6 +156,7 @@ class FastSpeech2(Pretrained):
         lexicon = ["@@"] + lexicon
         self.input_encoder = self.hparams.input_encoder
         self.input_encoder.update_from_iterable(lexicon, sequence_input=False)
+        self.input_encoder.add_unk()
 
     def encode_batch(self, texts):
         """Computes mel-spectrogram for a list of texts
