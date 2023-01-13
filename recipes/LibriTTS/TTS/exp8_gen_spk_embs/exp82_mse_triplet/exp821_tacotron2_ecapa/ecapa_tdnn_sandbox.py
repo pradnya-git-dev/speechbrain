@@ -23,6 +23,9 @@ SPK_EMB_SR = 16000
 PHONEME_INPUT = False
 TENSORBOARD_LOG_DIR = "/content/speechbrain/recipes/LibriTTS/TTS/exp8_gen_spk_embs/exp82_mse_triplet/exp821_tacotron2_ecapa/tensorboard_sandbox"
 
+if not os.path.exists(TENSORBOARD_LOG_DIR):
+  os.mkdir(TENSORBOARD_LOG_DIR)
+
 
 def dynamic_range_compression(x, C=1, clip_val=1e-5):
     """Dynamic range compression for audio signals
@@ -102,7 +105,7 @@ def mel_spectogram_exp(
 spk_emb_waveform_encoder = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb",
                                                  run_opts={"device": DEVICE})
 
-spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/TTS/exp8_gen_spk_embs/exp82_mse_triplet/exp821_tacotron2_ecapa/ldc_sub_tlw1_e39",
+spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/TTS/exp8_gen_spk_embs/exp82_mse_triplet/exp821_tacotron2_ecapa/ldc_sub_nopt_tlw1_e97",
                                                               hparams_file="/content/speechbrain/recipes/LibriTTS/TTS/exp8_gen_spk_embs/exp82_mse_triplet/exp821_tacotron2_ecapa/ecapa_tdnn_inf_hparams.yaml",
                                                               run_opts={"device": DEVICE})
                                                  
