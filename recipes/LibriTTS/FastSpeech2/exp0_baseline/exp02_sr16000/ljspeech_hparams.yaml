@@ -32,10 +32,6 @@ train_json: !ref <save_folder>/train.json
 valid_json: !ref <save_folder>/valid.json
 test_json: !ref <save_folder>/test.json
 
-train_speaker_embeddings_pickle: !ref <save_folder>/train_speaker_embeddings.pickle
-valid_speaker_embeddings_pickle: !ref <save_folder>/valid_speaker_embeddings.pickle
-test_speaker_embeddings_pickle: !ref <save_folder>/test_speaker_embeddings.pickle
-
 splits: ["train", "valid"]
 split_ratio: [90, 10]
 
@@ -61,13 +57,6 @@ min_f0: 65  #(torchaudio pyin values)
 max_f0: 2093 #(torchaudio pyin values)
 
 ################################
-# Speaker Embedding Parameters #
-################################
-
-spk_emb_size: 192
-spk_emb_sample_rate: 16000
-
-################################
 # Optimization Hyperparameters #
 ################################
 learning_rate: 0.0001
@@ -75,6 +64,7 @@ weight_decay: 0.000000001
 max_grad_norm: 1.0
 batch_size: 64 #minimum 2
 betas: [0.98, 0.99]
+
 ################################
 # Model Parameters and model   #
 ################################
@@ -191,7 +181,6 @@ valid_dataloader_opts:
     shuffle: False
     collate_fn: !new:FastSpeech2.TextMelCollate
 
-
 #optimizer
 opt_class: !name:torch.optim.Adam
     lr: !ref <learning_rate>
@@ -213,7 +202,6 @@ checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
         counter: !ref <epoch_counter>
 
 input_encoder: !new:speechbrain.dataio.encoder.TextEncoder
-
 
 progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
     output_path: !ref <progress_sample_path>
