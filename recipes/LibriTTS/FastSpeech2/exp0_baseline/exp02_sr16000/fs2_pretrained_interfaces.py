@@ -4,7 +4,8 @@ from speechbrain.utils.text_to_sequence import text_to_sequence
 import torch
 from speechbrain.dataio.dataio import length_to_mask
 import os
-
+from g2p_en import G2p
+import string
 
 class HIFIGAN(Pretrained):
     """
@@ -157,6 +158,7 @@ class FastSpeech2(Pretrained):
         self.input_encoder = self.hparams.input_encoder
         self.input_encoder.update_from_iterable(lexicon, sequence_input=False)
         self.input_encoder.add_unk()
+        self.g2p = G2p()
 
     def encode_batch(self, texts):
         """Computes mel-spectrogram for a list of texts
@@ -169,14 +171,20 @@ class FastSpeech2(Pretrained):
         -------
         tensors of output spectrograms, output lengths and alignments
         """
+        phoneme_seqs = list()
+        for text in texts:
+          text = text.translate(str.maketrans('', '', string.punctuation))
+          phoneme_seq = self.g2p(text)
+          phoneme_seqs.append(phoneme_seq)
+
         with torch.no_grad():
             inputs = [
                 {
                     "text_sequences": self.input_encoder.encode_sequence_torch(
-                        item.split()
+                        item
                     ).int()
                 }
-                for item in texts
+                for item in phoneme_seqs
             ]
             inputs = speechbrain.dataio.batch.PaddedBatch(inputs)
             mel_outputs, _, durations, pitch, energy, _ = self.hparams.model(
