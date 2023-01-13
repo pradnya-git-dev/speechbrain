@@ -18,7 +18,7 @@ hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-libritts-16kHz",
 
 # Take input text
 # import pdb; pdb.set_trace()
-input_text = "Testing the grapheme to phoneme model from the inference file."
+input_text = "It was also suggested that it would take a substantial period of time for the secret service to build up the skills necessary to meet the problem"
 print(input_text)
 # Convert text label into a phoneme label
 # phoneme_seq = g2p(input_text)
