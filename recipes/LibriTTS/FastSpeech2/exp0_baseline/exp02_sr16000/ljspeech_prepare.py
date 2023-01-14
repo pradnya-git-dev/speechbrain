@@ -362,8 +362,7 @@ def prepare_json(
     None
     """
 
-    seg_lst = seg_lst[:10]
-
+    
     print("preparing %s..." % (json_file))
     if compute_pitch:
         print("Computing pitch as well. This takes several minutes...")
@@ -462,7 +461,10 @@ def get_alignment(tier, sampling_rate, hop_length):
 
       if p not in sil_phones:
           # For ordinary phones
-          phones.append(p)
+          if p[-1].isdigit():
+            phones.append(p[:-1])
+          else:
+            phones.append(p)
           end_time = e
           end_idx = len(phones)
       else:
