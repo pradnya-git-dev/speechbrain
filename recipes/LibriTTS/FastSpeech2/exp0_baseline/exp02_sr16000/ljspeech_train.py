@@ -296,9 +296,8 @@ class FastSpeech2Brain(sb.Brain):
 
 
 def dataio_prepare(hparams):
-    # read saved lexicon
-    with open(os.path.join(hparams["save_folder"], "lexicon"), "r") as f:
-        lexicon = f.read().split("\t")
+    
+    lexicon = hparams["lexicon"]
     input_encoder = hparams.get("input_encoder")
 
     # import pdb; pdb.set_trace()
@@ -381,7 +380,6 @@ def main():
             "pitch_min_f0": hparams["min_f0"],
             "pitch_max_f0": hparams["max_f0"],
             "skip_prep": hparams["skip_prep"],
-            "create_symbol_list": True,
             "use_custom_cleaner":True,
         },
     )

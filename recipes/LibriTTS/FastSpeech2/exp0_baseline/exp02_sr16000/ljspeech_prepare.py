@@ -45,7 +45,6 @@ def prepare_ljspeech(
     pitch_hop_length=256,
     pitch_min_f0=65,
     pitch_max_f0=2093,
-    create_symbol_list=False,
     skip_prep=False,
     use_custom_cleaner=False,
     device="cpu",
@@ -201,8 +200,6 @@ def prepare_ljspeech(
             device,
         )
         json_files.append(save_json_test)
-    if create_symbol_list:
-        create_symbol_file(save_folder, json_files)
     save_pkl(conf, save_opt)
 
 
@@ -371,7 +368,7 @@ def prepare_json(
 
     json_dict = {}
     for index in tqdm(seg_lst):
-        # Common data
+        # Common data preparation
         id = list(csv_reader)[index][0]
         wav = os.path.join(wavs_folder, f"{id}.wav")
         label = list(csv_reader)[index][2]
@@ -450,7 +447,10 @@ def prepare_json(
     logger.info(f"{json_file} successfully created!")
 
 def get_alignment(tier, sampling_rate, hop_length):
-  sil_phones = ["sil", "sp", "spn"]
+  """
+  This function is adopted from https://github.com/ming024/FastSpeech2/blob/master/preprocessor/preprocessor.py
+  """
+  sil_phones = ["sil", "sp", "spn", ""]
 
   phones = []
   durations = []
@@ -491,24 +491,6 @@ def get_alignment(tier, sampling_rate, hop_length):
   durations = durations[:end_idx]
 
   return phones, durations, start_time, end_time
-
-
-def create_symbol_file(save_folder, json_files):
-    lexicon_path = os.path.join(save_folder, "lexicon")
-    if os.path.exists(lexicon_path):
-        logger.info("Symbols file present")
-    else:
-        logger.info("Symbols file not present, creating from training data.")
-        char_set = set()
-
-        for json_file in json_files:
-          data = load_data_json(json_file)
-          for id in data:
-              line = data[id]["label_phoneme"]
-              char_set.update(line.split())
-
-        with open(lexicon_path, "w") as f:
-            f.write("\t".join(char_set))
 
 def custom_clean(text):
     import re

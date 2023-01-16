@@ -68,7 +68,50 @@ betas: [0.98, 0.99]
 ################################
 # Model Parameters and model   #
 ################################
-n_symbols: 500 #fixed deppending on symbols in textToSequence
+
+lexicon:
+    - AA
+    - AE
+    - AH
+    - AO
+    - AW
+    - AY
+    - B
+    - CH
+    - D
+    - DH
+    - EH
+    - ER
+    - EY
+    - F
+    - G
+    - HH
+    - IH
+    - IY
+    - JH
+    - K
+    - L
+    - M
+    - N
+    - NG
+    - OW
+    - OY
+    - P
+    - R
+    - S
+    - SH
+    - T
+    - TH
+    - UH
+    - UW
+    - V
+    - W
+    - Y
+    - Z
+    - ZH
+    - spn
+
+n_symbols: 41 #fixed deppending on symbols in the lexicon +1 for a dummy symbol used for padding
 padding_idx: 0
 
 # Encoder parameters
