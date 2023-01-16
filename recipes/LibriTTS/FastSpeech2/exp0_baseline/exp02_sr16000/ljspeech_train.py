@@ -311,14 +311,16 @@ def dataio_prepare(hparams):
 
     # load audio, text and durations on the fly; encode audio and text.
 
-    @sb.utils.data_pipeline.takes("wav", "label", "durations", "pitch", "start", "end")
+    @sb.utils.data_pipeline.takes("wav", "label_phoneme", "durations", "pitch", "start", "end")
     @sb.utils.data_pipeline.provides("mel_text_pair")
-    def audio_pipeline(wav, label, dur, pitch, start, end):
+    def audio_pipeline(wav, label_phoneme, dur, pitch, start, end):
+
+        # ToDo: Verify the label_phoneme here
         durs = np.load(dur)
         durs_seq = torch.from_numpy(durs).int()
-        label = label.strip()
-        text_seq = input_encoder.encode_sequence_torch(label.split()).int()
-        assert len(text_seq) == len(durs), f'{len(text_seq)}, {len(durs), len(label)}, ({label})'  # ensure every token has a duration
+        label_phoneme = label_phoneme.strip()
+        text_seq = input_encoder.encode_sequence_torch(label_phoneme.split()).int()
+        assert len(text_seq) == len(durs), f'{len(text_seq)}, {len(durs), len(label_phoneme)}, ({label_phoneme})'  # ensure every token has a duration
         audio, fs = torchaudio.load(wav)
         
         # import pdb; pdb.set_trace()
@@ -363,6 +365,8 @@ def main():
     sys.path.append("../")
     from ljspeech_prepare import prepare_ljspeech
 
+    # import pdb; pdb.set_trace()
+
     sb.utils.distributed.run_on_main(
         prepare_ljspeech,
         kwargs={
@@ -370,11 +374,8 @@ def main():
             "save_folder": hparams["save_folder"],
             "splits": hparams["splits"],
             "split_ratio": hparams["split_ratio"],
+            "model_name": hparams["model"].__class__.__name__,
             "seed": hparams["seed"],
-            "duration_link": hparams["duration_link"],
-            "duration_folder": hparams["duration_folder"],
-            "compute_pitch": True,
-            "pitch_folder": hparams["pitch_folder"],
             "pitch_n_fft": hparams["n_fft"],
             "pitch_hop_length": hparams["hop_length"],
             "pitch_min_f0": hparams["min_f0"],

@@ -18,6 +18,8 @@ from tqdm import tqdm
 from speechbrain.utils.data_utils import download_file
 from speechbrain.dataio.dataio import load_pkl, save_pkl, load_data_json
 import tgt
+from speechbrain.pretrained import GraphemeToPhoneme
+import torch
 
 logger = logging.getLogger(__name__)
 OPT_FILE = "opt_ljspeech_prepare.pkl"
@@ -37,11 +39,8 @@ def prepare_ljspeech(
     save_folder,
     splits=["train", "valid"],
     split_ratio=[90, 10],
+    model_name=None,
     seed=1234,
-    duration_link=None,
-    duration_folder=None,
-    compute_pitch=False,
-    pitch_folder=".",
     pitch_n_fft=1024,
     pitch_hop_length=256,
     pitch_min_f0=65,
@@ -49,6 +48,7 @@ def prepare_ljspeech(
     create_symbol_list=False,
     skip_prep=False,
     use_custom_cleaner=False,
+    device="cpu",
 ):
     """
     Prepares the csv files for the LJspeech datasets.
@@ -109,9 +109,6 @@ def prepare_ljspeech(
     }
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
-    if compute_pitch:
-        if not os.path.exists(pitch_folder):
-            os.makedirs(pitch_folder)
 
     # Setting ouput files
     meta_csv = os.path.join(data_folder, METADATA_CSV)
@@ -122,22 +119,19 @@ def prepare_ljspeech(
     save_json_valid = os.path.join(save_folder, VALID_JSON)
     save_json_test = os.path.join(save_folder, TEST_JSON)
 
-    """
-    # Download duration folder
-    if duration_link is not None:
-        if not os.path.exists(os.path.join(duration_folder, "durations/LJ001-0001.npy")):
-            logger.info("Downloading durations for fastspeech training")
-            download_file(
-                duration_link, duration_folder + "/durations.zip", unpack=True,
-            )
-        duration_folder = duration_folder + "/durations"
-    """
+    if model_name == "FastSpeech2":
+      # The phoneme alignements need to be present in the data_folder for this to work
+      # Download and unzip LJSpeech phoneme alignments from here: https://drive.google.com/drive/folders/1DBRkALpPd6FL9gjHMmMEdHODmkgNIIK4
+      phoneme_alignments_folder = os.path.join(data_folder, "TextGrid", "LJSpeech")
 
-    duration_folder = os.path.join(data_folder, "durations")
-    if not os.path.exists(duration_folder):
-      os.makedirs(duration_folder)
-    phoneme_alignments_folder = os.path.join(data_folder, "TextGrid", "LJSpeech")
+      duration_folder = os.path.join(data_folder, "durations")
+      if not os.path.exists(duration_folder):
+        os.makedirs(duration_folder)
 
+      pitch_folder = os.path.join(data_folder, "pitch")
+      if not os.path.exists(pitch_folder):
+        os.makedirs(pitch_folder)
+    
     # Check if this phase is already done (if so, skip it)
     if skip(splits, save_folder, conf):
         logger.info("Skipping preparation, completed in previous run.")
@@ -155,53 +149,56 @@ def prepare_ljspeech(
 
     if "train" in splits:
         prepare_json(
+            model_name,
             data_split["train"],
             save_json_train,
             wavs_folder,
             meta_csv,
             phoneme_alignments_folder,
             duration_folder,
-            compute_pitch,
             pitch_folder,
             pitch_n_fft,
             pitch_hop_length,
             pitch_min_f0,
             pitch_max_f0,
             use_custom_cleaner,
+            device,
         )
         json_files.append(save_json_train)
     if "valid" in splits:
         prepare_json(
+            model_name,
             data_split["valid"],
             save_json_valid,
             wavs_folder,
             meta_csv,
             phoneme_alignments_folder,
             duration_folder,
-            compute_pitch,
             pitch_folder,
             pitch_n_fft,
             pitch_hop_length,
             pitch_min_f0,
             pitch_max_f0,
             use_custom_cleaner,
+            device,
         )
         json_files.append(save_json_valid)
     if "test" in splits:
         prepare_json(
+            model_name,
             data_split["test"],
             save_json_test,
             wavs_folder,
             meta_csv,
             phoneme_alignments_folder,
             duration_folder,
-            compute_pitch,
             pitch_folder,
             pitch_n_fft,
             pitch_hop_length,
             pitch_min_f0,
             pitch_max_f0,
             use_custom_cleaner,
+            device,
         )
         json_files.append(save_json_test)
     if create_symbol_list:
@@ -315,19 +312,20 @@ def split_sets(data_folder, splits, split_ratio):
 
 
 def prepare_json(
+    model_name,
     seg_lst,
     json_file,
     wavs_folder,
     csv_reader,
     phoneme_alignments_folder,
     durations_folder,
-    compute_pitch,
     pitch_folder,
     pitch_n_fft,
     pitch_hop_length,
     pitch_min_f0,
     pitch_max_f0,
     use_custom_cleaner=False,
+    device="cpu",
 ):
     """
     Creates json file given a list of indexes.
@@ -362,78 +360,88 @@ def prepare_json(
     None
     """
 
-    
+    seg_lst = seg_lst[:10]
+
     print("preparing %s..." % (json_file))
-    if compute_pitch:
-        print("Computing pitch as well. This takes several minutes...")
+    if model_name == "Tacotron2":
+      print("Computing phonemes for LJSpeech labels using SpeechBrain G2P.")
+      g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p", run_opts={"device":device})
+    if model_name == "FastSpeech2":
+      print("Computing pitch as well. This takes several minutes...")
+
     json_dict = {}
     for index in tqdm(seg_lst):
+        # Common data
         id = list(csv_reader)[index][0]
         wav = os.path.join(wavs_folder, f"{id}.wav")
         label = list(csv_reader)[index][2]
         if use_custom_cleaner:
             label = custom_clean(label)
 
-        audio, fs = torchaudio.load(wav)
-
-        textgrid_path = os.path.join(
-            phoneme_alignments_folder, f"{id}.TextGrid"
-        )
-
-        # Get alignments
-        textgrid = tgt.io.read_textgrid(textgrid_path)
-        phone, duration, start, end = get_alignment(
-            textgrid.get_tier_by_name("phones"),
-            fs,
-            pitch_hop_length
-        )
-        label = " ".join(phone)
-        if start >= end:
-            print(f"Skipping {id}")
-            continue
-
-        duration_file_path = os.path.join(durations_folder, f"{id}.npy")
-        np.save(duration_file_path, duration)
-
-        audio = audio[:,
-            int(fs * start) : int(fs * end)
-        ]
-
-        """
-        if durations_folder is not None:
-            duration_path = os.path.join(durations_folder, id + ".npy")
-            json_dict[id].update({"durations": duration_path})
-        """
-        
-        # Pitch Computation
-        if compute_pitch:
-            pitch_file = wav.replace(".wav", ".npy").replace(
-                wavs_folder, pitch_folder
-            )
-            if not os.path.isfile(pitch_file):
-                
-                pitch = torchaudio.functional.compute_kaldi_pitch(
-                    waveform=audio,
-                    sample_rate=fs,
-                    frame_length=(pitch_n_fft / fs * 1000),
-                    frame_shift=(pitch_hop_length / fs * 1000),
-                    min_f0=pitch_min_f0,
-                    max_f0=pitch_max_f0,
-                )[0, :, 0]
-                pitch = pitch[: sum(duration)]
-                np.save(pitch_file, pitch)
-
-        
         json_dict[id] = {
             "uttid": id,
             "wav": wav,
             "label": label,
             "segment": True if "train" in json_file else False,
-            "start": start,
-            "end": end,
-            "durations": duration_file_path,
-            "pitch": pitch_file
         }
+
+        # Tacotron2 specific data preparation
+        if model_name == "Tacotron2":
+          # Compute phoneme labels using SpeechBrain G2P for Tacotron2
+          label_phoneme_list = g2p(label)
+          label_phoneme = " ".join(label_phoneme_list)
+          json_dict[id].update({"label_phoneme": label_phoneme})
+
+        # FastSpeech2 specific data preparation
+        if model_name == "FastSpeech2":
+
+          # Parse phoneme alignments
+          audio, fs = torchaudio.load(wav)
+          textgrid_path = os.path.join(
+              phoneme_alignments_folder, f"{id}.TextGrid"
+          )
+          textgrid = tgt.io.read_textgrid(textgrid_path)
+          phone, duration, start, end = get_alignment(
+              textgrid.get_tier_by_name("phones"),
+              fs,
+              pitch_hop_length
+          )
+
+          # Get label phonemes
+          label_phoneme = " ".join(phone)
+          if start >= end:
+              print(f"Skipping {id}")
+              continue
+
+          # Save durations
+          duration_file_path = os.path.join(durations_folder, f"{id}.npy")
+          np.save(duration_file_path, duration)
+
+          # Pitch Computation
+          audio = audio[:,
+              int(fs * start) : int(fs * end)
+          ]
+          pitch_file = wav.replace(".wav", ".npy").replace(
+              wavs_folder, pitch_folder
+          )
+          if not os.path.isfile(pitch_file):
+              pitch = torchaudio.functional.compute_kaldi_pitch(
+                  waveform=audio,
+                  sample_rate=fs,
+                  frame_length=(pitch_n_fft / fs * 1000),
+                  frame_shift=(pitch_hop_length / fs * 1000),
+                  min_f0=pitch_min_f0,
+                  max_f0=pitch_max_f0,
+              )[0, :, 0]
+              pitch = pitch[: sum(duration)]
+              np.save(pitch_file, pitch)
+          
+
+          json_dict[id].update({"label_phoneme": label_phoneme})
+          json_dict[id].update({"start": start})
+          json_dict[id].update({"end": end})
+          json_dict[id].update({"durations": duration_file_path})
+          json_dict[id].update({"pitch": pitch_file})
 
     # Writing the dictionary to the json file
     with open(json_file, mode="w") as json_f:
@@ -469,7 +477,7 @@ def get_alignment(tier, sampling_rate, hop_length):
           end_idx = len(phones)
       else:
           # For silent phones
-          phones.append(p)
+          phones.append("spn")
 
       durations.append(
           int(
@@ -496,7 +504,7 @@ def create_symbol_file(save_folder, json_files):
         for json_file in json_files:
           data = load_data_json(json_file)
           for id in data:
-              line = data[id]["label"]
+              line = data[id]["label_phoneme"]
               char_set.update(line.split())
 
         with open(lexicon_path, "w") as f:
