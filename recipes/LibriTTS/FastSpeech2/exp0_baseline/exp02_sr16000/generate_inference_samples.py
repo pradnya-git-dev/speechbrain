@@ -1,7 +1,6 @@
 import torchaudio
 from fs2_pretrained_interfaces import FastSpeech2
 from fs2_pretrained_interfaces import HIFIGAN
-from g2p_en import G2p
 import tgt
 import numpy as np
 import os
@@ -18,7 +17,9 @@ hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-libritts-16kHz",
 
 # Take input text
 # import pdb; pdb.set_trace()
-input_text = "It was also suggested that it would take a substantial period of time for the secret service to build up the skills necessary to meet the problem"
+# input_text = "It was also suggested that it would take a substantial period of time for the secret service to build up the skills necessary to meet the problem"
+# input_text = "Testing Speech Brain grapheme to phoneme model with the Fast Speech two model."
+input_text = "Testing homographs. I like to read. I read that book twice."
 print(input_text)
 # Convert text label into a phoneme label
 # phoneme_seq = g2p(input_text)

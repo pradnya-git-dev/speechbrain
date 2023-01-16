@@ -4,8 +4,7 @@ from speechbrain.utils.text_to_sequence import text_to_sequence
 import torch
 from speechbrain.dataio.dataio import length_to_mask
 import os
-from g2p_en import G2p
-import string
+from speechbrain.pretrained import GraphemeToPhoneme
 
 class HIFIGAN(Pretrained):
     """
@@ -157,7 +156,7 @@ class FastSpeech2(Pretrained):
         self.input_encoder = self.hparams.input_encoder
         self.input_encoder.update_from_iterable(lexicon, sequence_input=False)
         self.input_encoder.add_unk()
-        self.g2p = G2p()
+        self.g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p")
 
     def encode_batch(self, texts, pace=1.1):
         """Computes mel-spectrogram for a list of texts
@@ -174,7 +173,6 @@ class FastSpeech2(Pretrained):
         """
         phoneme_seqs = list()
         for text in texts:
-          text = text.translate(str.maketrans('', '', string.punctuation))
           phoneme_seq = self.g2p(text)
           phoneme_seq = " ".join(phoneme_seq)
           phoneme_seqs.append(phoneme_seq)
