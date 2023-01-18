@@ -24,9 +24,6 @@ progress_batch_sample_size: 4
 # Data files and pre-processing #
 #################################
 data_folder: #!PLACEHOLDER # e.g., /data/Database/LJSpeech-1.1
-duration_link: https://www.dropbox.com/s/s0yebx13pp10b0e/ljspeech_clean_DFA_durations.zip?dl=0 #https://www.dropbox.com/s/byyjcmmzxbbco39/ljspeech_DFA_durations.zip?dl=1  
-duration_folder: !ref <data_folder>
-pitch_folder: !ref <data_folder>/pitch
 
 train_json: !ref <save_folder>/train.json
 valid_json: !ref <save_folder>/valid.json
@@ -68,7 +65,7 @@ betas: [0.98, 0.99]
 ################################
 # Model Parameters and model   #
 ################################
-
+# Input parameters
 lexicon:
     - AA
     - AE
@@ -150,7 +147,7 @@ energy_pred_kernel_size: 3
 variance_predictor_dropout: 0.5
 
 #model
-model: !new:FastSpeech2.FastSpeech2
+model: !new:speechbrain.lobes.models.FastSpeech2.FastSpeech2
     enc_num_layers: !ref <enc_num_layers>
     enc_num_head: !ref <enc_num_head>
     enc_d_model: !ref <enc_d_model>
@@ -180,7 +177,7 @@ model: !new:FastSpeech2.FastSpeech2
     energy_pred_kernel_size: !ref <energy_pred_kernel_size>
     variance_predictor_dropout: !ref <variance_predictor_dropout>
 
-mel_spectogram: !name:FastSpeech2.mel_spectogram
+mel_spectogram: !name:speechbrain.lobes.models.FastSpeech2.mel_spectogram
     sample_rate: !ref <sample_rate>
     hop_length: !ref <hop_length>
     win_length: !ref <win_length>
@@ -195,7 +192,7 @@ mel_spectogram: !name:FastSpeech2.mel_spectogram
     mel_scale: !ref <mel_scale>
     compression: !ref <dynamic_range_compression>
 
-criterion: !new:FastSpeech2.Loss
+criterion: !new:speechbrain.lobes.models.FastSpeech2.Loss
     log_scale_durations: True
     duration_loss_weight: 1.0
     pitch_loss_weight: 1.0
@@ -216,13 +213,13 @@ train_dataloader_opts:
     drop_last: False  #True #False
     num_workers: 16
     shuffle: True
-    collate_fn: !new:FastSpeech2.TextMelCollate
+    collate_fn: !new:speechbrain.lobes.models.FastSpeech2.TextMelCollate
 
 valid_dataloader_opts:
     batch_size: !ref <batch_size>
     num_workers: 4
     shuffle: False
-    collate_fn: !new:FastSpeech2.TextMelCollate
+    collate_fn: !new:speechbrain.lobes.models.FastSpeech2.TextMelCollate
 
 #optimizer
 opt_class: !name:torch.optim.Adam

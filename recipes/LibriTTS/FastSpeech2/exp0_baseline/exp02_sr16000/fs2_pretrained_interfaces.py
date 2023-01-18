@@ -160,23 +160,27 @@ class FastSpeech2(Pretrained):
 
     def encode_batch(self, texts, pace=1.1):
         """Computes mel-spectrogram for a list of texts
-        Texts must be sorted in decreasing order on their lengths
+
         Arguments
         ---------
         text: List[str]
             texts to be encoded into spectrogram
         pace: float
             pace for the speech synthesis
+            
         Returns
         -------
         tensors of output spectrograms, output lengths and alignments
         """
+
+        # Converts texts to their respective phoneme sequences
         phoneme_seqs = list()
         for text in texts:
           phoneme_seq = self.g2p(text)
           phoneme_seq = " ".join(phoneme_seq)
           phoneme_seqs.append(phoneme_seq)
 
+        # Sorts phoneme sequences in descending order of length
         phoneme_seqs = sorted(phoneme_seqs, key=lambda x: (-len(x), x))
 
         with torch.no_grad():
@@ -193,7 +197,7 @@ class FastSpeech2(Pretrained):
                 inputs.phoneme_sequences.data, pace=1.1
             )
 
-            # Transpose to make in compliant with HiFI GAN expected format
+            # Transposes to make in compliant with HiFI GAN expected format
             mel_outputs = mel_outputs.transpose(-1, 1)
 
         return mel_outputs, durations, pitch, energy

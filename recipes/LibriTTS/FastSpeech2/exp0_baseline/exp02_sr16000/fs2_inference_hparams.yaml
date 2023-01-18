@@ -2,9 +2,52 @@
 # Model: Fastspeech2 for TTS
 # Authors: Sathvik Udupa, Yingzhi Wang 
 # ################################
-n_symbols: 500 #fixed deppending on symbols in textToSequence
-n_mel_channels: 80
+# Input parameters
+lexicon:
+    - AA
+    - AE
+    - AH
+    - AO
+    - AW
+    - AY
+    - B
+    - CH
+    - D
+    - DH
+    - EH
+    - ER
+    - EY
+    - F
+    - G
+    - HH
+    - IH
+    - IY
+    - JH
+    - K
+    - L
+    - M
+    - N
+    - NG
+    - OW
+    - OY
+    - P
+    - R
+    - S
+    - SH
+    - T
+    - TH
+    - UH
+    - UW
+    - V
+    - W
+    - Y
+    - Z
+    - ZH
+    - spn
+
+n_symbols: 41 #fixed deppending on symbols in the lexicon +1 for a dummy symbol used for padding
 padding_idx: 0
+n_mel_channels: 80
 
 # Encoder parameters
 enc_num_layers: 4
@@ -42,7 +85,7 @@ energy_pred_kernel_size: 3
 variance_predictor_dropout: 0.5
 
 #model
-model: !new:FastSpeech2.FastSpeech2
+model: !new:speechbrain.lobes.models.FastSpeech2.FastSpeech2
     enc_num_layers: !ref <enc_num_layers>
     enc_num_head: !ref <enc_num_head>
     enc_d_model: !ref <enc_d_model>
@@ -74,50 +117,6 @@ model: !new:FastSpeech2.FastSpeech2
 
 
 input_encoder: !new:speechbrain.dataio.encoder.TextEncoder
-
-lexicon:
-  - P
-  - AY
-  - Z
-  - B
-  - IH
-  - Y
-  - JH
-  - AO
-  - NG
-  - ZH
-  - T
-  - AH
-  - spn
-  - OW
-  - M
-  - R
-  - AA
-  - ER
-  - S
-  - N
-  - F
-  - UH
-  - L
-  - DH
-  - UW
-  - W
-  - SH
-  - sp
-  - OY
-  - TH
-  - G
-  - V
-  - EH
-  - D
-  - AE
-  - IY
-  - AW
-  - HH
-  - K
-  - CH
-  - EY
-  
 
 modules:
     model: !ref <model>

@@ -17,8 +17,7 @@ import logging
 import torchaudio
 import numpy as np
 import speechbrain as sb
-# from speechbrain.pretrained import HIFIGAN
-from fs2_pretrained_interfaces import HIFIGAN
+from speechbrain.pretrained import HIFIGAN
 from pathlib import Path
 from hyperpyyaml import load_hyperpyyaml
 from speechbrain.utils.data_utils import scalarize
@@ -297,24 +296,19 @@ class FastSpeech2Brain(sb.Brain):
 
 def dataio_prepare(hparams):
     
+    # Load lexicon
     lexicon = hparams["lexicon"]
     input_encoder = hparams.get("input_encoder")
-
-    # import pdb; pdb.set_trace()
-    # input_encoder.add_unk()
 
     # add a dummy symbol for idx 0 - used for padding.
     lexicon = ["@@"] + lexicon
     input_encoder.update_from_iterable(lexicon, sequence_input=False)
-    # n_symbols = input_encoder.__len__()
-
+    
     # load audio, text and durations on the fly; encode audio and text.
-
     @sb.utils.data_pipeline.takes("wav", "label_phoneme", "durations", "pitch", "start", "end")
     @sb.utils.data_pipeline.provides("mel_text_pair")
     def audio_pipeline(wav, label_phoneme, dur, pitch, start, end):
 
-        # ToDo: Verify the label_phoneme here
         durs = np.load(dur)
         durs_seq = torch.from_numpy(durs).int()
         label_phoneme = label_phoneme.strip()
@@ -322,7 +316,6 @@ def dataio_prepare(hparams):
         assert len(text_seq) == len(durs), f'{len(text_seq)}, {len(durs), len(label_phoneme)}, ({label_phoneme})'  # ensure every token has a duration
         audio, fs = torchaudio.load(wav)
         
-        # import pdb; pdb.set_trace()
         audio = audio.squeeze()
         audio = audio[
             int(fs * start) : int(fs * end)
@@ -363,8 +356,6 @@ def main():
 
     sys.path.append("../")
     from ljspeech_prepare import prepare_ljspeech
-
-    # import pdb; pdb.set_trace()
 
     sb.utils.distributed.run_on_main(
         prepare_ljspeech,
