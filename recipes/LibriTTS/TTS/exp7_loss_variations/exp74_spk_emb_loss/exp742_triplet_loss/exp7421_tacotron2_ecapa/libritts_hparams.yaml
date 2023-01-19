@@ -15,7 +15,7 @@ __set_seed: !apply:torch.manual_seed [!ref <seed>]
 output_folder: !ref ./results/tacotron2/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
-epochs: 600
+epochs: 100
 keep_checkpoint_interval: 50
 use_tensorboard: True
 device: cuda
@@ -259,4 +259,4 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
   loadables:
     model: !ref <model>
   paths:
-    model: /workspace/mstts_saved_models/6031_tacotron2_phoneme_film_mlp_ecapa_ljspeech/model.ckpt
+    model: /workspace/mstts_saved_models/exp6031_tacotron2_ecapa_vc12_ljspeech/model.ckpt
