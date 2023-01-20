@@ -279,6 +279,6 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
     # speaker_embedding_model: /content/drive/MyDrive/ecapa_tdnn/mel_spec_input/embedding_model.ckpt
     # mean_var_norm: /content/drive/MyDrive/ecapa_tdnn/mel_spec_input/normalizer.ckpt
 
-    model: /workspace/mstts_saved_models/6031_tacotron2_phoneme_film_mlp_ecapa_ljspeech/model.ckpt
-    speaker_embedding_model: /workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80/embedding_model.ckpt
-    mean_var_norm: /workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80/normalizer.ckpt
+    model: /workspace/mstts_saved_models/exp6031_tacotron2_ecapa_vc12_ljspeech/model.ckpt
+    speaker_embedding_model: /workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80_voxceleb12/embedding_model.ckpt
+    mean_var_norm: /workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80_voxceleb12/normalizer.ckpt
