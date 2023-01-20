@@ -49,8 +49,37 @@ class FastSpeech2Brain(sb.Brain):
         -------
         the model output
         """
-        inputs, _ = self.batch_to_device(batch)
-        return self.hparams.model(*inputs)
+        (phonemes, durations, pitch, energy), targets = self.batch_to_device(batch)
+        # Computes spk_embs before passing inputs to the model
+        # inputs = (phonemes, <add_spk_embs_here> durations, pitch, energy)
+
+        target_mels = targets[0]
+        target_feats = self.modules.mean_var_norm(target_mels, torch.ones(target_mels.shape[0], device=self.device))
+        spk_embs = self.modules.speaker_embedding_model(target_feats)
+        spk_embs = spk_embs.squeeze()
+        spk_embs = spk_embs.to(self.device, non_blocking=True).float()
+
+        inputs = (phonemes, spk_embs, durations, pitch, energy)
+
+        (
+          mel_post, 
+          postnet_output, 
+          predict_durations, 
+          predict_pitch, 
+          predict_energy, 
+          predict_mel_lens
+        ) = self.hparams.model(*inputs)
+
+        result = (
+          mel_post, 
+          postnet_output, 
+          predict_durations, 
+          predict_pitch, 
+          predict_energy, 
+          predict_mel_lens,
+          spk_embs
+        )
+        return result
 
     def fit_batch(self, batch):
         """Fits a single batch
@@ -82,9 +111,9 @@ class FastSpeech2Brain(sb.Brain):
             A one-element tensor used for backpropagating the gradient.
         """
         x, y, metadata = self.batch_to_device(batch, return_metadata=True)
-        self.last_batch = [x[0], x[1], y[-1], y[-2], predictions[0], *metadata]
-        self._remember_sample([x[0], x[1], *y, *metadata], predictions)
-        loss = self.hparams.criterion(predictions, y)
+        self.last_batch = [x[0], y[-1], y[-2], predictions[0], predictions[-1], *metadata]
+        self._remember_sample([x[0], *y, *metadata], predictions)
+        loss = self.hparams.criterion(predictions, y, metadata[2])
         self.last_loss_stats[stage] = scalarize(loss)
         return loss["total_loss"]
 
@@ -100,7 +129,6 @@ class FastSpeech2Brain(sb.Brain):
         """
         (
             tokens,
-            spk_embs,
             spectogram,
             durations,
             pitch,
@@ -109,6 +137,7 @@ class FastSpeech2Brain(sb.Brain):
             input_lengths,
             labels,
             wavs,
+            spk_ids,
         ) = batch
         (
             mel_post,
@@ -117,6 +146,7 @@ class FastSpeech2Brain(sb.Brain):
             predict_pitch,
             predict_energy,
             predict_mel_lens,
+            spk_embs
         ) = predictions
         self.hparams.progress_sample_logger.remember(
             target=self.process_mel(spectogram, mel_lengths),
@@ -132,6 +162,7 @@ class FastSpeech2Brain(sb.Brain):
                     "predict_durations": predict_durations,
                     "labels": labels,
                     "wavs": wavs,
+                    "spk_ids": spk_ids,
                     "spk_embs": spk_embs,
                 }
             ),
@@ -210,7 +241,7 @@ class FastSpeech2Brain(sb.Brain):
         """
         if self.last_batch is None:
             return
-        tokens, spk_embs, *_ = self.last_batch
+        tokens, _, _, _, spk_embs, *_ = self.last_batch
 
         _, postnet_mel_out, _, _, _, predict_mel_lens =  self.hparams.model(tokens, spk_embs)
         self.hparams.progress_sample_logger.remember(
@@ -231,7 +262,7 @@ class FastSpeech2Brain(sb.Brain):
         """
         if self.last_batch is None:
             return
-        *_, wavs = self.last_batch
+        *_, wavs, _ = self.last_batch
 
         inference_mel = inference_mel[: self.hparams.progress_batch_sample_size]
         mel_lens = mel_lens[0 : self.hparams.progress_batch_sample_size]
@@ -281,7 +312,7 @@ class FastSpeech2Brain(sb.Brain):
             len_x,
             labels,
             wavs,
-            spk_embs,
+            spk_ids,
         ) = batch
 
         durations = durations.to(self.device, non_blocking=True).long()
@@ -291,12 +322,11 @@ class FastSpeech2Brain(sb.Brain):
         pitch = pitch_padded.to(self.device, non_blocking=True).float()
         energy = energy_padded.to(self.device, non_blocking=True).float()
         mel_lengths = output_lengths.to(self.device, non_blocking=True).long()
-        spk_embs = spk_embs.to(self.device, non_blocking=True).float()
-
-        x = (phonemes, spk_embs, durations, pitch, energy)
+        
+        x = (phonemes, durations, pitch, energy)
         y = (spectogram, durations, pitch, energy, mel_lengths, input_lengths)
 
-        metadata = (labels, wavs)
+        metadata = (labels, wavs, spk_ids)
         if return_metadata:
             return x, y, metadata
         return x, y
@@ -345,7 +375,7 @@ def dataio_prepare(hparams):
             json_path=hparams[f"{dataset}_json"],
             replacements={"data_root": hparams["data_folder"]},
             dynamic_items=[audio_pipeline],
-            output_keys=["mel_text_pair", "wav", "label", "durations", "pitch", "uttid"],
+            output_keys=["mel_text_pair", "wav", "label", "durations", "pitch", "spk_id"],
         )
     return datasets
 
@@ -363,13 +393,17 @@ def main():
     )
 
     sys.path.append("../")
-    from ljspeech_prepare import prepare_ljspeech
+    from libritts_prepare import prepare_libritts
 
     sb.utils.distributed.run_on_main(
-        prepare_ljspeech,
+        prepare_libritts,
         kwargs={
             "data_folder": hparams["data_folder"],
             "save_folder": hparams["save_folder"],
+            "save_json_train": hparams["train_json"],
+            "save_json_valid": hparams["valid_json"],
+            "save_json_test": hparams["test_json"],
+            "sample_rate": hparams["sample_rate"],
             "splits": hparams["splits"],
             "split_ratio": hparams["split_ratio"],
             "model_name": hparams["model"].__class__.__name__,
@@ -382,37 +416,7 @@ def main():
             "use_custom_cleaner":True,
         },
     )
-
-    from compute_ecapa_embeddings import compute_speaker_embeddings
-
-    sb.utils.distributed.run_on_main(
-        compute_speaker_embeddings,
-        kwargs={
-            "input_filepaths": [hparams["train_json"], hparams["valid_json"]],
-            "output_file_paths": [
-                hparams["train_speaker_embeddings_pickle"],
-                hparams["valid_speaker_embeddings_pickle"],
-            ],
-            "data_folder": hparams["data_folder"],
-            "audio_sr": hparams["sample_rate"],
-            "spk_emb_sr": hparams["spk_emb_sample_rate"],
-            "mel_spec_params": {
-              "sample_rate": hparams["sample_rate"],
-              "hop_length": hparams["hop_length"],
-              "win_length": hparams["win_length"],
-              "n_mel_channels": hparams["n_mel_channels"],
-              "n_fft": hparams["n_fft"],
-              "mel_fmin": hparams["mel_fmin"],
-              "mel_fmax": hparams["mel_fmax"],
-              "mel_normalized": hparams["mel_normalized"],
-              "power": hparams["power"],
-              "norm": hparams["norm"],
-              "mel_scale": hparams["mel_scale"],
-              "dynamic_range_compression": hparams["dynamic_range_compression"]
-            }
-        },
-    )
-
+    
     datasets = dataio_prepare(hparams)
 
     # Brain class initialization

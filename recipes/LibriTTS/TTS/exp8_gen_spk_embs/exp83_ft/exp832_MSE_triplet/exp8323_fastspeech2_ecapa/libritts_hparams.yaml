@@ -13,7 +13,7 @@ __set_seed: !apply:torch.manual_seed [!ref <seed>]
 output_folder: !ref results/fastspeech2/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
-epochs: 300 # Note: 100 epochs are enough for good quality
+epochs: 150 # Note: 100 epochs are enough for good quality
 progress_samples: True
 progress_sample_path: !ref <output_folder>/samples
 progress_samples_min_run: 10
@@ -28,10 +28,6 @@ data_folder: #!PLACEHOLDER # e.g., /data/Database/LJSpeech-1.1
 train_json: !ref <save_folder>/train.json
 valid_json: !ref <save_folder>/valid.json
 test_json: !ref <save_folder>/test.json
-
-train_speaker_embeddings_pickle: !ref <save_folder>/train_speaker_embeddings.pickle
-valid_speaker_embeddings_pickle: !ref <save_folder>/valid_speaker_embeddings.pickle
-test_speaker_embeddings_pickle: !ref <save_folder>/test_speaker_embeddings.pickle
 
 splits: ["train", "valid"]
 split_ratio: [90, 10]
@@ -73,6 +69,23 @@ weight_decay: 0.000000001
 max_grad_norm: 1.0
 batch_size: 64 #minimum 2
 betas: [0.98, 0.99]
+
+###########################
+# Speaker embedding model #
+###########################
+mean_var_norm: !new:speechbrain.processing.features.InputNormalization
+    norm_type: sentence
+    std_norm: False
+
+# Modules
+speaker_embedding_model: !new:speechbrain.lobes.models.ECAPA_TDNN.ECAPA_TDNN
+    input_size: !ref <n_mel_channels>
+    channels: [1024, 1024, 1024, 1024, 3072]
+    kernel_sizes: [5, 3, 3, 3, 1]
+    dilations: [1, 2, 3, 4, 1]
+    groups: [1, 1, 1, 1, 1]
+    attention_channels: 128
+    lin_neurons: 192
 
 ################################
 # Model Parameters and model   #
@@ -214,6 +227,7 @@ criterion: !new:FastSpeech2.Loss
     energy_loss_weight: 1.0
     mel_loss_weight: 1.0
     postnet_mel_loss_weight: 1.0
+    se_triplet_loss_weight: 10.0
 
 vocoder: "hifi-gan"
 pretrained_vocoder: True
@@ -222,6 +236,8 @@ vocoder_download_path: tmpdir_vocoder
 
 modules:
     model: !ref <model>
+    speaker_embedding_model: !ref <speaker_embedding_model>
+    mean_var_norm: !ref <mean_var_norm>
 
 train_dataloader_opts:
     batch_size: !ref <batch_size>
@@ -229,14 +245,12 @@ train_dataloader_opts:
     num_workers: 16
     shuffle: True
     collate_fn: !new:FastSpeech2.TextMelCollate
-      speaker_embeddings_pickle: !ref <train_speaker_embeddings_pickle>
 
 valid_dataloader_opts:
     batch_size: !ref <batch_size>
     num_workers: 4
     shuffle: False
     collate_fn: !new:FastSpeech2.TextMelCollate
-      speaker_embeddings_pickle: !ref <valid_speaker_embeddings_pickle>
 
 #optimizer
 opt_class: !name:torch.optim.Adam
@@ -257,6 +271,8 @@ checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
     recoverables:
         model: !ref <model>
         counter: !ref <epoch_counter>
+        speaker_embedding_model: !ref <speaker_embedding_model>
+        mean_var_norm: !ref <mean_var_norm>
 
 input_encoder: !new:speechbrain.dataio.encoder.TextEncoder
 
@@ -265,3 +281,15 @@ progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
     batch_sample_size: !ref <progress_batch_sample_size>
     formats:
         raw_batch: raw
+
+# If you do not want to use the pretrained separator you can simply delete pretrained_separator field.
+pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
+  collect_in: !ref <save_folder>
+  loadables:
+    model: !ref <model>
+    speaker_embedding_model: !ref <speaker_embedding_model>
+    mean_var_norm: !ref <mean_var_norm>
+  paths:
+    model: /workspace/mstts_saved_models/exp6033_fastspeech2_ecapa_vc12_ljspeech/model.ckpt
+    speaker_embedding_model: /workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80_voxceleb12/embedding_model.ckpt
+    mean_var_norm: /workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80_voxceleb12/normalizer.ckpt

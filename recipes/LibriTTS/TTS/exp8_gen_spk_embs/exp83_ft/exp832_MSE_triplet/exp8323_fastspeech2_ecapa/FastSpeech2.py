@@ -732,10 +732,6 @@ class TextMelCollate:
         )
     """
 
-    def __init__(self,
-      speaker_embeddings_pickle,):
-        self.speaker_embeddings_pickle = speaker_embeddings_pickle
-
     # TODO: Make this more intuitive, use the pipeline
     def __call__(self, batch):
         """Collate's training batch from normalized text and mel-spectrogram
@@ -783,10 +779,7 @@ class TextMelCollate:
         energy_padded = torch.FloatTensor(len(batch), max_target_len)
         energy_padded.zero_()
         output_lengths = torch.LongTensor(len(batch))
-        labels, wavs, spk_embs_list = [], [], []
-
-        with open(self.speaker_embeddings_pickle, "rb") as speaker_embeddings_file:
-            speaker_embeddings = pickle.load(speaker_embeddings_file)
+        labels, wavs, spk_ids = [], [], []
 
         for i in range(len(ids_sorted_decreasing)):
 
@@ -800,11 +793,7 @@ class TextMelCollate:
             output_lengths[i] = mel.size(1)
             labels.append(raw_batch[idx]["label"])
             wavs.append(raw_batch[idx]["wav"])
-
-            spk_emb = speaker_embeddings[raw_batch[idx]["uttid"]]
-            spk_embs_list.append(spk_emb)
-
-        spk_embs = torch.stack(spk_embs_list)
+            spk_ids.append(raw_batch[idx]["spk_id"])
 
         # count number of items - characters in text
         len_x = [x[5] for x in batch]
@@ -821,7 +810,7 @@ class TextMelCollate:
             len_x,
             labels,
             wavs,
-            spk_embs,
+            spk_ids,
         )
 
 
@@ -850,7 +839,8 @@ class Loss(nn.Module):
         pitch_loss_weight,
         energy_loss_weight,
         mel_loss_weight,
-        postnet_mel_loss_weight
+        postnet_mel_loss_weight,
+        se_triplet_loss_weight
     ):
         super().__init__()
 
@@ -866,7 +856,13 @@ class Loss(nn.Module):
         self.pitch_loss_weight = pitch_loss_weight
         self.energy_loss_weight = energy_loss_weight
 
-    def forward(self, predictions, targets):
+        # For computing speaker embedding triplet loss
+        self.spk_emb_triplet_loss = torch.nn.TripletMarginWithDistanceLoss(
+          distance_function=lambda x, y: 1.0 - F.cosine_similarity(x, y)
+        )
+        self.se_triplet_loss_weight = se_triplet_loss_weight
+
+    def forward(self, predictions, targets, spk_ids):
         """Computes the value of the loss function and updates stats
         Arguments
         ---------
@@ -894,8 +890,13 @@ class Loss(nn.Module):
             log_durations,
             predicted_pitch,
             predicted_energy,
-            mel_lens
+            mel_lens,
+            spk_embs
         ) = predictions
+
+        # import pdb; pdb.set_trace()
+
+
         predicted_pitch = predicted_pitch.squeeze()
         predicted_energy = predicted_energy.squeeze()
         target_energy = target_energy.squeeze()
@@ -954,18 +955,67 @@ class Loss(nn.Module):
         pitch_loss = torch.div(pitch_loss, len(mel_target))
         energy_loss = torch.div(energy_loss, len(mel_target))
 
-        total_loss = mel_loss*self.mel_loss_weight + postnet_mel_loss*self.postnet_mel_loss_weight + dur_loss*self.duration_loss_weight + pitch_loss*self.pitch_loss_weight + energy_loss*self.energy_loss_weight
+        # Computes speaker embedding triplet loss
+        spk_emb_triplet_loss = self.get_spk_emb_triplet_loss(spk_ids, spk_embs)
+
+        total_loss = mel_loss*self.mel_loss_weight \
+                    + postnet_mel_loss*self.postnet_mel_loss_weight \
+                    + spk_emb_triplet_loss*self.se_triplet_loss_weight \
+                    + dur_loss*self.duration_loss_weight \
+                    + pitch_loss*self.pitch_loss_weight \
+                    + energy_loss*self.energy_loss_weight
 
         loss = {
             "total_loss": total_loss,
             "mel_loss": mel_loss*self.mel_loss_weight,
             "postnet_mel_loss": postnet_mel_loss*self.postnet_mel_loss_weight,
+            "spk_emb_triplet_loss": spk_emb_triplet_loss*self.se_triplet_loss_weight,
             "dur_loss": dur_loss*self.duration_loss_weight,
             "pitch_loss": pitch_loss*self.pitch_loss_weight,
             "energy_loss": energy_loss*self.energy_loss_weight,
         }
         return loss
 
+
+    def get_spk_emb_triplet_loss(self, spk_ids, spk_embs):
+
+      # import pdb; pdb.set_trace()
+      spk_emb_triplet_loss = torch.Tensor([0]).to(spk_embs.device)
+      anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
+
+      if anchor_se_idx.shape[0] != 0:
+
+        anchor_se_idx = anchor_se_idx.to(spk_embs.device, non_blocking=True).long()
+        pos_se_idx = pos_se_idx.to(spk_embs.device, non_blocking=True).long()
+        neg_se_idx = neg_se_idx.to(spk_embs.device, non_blocking=True).long()
+        
+        anchor_spk_embs = spk_embs[anchor_se_idx]
+        pos_spk_embs = spk_embs[pos_se_idx]
+        neg_spk_embs = spk_embs[neg_se_idx]
+
+        # spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
+
+        spk_emb_triplet_loss = self.spk_emb_triplet_loss(anchor_spk_embs, pos_spk_embs, neg_spk_embs)
+
+      return spk_emb_triplet_loss
+
+
+
+    def get_triplets(self, spk_ids):  
+      anchor_se_idx, pos_se_idx, neg_se_idx = None, None, None
+      spk_idx_tuples = list()
+      for i in range(len(spk_ids) - 1):
+        for j in range(i + 1, len(spk_ids)):
+          if spk_ids[i] == spk_ids[j]:
+            for k in range(len(spk_ids)):
+              if spk_ids[j] != spk_ids[k]:
+                spk_idx_tuples.append((i, j, k))
+      
+      anchor_se_idx = torch.LongTensor([i for (i, j, k) in spk_idx_tuples])
+      pos_se_idx = torch.LongTensor([j for (i, j, k) in spk_idx_tuples])
+      neg_se_idx = torch.LongTensor([k for (i, j, k) in spk_idx_tuples])
+
+      return (anchor_se_idx, pos_se_idx, neg_se_idx)
 
 def mel_spectogram(
     sample_rate,
