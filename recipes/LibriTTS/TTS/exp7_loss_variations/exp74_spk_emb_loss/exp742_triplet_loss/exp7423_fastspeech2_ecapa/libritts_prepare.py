@@ -78,8 +78,6 @@ def prepare_libritts(
     pitch_folder = os.path.join(data_folder, "pitch")
     if not os.path.exists(pitch_folder):
       os.makedirs(pitch_folder)
-    
-
 
     extension = [".wav"]  # The expected extension for audio files
     wav_list = list()  # Stores all audio file paths for the dataset
@@ -111,7 +109,7 @@ def prepare_libritts(
 
         # Collects all files matching the provided extension
         wav_list.extend(get_all_files(subset_folder, match_and=extension))
-        # wav_list = wav_list[:10]
+        # wav_list = wav_list[:64]
         
     logger.info(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
@@ -123,7 +121,7 @@ def prepare_libritts(
 
     # Random split the signal list into train, valid, and test sets.
     data_split = split_sets(wav_list, split_ratio)
-    lexicon_json_files = list()
+    # import pdb; pdb.set_trace()
 
     # Creating json files
     if "train" in splits:
@@ -136,7 +134,6 @@ def prepare_libritts(
                   pitch_min_f0,
                   pitch_max_f0,
                   use_custom_cleaner)
-      lexicon_json_files.append(save_json_train)
 
     if "valid" in splits:
       create_json(data_split["valid"], 
@@ -148,7 +145,6 @@ def prepare_libritts(
                   pitch_min_f0,
                   pitch_max_f0,
                   use_custom_cleaner)
-      lexicon_json_files.append(save_json_valid)
     
     if "test" in splits:
       create_json(data_split["test"], 
@@ -160,10 +156,6 @@ def prepare_libritts(
                   pitch_min_f0,
                   pitch_max_f0,
                   use_custom_cleaner)
-      lexicon_json_files.append(save_json_test)
-
-    if create_symbol_list:
-        create_symbol_file(save_folder, lexicon_json_files)
 
 
 def create_json(wav_list, 
@@ -208,6 +200,18 @@ def create_json(wav_list,
         uttid, _ = os.path.splitext(path_parts[-1])
         relative_path = os.path.join("{data_root}", *path_parts[-6:])
 
+        # Gets the path for the  text files and extracts the input text
+        normalized_text_path = os.path.join(
+            "/", *path_parts[:-1], uttid + ".normalized.txt"
+        )
+        with open(normalized_text_path) as f:
+            normalized_text = f.read()
+            if normalized_text.__contains__("{"):
+                normalized_text = normalized_text.replace("{", "")
+            if normalized_text.__contains__("}"):
+                normalized_text = normalized_text.replace("}", "")
+        label = normalized_text
+
         # Resamples the audio file if required
         if sig_sr != sample_rate:
             # signal = signal.unsqueeze(0)
@@ -220,7 +224,7 @@ def create_json(wav_list,
 
         # Gets the path for the  text files and extracts the input text
         textgrid_path = os.path.join(
-            phoneme_alignments_folder, f"{uttid}.TextGrid"
+            phoneme_alignments_folder, spk_id, f"{uttid}.TextGrid"
         )
         if not os.path.exists(textgrid_path):
           print("Skipping because this does not exist: ", textgrid_path)
@@ -233,7 +237,7 @@ def create_json(wav_list,
             sample_rate,
             pitch_hop_length
         )
-        label = " ".join(phone)
+        label_phoneme = " ".join(phone)
         if start >= end:
             print(f"Skipping {uttid}")
             continue
@@ -265,6 +269,7 @@ def create_json(wav_list,
             "wav": relative_path,
             "spk_id": spk_id,
             "label": label,
+            "label_phoneme": label_phoneme,
             "segment": True if "train" in json_file else False,
             "start": start,
             "end": end,
@@ -280,18 +285,36 @@ def create_json(wav_list,
 
 
 def get_alignment(tier, sampling_rate, hop_length):
+  """
+  Returns phonemes, phoneme durations (in frames), start time (in seconds), end time (in seconds).
+  This function is adopted from https://github.com/ming024/FastSpeech2/blob/master/preprocessor/preprocessor.py
+  Arguments
+  ---------
+  tier : tgt.core.IntervalTier
+      For an utterance, contains Interval objects for phonemes and their start time and end time in seconds
+  sampling_rate : int
+      Sample rate if audio signal
+  hop_length : int
+      Hop length for duration computation
+  Returns
+  -------
+  (phones, durations, start_time, end_time) : tuple
+      The phonemes, durations, start time, and end time for an utterance
+  """
+
   sil_phones = ["sil", "sp", "spn", ""]
 
-  phones = []
+  phonemes = []
   durations = []
   start_time = 0
   end_time = 0
   end_idx = 0
+
   for t in tier._objects:
       s, e, p = t.start_time, t.end_time, t.text
 
-      # Trim leading silences
-      if phones == []:
+      # Trims leading silences
+      if phonemes == []:
           if p in sil_phones:
               continue
           else:
@@ -299,15 +322,16 @@ def get_alignment(tier, sampling_rate, hop_length):
 
       if p not in sil_phones:
           # For ordinary phones
-          phones.append(p)
-          end_time = e
-          end_idx = len(phones)
-      else:
-          # For silent phones
-          if p == "":
-            phones.append("sp")
+          # Removes stress indicators
+          if p[-1].isdigit():
+            phonemes.append(p[:-1])
           else:
-            phones.append(p)
+            phonemes.append(p)
+          end_time = e
+          end_idx = len(phonemes)
+      else:
+          # Uses a unique token for all silent phones
+          phonemes.append("spn")
 
       durations.append(
           int(
@@ -316,11 +340,11 @@ def get_alignment(tier, sampling_rate, hop_length):
           )
       )
 
-  # Trim tailing silences
-  phones = phones[:end_idx]
+  # Trims tailing silences
+  phonemes = phonemes[:end_idx]
   durations = durations[:end_idx]
 
-  return phones, durations, start_time, end_time
+  return phonemes, durations, start_time, end_time
 
 
 def skip(*filenames):
@@ -377,25 +401,6 @@ def check_folders(*folders):
         if not os.path.exists(folder):
             return False
     return True
-
-def create_symbol_file(save_folder, json_files):
-    lexicon_path = os.path.join(save_folder, "lexicon")
-    if os.path.exists(lexicon_path):
-        logger.info("Symbols file present")
-    else:
-        logger.info("Symbols file not present, creating from training data.")
-        char_set = set()
-
-        import pdb; pdb.set_trace()
-        for json_file in json_files:
-          with open(json_file) as f:
-            data = json.load(f)
-          for id in data:
-              line = data[id]["label"]
-              char_set.update(line.split())
-
-        with open(lexicon_path, "w") as f:
-            f.write("\t".join(char_set))
 
 def custom_clean(text):
     import re

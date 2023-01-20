@@ -22,6 +22,9 @@ from fs2_pretrained_interfaces import HIFIGAN
 from pathlib import Path
 from hyperpyyaml import load_hyperpyyaml
 from speechbrain.utils.data_utils import scalarize
+from spk_emb_pretrained_interfaces import MelSpectrogramEncoder
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 logger = logging.getLogger(__name__)
@@ -35,7 +38,16 @@ class FastSpeech2Brain(sb.Brain):
         self.last_epoch = 0
         self.last_batch = None
         self.last_loss_stats = {}
+
+        self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
+          source="/workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80_voxceleb12",
+          run_opts={"device": self.device},
+          freeze_params=True
+        )
+
         return super().on_fit_start()
+
+        
 
     def compute_forward(self, batch, stage):
         """Computes the forward pass
@@ -84,7 +96,42 @@ class FastSpeech2Brain(sb.Brain):
         x, y, metadata = self.batch_to_device(batch, return_metadata=True)
         self.last_batch = [x[0], x[1], y[-1], y[-2], predictions[0], *metadata]
         self._remember_sample([x[0], x[1], *y, *metadata], predictions)
-        loss = self.hparams.criterion(predictions, y)
+
+        self.spk_emb_mel_spec_encoder.eval()
+
+        # import pdb; pdb.set_trace()
+
+        target_mels = y[0].detach().clone()
+        pred_mels_postnet = predictions[1].detach().clone()
+        spk_ids = metadata[2]
+
+        target_mels = torch.transpose(target_mels, 1, 2)
+        target_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(target_mels)
+        target_spk_embs = target_spk_embs.squeeze()
+        target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
+
+        pred_mels_postnet = torch.transpose(pred_mels_postnet, 1, 2)
+        preds_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(pred_mels_postnet)
+        preds_spk_embs = preds_spk_embs.squeeze()
+        preds_spk_embs = preds_spk_embs.to(self.device, non_blocking=True).float()
+
+        anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
+        
+        spk_emb_triplets = (None, None, None)
+
+        if anchor_se_idx.shape[0] != 0:
+
+          anchor_se_idx = anchor_se_idx.to(self.device, non_blocking=True).long()
+          pos_se_idx = pos_se_idx.to(self.device, non_blocking=True).long()
+          neg_se_idx = neg_se_idx.to(self.device, non_blocking=True).long()
+          
+          anchor_spk_embs = target_spk_embs[anchor_se_idx]
+          pos_spk_embs = preds_spk_embs[pos_se_idx]
+          neg_spk_embs = preds_spk_embs[neg_se_idx]
+
+          spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
+
+        loss = self.hparams.criterion(predictions, y, spk_emb_triplets)
         self.last_loss_stats[stage] = scalarize(loss)
         return loss["total_loss"]
 
@@ -109,6 +156,7 @@ class FastSpeech2Brain(sb.Brain):
             input_lengths,
             labels,
             wavs,
+            spk_ids,
         ) = batch
         (
             mel_post,
@@ -231,7 +279,7 @@ class FastSpeech2Brain(sb.Brain):
         """
         if self.last_batch is None:
             return
-        *_, wavs = self.last_batch
+        *_, wavs, spk_ids = self.last_batch
 
         inference_mel = inference_mel[: self.hparams.progress_batch_sample_size]
         mel_lens = mel_lens[0 : self.hparams.progress_batch_sample_size]
@@ -282,6 +330,7 @@ class FastSpeech2Brain(sb.Brain):
             labels,
             wavs,
             spk_embs,
+            spk_ids,
         ) = batch
 
         durations = durations.to(self.device, non_blocking=True).long()
@@ -296,11 +345,24 @@ class FastSpeech2Brain(sb.Brain):
         x = (phonemes, spk_embs, durations, pitch, energy)
         y = (spectogram, durations, pitch, energy, mel_lengths, input_lengths)
 
-        metadata = (labels, wavs)
+        metadata = (labels, wavs, spk_ids)
         if return_metadata:
             return x, y, metadata
         return x, y
 
+    def get_triplets(self, spk_ids):  
+      anchor_se_idx, pos_se_idx, neg_se_idx = None, None, None
+      spk_idx_pairs = list()
+      for i in range(len(spk_ids)):
+        for j in range(i, len(spk_ids)):
+          if spk_ids[i] != spk_ids[j]:
+            spk_idx_pairs.append((i, j))
+      
+      anchor_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
+      pos_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
+      neg_se_idx = torch.LongTensor([j for (i, j) in spk_idx_pairs])
+
+      return (anchor_se_idx, pos_se_idx, neg_se_idx)
 
 def dataio_prepare(hparams):
 
@@ -340,6 +402,7 @@ def dataio_prepare(hparams):
     # define splits and load it as sb dataset
     datasets = {}
 
+    # import pdb; pdb.set_trace()
     for dataset in hparams["splits"]:
         datasets[dataset] = sb.dataio.dataset.DynamicItemDataset.from_json(
             json_path=hparams[f"{dataset}_json"],
