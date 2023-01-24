@@ -14,7 +14,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 # Change the entries in the following "LIBRITTS_SUBSETS" to modify the downloaded subsets for LibriTTS
 # Used subsets ["dev-clean", "train-clean-100", "train-clean-360"]
-LIBRITTS_SUBSETS = ["dev-clean"]
+LIBRITTS_SUBSETS = ["dev-clean", "train-clean-100"]
 LIBRITTS_URL_PREFIX = "https://www.openslr.org/resources/60/"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
