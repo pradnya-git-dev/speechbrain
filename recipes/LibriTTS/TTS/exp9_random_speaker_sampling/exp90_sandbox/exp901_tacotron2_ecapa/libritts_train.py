@@ -83,11 +83,13 @@ class Tacotron2Brain(sb.Brain):
         spk_embs = spk_embs.squeeze()
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
 
+        z_spk_embs, z_mean, z_log_var = self.modules.random_sampler(spk_embs)
+
         mel_outputs, mel_outputs_postnet, gate_outputs, alignments = self.modules.model(
-            inputs, spk_embs, alignments_dim=max_input_length
+            inputs, z_spk_embs, alignments_dim=max_input_length
         )
 
-        result = (mel_outputs, mel_outputs_postnet, gate_outputs, alignments, spk_embs)
+        result = (mel_outputs, mel_outputs_postnet, gate_outputs, alignments, z_spk_embs)
         return result
         
 

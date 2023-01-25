@@ -127,6 +127,12 @@ speaker_embedding_model: !new:speechbrain.lobes.models.ECAPA_TDNN.ECAPA_TDNN
     attention_channels: 128
     lin_neurons: 192
 
+##################
+# Random sampler #
+##################
+random_sampler: !new:MSTacotron2.Sampler
+  spk_emb_size: !ref <spk_emb_size>
+
 ################################
 # Model Parameters and model   #
 ################################
@@ -223,6 +229,7 @@ criterion: !new:MSTacotron2.Loss
 
 modules:
   model: !ref <model>
+  random_sampler: !ref <random_sampler>
   speaker_embedding_model: !ref <speaker_embedding_model>
   mean_var_norm: !ref <mean_var_norm>
 

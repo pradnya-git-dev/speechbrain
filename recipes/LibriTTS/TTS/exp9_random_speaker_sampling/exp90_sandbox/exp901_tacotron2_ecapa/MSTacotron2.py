@@ -1233,6 +1233,40 @@ class Decoder(nn.Module):
         return mel_outputs, gate_outputs, alignments, mel_lengths
 
 
+class Sampler(nn.Module):
+  """
+  This module takes a speaker embedding as an input. A transformation is applied
+  to the speaker embedding to map it to a latent space thant should be Gaussian.
+  The output of this module is used as the speaker embedding for the TTS.
+  """
+  def __init__(
+    self,
+    spk_emb_size
+  ):
+    super().__init__()
+    self.spk_emb_size = spk_emb_size
+
+    self.mean = LinearNorm(self.spk_emb_size, self.spk_emb_size)
+    self.log_var = LinearNorm(self.spk_emb_size, self.spk_emb_size)
+    
+    self.normal = torch.distributions.Normal(0,1)
+
+  def forward(self, spk_embs):
+
+    z_mean = self.mean(spk_embs)
+    z_log_var = self.log_var(spk_embs)
+
+    # ToDo: Move these to GPU if available
+    self.normal.loc = self.normal.loc.to(spk_embs.device)
+    self.normal.scale = self.normal.scale.to(spk_embs.device)
+    
+    random_sample = self.normal.sample(spk_embs.shape)
+
+    z_spk_embs = z_mean + torch.exp(0.5 * z_log_var) * random_sample
+
+    return z_spk_embs, z_mean, z_log_var
+
+  
 class Tacotron2(nn.Module):
     """The Tactron2 text-to-speech model, based on the NVIDIA implementation.
 
