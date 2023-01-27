@@ -1247,24 +1247,24 @@ class Sampler(nn.Module):
     self.spk_emb_size = spk_emb_size
 
     self.mean = LinearNorm(self.spk_emb_size, self.spk_emb_size)
-    self.variance = LinearNorm(self.spk_emb_size, self.spk_emb_size)
+    self.log_var = LinearNorm(self.spk_emb_size, self.spk_emb_size)
     
     self.normal = torch.distributions.Normal(0,1)
 
   def forward(self, spk_embs):
 
     z_mean = self.mean(spk_embs)
-    z_variance = self.variance(spk_embs)
-    z_variance = torch.exp(z_variance)
+    z_log_var = self.log_var(spk_embs)
 
+    # ToDo: Move these to GPU if available
     self.normal.loc = self.normal.loc.to(spk_embs.device)
     self.normal.scale = self.normal.scale.to(spk_embs.device)
     
-    random_sample = self.normal.sample(z_mean.shape)
+    random_sample = self.normal.sample(spk_embs.shape)
 
-    z_spk_embs = z_mean + (z_variance * random_sample)
+    z_spk_embs = z_mean + torch.exp(0.5 * z_log_var) * random_sample
 
-    return z_spk_embs, z_mean, z_variance
+    return z_spk_embs, z_mean, z_log_var
 
   
 class Tacotron2(nn.Module):
@@ -1748,7 +1748,7 @@ class Loss(nn.Module):
         gate_target.requires_grad = False
         gate_target = gate_target.view(-1, 1)
 
-        mel_out, mel_out_postnet, gate_out, alignments, z_mean, z_variance = model_output
+        mel_out, mel_out_postnet, gate_out, alignments, z_mean, z_log_var = model_output
 
         gate_out = gate_out.view(-1, 1)
         mel_loss = self.mse_loss(mel_out, mel_target) + self.mse_loss(
@@ -1763,7 +1763,7 @@ class Loss(nn.Module):
         )
 
         # import pdb; pdb.set_trace()
-        kl_loss = (z_variance**2 + z_mean**2 - torch.log(z_variance) - 1/2).sum()
+        kl_loss = -0.5 * torch.sum(1 + z_log_var - z_mean ** 2 - torch.exp(z_log_var))
         kl_loss = self.kl_loss_weight * kl_loss
 
         total_loss = mel_loss + kl_loss + gate_loss + attn_loss
