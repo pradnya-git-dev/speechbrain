@@ -83,13 +83,13 @@ class Tacotron2Brain(sb.Brain):
         spk_embs = spk_embs.squeeze()
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
 
-        z_spk_embs, z_mean, z_variance = self.modules.random_sampler(spk_embs)
+        z_spk_embs, z_mean, z_log_var = self.modules.random_sampler(spk_embs)
 
         mel_outputs, mel_outputs_postnet, gate_outputs, alignments = self.modules.model(
             inputs, z_spk_embs, alignments_dim=max_input_length
         )
 
-        result = (mel_outputs, mel_outputs_postnet, gate_outputs, alignments, z_mean, z_variance)
+        result = (mel_outputs, mel_outputs_postnet, gate_outputs, alignments, z_mean, z_log_var)
         return result
         
 
@@ -174,7 +174,7 @@ class Tacotron2Brain(sb.Brain):
         inputs, targets, num_items, labels, wavs = batch
         text_padded, input_lengths, _, max_len, output_lengths, spk_ids = inputs
         mel_target, _ = targets
-        mel_out, mel_out_postnet, gate_out, alignments, z_mean, z_variance = predictions
+        mel_out, mel_out_postnet, gate_out, alignments, z_mean, z_log_var = predictions
         alignments_max = (
             alignments[0]
             .max(dim=-1)
@@ -431,7 +431,7 @@ class Tacotron2Brain(sb.Brain):
         spk_embs = spk_embs.squeeze()
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
 
-        z_spk_embs, z_mean, z_variance = self.modules.random_sampler(spk_embs)
+        z_spk_embs, z_mean, z_log_var = self.modules.random_sampler(spk_embs)
 
         mel_out, _, _ = self.hparams.model.infer(
             text_padded[:1], z_spk_embs[:1], input_lengths[:1]
