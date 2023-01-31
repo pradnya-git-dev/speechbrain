@@ -1246,25 +1246,34 @@ class Sampler(nn.Module):
     super().__init__()
     self.spk_emb_size = spk_emb_size
 
-    self.mean = LinearNorm(self.spk_emb_size, self.spk_emb_size)
-    self.log_var = LinearNorm(self.spk_emb_size, self.spk_emb_size)
+    # import pdb; pdb.set_trace()
+    self.linear1_size = int(self.spk_emb_size * 3/2)
+    self.linear2_size = int( (self.linear1_size + self.spk_emb_size) / 2)
+
+    self.linear1 = LinearNorm(self.spk_emb_size, self.linear1_size)
+    self.linear2 = LinearNorm(self.linear1_size, self.linear2_size)
+    self.z_spk_embs = LinearNorm(self.linear2_size, self.spk_emb_size)
+    # self.log_var = LinearNorm(self.linear2_size, self.spk_emb_size)
     
-    self.normal = torch.distributions.Normal(0,1)
+    # self.normal = torch.distributions.Normal(0,1)
 
   def forward(self, spk_embs):
 
-    z_mean = self.mean(spk_embs)
-    z_log_var = self.log_var(spk_embs)
+    
+    out = F.relu(self.linear1(spk_embs))
+    out = F.relu(self.linear2(out))
+    z_spk_embs = self.z_spk_embs(out)
+    # z_log_var = self.log_var(out)
 
     # ToDo: Move these to GPU if available
-    self.normal.loc = self.normal.loc.to(spk_embs.device)
-    self.normal.scale = self.normal.scale.to(spk_embs.device)
+    # self.normal.loc = self.normal.loc.to(spk_embs.device)
+    # self.normal.scale = self.normal.scale.to(spk_embs.device)
     
-    random_sample = self.normal.sample(spk_embs.shape)
+    # random_sample = self.normal.sample(spk_embs.shape)
 
-    z_spk_embs = z_mean + torch.exp(0.5 * z_log_var) * random_sample
+    # z_spk_embs = z_mean + torch.exp(0.5 * z_log_var) * random_sample
 
-    return z_spk_embs, z_mean, z_log_var
+    return z_spk_embs
 
   
 class Tacotron2(nn.Module):
@@ -1640,7 +1649,7 @@ def infer(model, text_sequences, input_lengths):
 
 
 LossStats = namedtuple(
-    "TacotronLoss", "loss mel_loss kl_loss gate_loss attn_loss attn_weight"
+    "TacotronLoss", "loss mel_loss gate_loss attn_loss attn_weight"
 )
 
 
@@ -1748,7 +1757,7 @@ class Loss(nn.Module):
         gate_target.requires_grad = False
         gate_target = gate_target.view(-1, 1)
 
-        mel_out, mel_out_postnet, gate_out, alignments, z_mean, z_log_var = model_output
+        mel_out, mel_out_postnet, gate_out, alignments, z_spk_embs = model_output
 
         gate_out = gate_out.view(-1, 1)
         mel_loss = self.mse_loss(mel_out, mel_target) + self.mse_loss(
@@ -1762,13 +1771,13 @@ class Loss(nn.Module):
             alignments, input_lengths, target_lengths, epoch
         )
 
-        kl_loss_t = -0.5 * torch.sum(1 + z_log_var - z_mean ** 2 - torch.exp(z_log_var), dim=-1)
-        kl_loss = torch.mean(kl_loss_t)
-        kl_loss = self.kl_loss_weight * kl_loss
+        # kl_loss_t = -0.5 * torch.sum(1 + z_log_var - z_mean ** 2 - torch.exp(z_log_var), dim=-1)
+        # kl_loss = torch.mean(kl_loss_t)
+        # kl_loss = self.kl_loss_weight * kl_loss
 
-        total_loss = mel_loss + kl_loss + gate_loss + attn_loss
+        total_loss = mel_loss + gate_loss + attn_loss
         return LossStats(
-            total_loss, mel_loss, kl_loss, gate_loss, attn_loss, attn_weight
+            total_loss, mel_loss, gate_loss, attn_loss, attn_weight
         )
 
     def get_attention_loss(

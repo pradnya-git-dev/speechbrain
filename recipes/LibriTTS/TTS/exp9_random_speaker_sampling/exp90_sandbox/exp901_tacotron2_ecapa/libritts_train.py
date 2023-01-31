@@ -52,6 +52,11 @@ class Tacotron2Brain(sb.Brain):
         )
         
         self.last_loss_stats = {}
+
+        # for name, param in self.modules.speaker_embedding_model.named_parameters():
+        #   if param.requires_grad:
+        #     param.requires_grad = False
+        
         return super().on_fit_start()
 
     def compute_forward(self, batch, stage):
@@ -79,17 +84,26 @@ class Tacotron2Brain(sb.Brain):
 
         target_mels = torch.transpose(target_mels, 1, 2)
         target_feats = self.modules.mean_var_norm(target_mels, torch.ones(target_mels.shape[0], device=self.device))
+
+        if self.hparams.epoch_counter.current == 1:
+          param_counter = 0
+          for name, param in self.modules.speaker_embedding_model.named_parameters():
+            if param.requires_grad:
+              param_counter += 1
+          if param_counter == 0:
+            print("self.modules.speaker_embedding_model is FROZEN.")
+
         spk_embs = self.modules.speaker_embedding_model(target_feats)
         spk_embs = spk_embs.squeeze()
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
 
-        z_spk_embs, z_mean, z_log_var = self.modules.random_sampler(spk_embs)
+        z_spk_embs = self.modules.random_sampler(spk_embs)
 
         mel_outputs, mel_outputs_postnet, gate_outputs, alignments = self.modules.model(
             inputs, z_spk_embs, alignments_dim=max_input_length
         )
 
-        result = (mel_outputs, mel_outputs_postnet, gate_outputs, alignments, z_mean, z_log_var)
+        result = (mel_outputs, mel_outputs_postnet, gate_outputs, alignments, z_spk_embs)
         return result
         
 
@@ -174,7 +188,7 @@ class Tacotron2Brain(sb.Brain):
         inputs, targets, num_items, labels, wavs = batch
         text_padded, input_lengths, _, max_len, output_lengths, spk_ids = inputs
         mel_target, _ = targets
-        mel_out, mel_out_postnet, gate_out, alignments, z_mean, z_log_var = predictions
+        mel_out, mel_out_postnet, gate_out, alignments, z_spk_embs = predictions
         alignments_max = (
             alignments[0]
             .max(dim=-1)
@@ -316,7 +330,7 @@ class Tacotron2Brain(sb.Brain):
                 self.hparams.sample_rate,
             )
 
-            _, mel_out_postnet, _, _, _, _ = self.last_preds
+            _, mel_out_postnet, _, _, _ = self.last_preds
             waveform_ss = self.vocoder.decode_batch(mel_out_postnet[0])
             train_sample_audio = os.path.join(
                 self.hparams.progress_sample_path,
@@ -427,11 +441,12 @@ class Tacotron2Brain(sb.Brain):
 
         target_mels = torch.transpose(target_mels, 1, 2)
         target_feats = self.modules.mean_var_norm(target_mels, torch.ones(target_mels.shape[0], device=self.device))
+
         spk_embs = self.modules.speaker_embedding_model(target_feats)
         spk_embs = spk_embs.squeeze()
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
 
-        z_spk_embs, z_mean, z_log_var = self.modules.random_sampler(spk_embs)
+        z_spk_embs = self.modules.random_sampler(spk_embs)
 
         mel_out, _, _ = self.hparams.model.infer(
             text_padded[:1], z_spk_embs[:1], input_lengths[:1]
@@ -623,7 +638,7 @@ if __name__ == "__main__":
     tacotron2_brain.fit(
         tacotron2_brain.hparams.epoch_counter,
         train_set=datasets["train"],
-        valid_set=datasets["valid"],
+        valid_set=datasets["train"],
         train_loader_kwargs=hparams["train_dataloader_opts"],
         valid_loader_kwargs=hparams["valid_dataloader_opts"],
     )
@@ -631,6 +646,6 @@ if __name__ == "__main__":
     # Test
     if "test" in datasets:
         tacotron2_brain.evaluate(
-            datasets["test"],
+            datasets["train"],
             test_loader_kwargs=hparams["test_dataloader_opts"],
         )
