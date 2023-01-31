@@ -1,0 +1,26 @@
+n_mel_channels: 80
+
+# Modules
+embedding_model: !new:speechbrain.lobes.models.ECAPA_TDNN.ECAPA_TDNN
+    input_size: !ref <n_mel_channels>
+    channels: [1024, 1024, 1024, 1024, 3072]
+    kernel_sizes: [5, 3, 3, 3, 1]
+    dilations: [1, 2, 3, 4, 1]
+    groups: [1, 1, 1, 1, 1]
+    attention_channels: 128
+    lin_neurons: 192
+
+
+normalizer: !new:speechbrain.processing.features.InputNormalization
+    norm_type: sentence
+    std_norm: False
+
+
+modules:
+    normalizer: !ref <normalizer>
+    embedding_model: !ref <embedding_model>
+
+pretrainer: !new:speechbrain.utils.parameter_transfer.Pretrainer
+    loadables:
+        normalizer: !ref <normalizer>
+        embedding_model: !ref <embedding_model>
