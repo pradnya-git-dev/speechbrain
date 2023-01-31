@@ -93,15 +93,15 @@ def prepare_libritts(
 
         # Collects all files matching the provided extension
         wav_list.extend(get_all_files(subset_folder, match_and=extension))
-        # wav_list = wav_list[:100]
+        wav_list = wav_list[:10]
         
     logger.info(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
     )
 
-    # if len(split_ratio) == 1:
-    #   create_json(wav_list, save_json_train, sample_rate)
-    #   return
+    if len(split_ratio) == 1:
+      create_json(wav_list, save_json_train, sample_rate)
+      return
 
     # Random split the signal list into train, valid, and test sets.
     data_split = split_sets(wav_list, split_ratio)

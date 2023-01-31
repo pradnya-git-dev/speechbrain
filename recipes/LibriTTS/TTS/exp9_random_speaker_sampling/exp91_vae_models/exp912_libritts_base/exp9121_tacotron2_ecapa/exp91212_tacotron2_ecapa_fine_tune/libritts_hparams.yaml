@@ -48,8 +48,8 @@ train_json: !ref <save_folder>/train.json
 valid_json: !ref <save_folder>/valid.json
 test_json: !ref <save_folder>/test.json
 
-splits: ["train", "valid"]
-split_ratio: [90, 10]
+splits: ["train"]
+split_ratio: [100]
 
 skip_prep: False
 
@@ -85,7 +85,7 @@ spk_emb_sample_rate: 16000
 ################################
 learning_rate: 0.0001
 weight_decay: 0.000006
-batch_size: 32 #minimum 2
+batch_size: 2 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 75.0
@@ -279,8 +279,13 @@ progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
 pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
   collect_in: !ref <save_folder>
   loadables:
+    model: !ref <model>
     speaker_embedding_model: !ref <speaker_embedding_model>
     mean_var_norm: !ref <mean_var_norm>
   paths:
-    speaker_embedding_model: /workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80_voxceleb12/embedding_model.ckpt
-    mean_var_norm: /workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80_voxceleb12/normalizer.ckpt
+    # speaker_embedding_model: /workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80_voxceleb12/embedding_model.ckpt
+    # mean_var_norm: /workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80_voxceleb12/normalizer.ckpt
+
+    model: speechbrain/tts-tacotron2-ljspeech/model.ckpt
+    speaker_embedding_model: /content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80/embedding_model.ckpt
+    mean_var_norm: /content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80/normalizer.ckpt

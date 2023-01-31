@@ -446,7 +446,7 @@ class Tacotron2Brain(sb.Brain):
         spk_embs = spk_embs.squeeze()
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
 
-        z_spk_embs, z_mean, z_log_var = self.modules.random_sampler(spk_embs)
+        z_spk_embs = self.modules.random_sampler.infer(spk_embs)
 
         mel_out, _, _ = self.hparams.model.infer(
             text_padded[:1], z_spk_embs[:1], input_lengths[:1]
@@ -638,7 +638,7 @@ if __name__ == "__main__":
     tacotron2_brain.fit(
         tacotron2_brain.hparams.epoch_counter,
         train_set=datasets["train"],
-        valid_set=datasets["valid"],
+        valid_set=datasets["train"],
         train_loader_kwargs=hparams["train_dataloader_opts"],
         valid_loader_kwargs=hparams["valid_dataloader_opts"],
     )
@@ -646,6 +646,6 @@ if __name__ == "__main__":
     # Test
     if "test" in datasets:
         tacotron2_brain.evaluate(
-            datasets["test"],
+            datasets["train"],
             test_loader_kwargs=hparams["test_dataloader_opts"],
         )
