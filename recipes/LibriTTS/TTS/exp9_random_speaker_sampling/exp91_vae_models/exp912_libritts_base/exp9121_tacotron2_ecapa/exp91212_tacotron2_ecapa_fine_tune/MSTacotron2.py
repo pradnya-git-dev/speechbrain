@@ -1278,13 +1278,13 @@ class Sampler(nn.Module):
   @torch.jit.export
   def infer(self, spk_embs=None):
 
+    # import pdb; pdb.set_trace()
     if spk_embs != None:
       z_spk_embs, z_mean, z_log_var = self.forward(spk_embs)
-      return z_spk_embs
+      return z_spk_embs.squeeze()
     else:
       z_spk_embs = self.normal.sample([self.spk_emb_size])
       return z_spk_embs
-      
 
   
 class Tacotron2(nn.Module):
