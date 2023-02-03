@@ -40,7 +40,7 @@ class FastSpeech2Brain(sb.Brain):
         self.last_loss_stats = {}
 
         self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
-          source="/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80",
+          source="/workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80_voxceleb12",
           run_opts={"device": self.device},
           freeze_params=True
         )
