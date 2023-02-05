@@ -446,7 +446,7 @@ class Tacotron2Brain(sb.Brain):
         spk_embs = spk_embs.squeeze()
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
 
-        z_spk_embs = self.modules.random_sampler(spk_embs)
+        z_spk_embs, z_mean, z_log_var = self.modules.random_sampler(spk_embs)
 
         mel_out, _, _ = self.hparams.model.infer(
             text_padded[:1], z_spk_embs[:1], input_lengths[:1]
