@@ -93,7 +93,7 @@ def prepare_libritts(
 
         # Collects all files matching the provided extension
         wav_list.extend(get_all_files(subset_folder, match_and=extension))
-        wav_list = wav_list[:100]
+        # wav_list = wav_list[:100]
         
     logger.info(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
@@ -106,12 +106,38 @@ def prepare_libritts(
     # Random split the signal list into train, valid, and test sets.
     data_split = split_sets(wav_list, split_ratio)
     # Creating json files
-    create_json(data_split["train"], save_json_train, sample_rate)
-    create_json(data_split["valid"], save_json_valid, sample_rate)
-    create_json(data_split["test"], save_json_test, sample_rate)
+
+    # dev-clean train split - 30 speakers
+    train_spk_ids = [
+      "7976", "6319", "1993", "2902", "174", "6241", "422", "1272", "6313", "2035", "1673", "7850", "3536", "5338", "2277", "3576", "3752", "652", "1462", "1988", "777", "3000", "6345", "3853", "2412", "2428", "251", "1919", "84", "3170"
+    ]
+    create_json(
+      data_split["train"],
+      train_spk_ids, 
+      save_json_train, 
+      sample_rate
+    )
+
+    # dev-clean valid split - 5 speakers
+    valid_spk_ids = ["8842", "3081", "2086", "2078", "6295"]
+    create_json(
+      data_split["valid"], 
+      valid_spk_ids, 
+      save_json_valid, 
+      sample_rate
+    )
+
+    # dev-clean test split - 5 speakers
+    test_spk_ids = ["5895", "8297", "2803", "5536", "5694"]
+    create_json(
+      data_split["test"],
+      test_spk_ids, 
+      save_json_test,
+      sample_rate
+    )
 
 
-def create_json(wav_list, json_file, sample_rate):
+def create_json(wav_list, split_spk_ids, json_file, sample_rate):
     """
     Creates the json file given a list of wav files.
     Arguments
@@ -145,6 +171,12 @@ def create_json(wav_list, json_file, sample_rate):
         uttid, _ = os.path.splitext(path_parts[-1])
         relative_path = os.path.join("{data_root}", *path_parts[-6:])
 
+        # Gets the speaker-id from the utterance-id
+        spk_id = uttid.split("_")[0]
+
+        if spk_id not in split_spk_ids:
+          continue
+
         # Gets the path for the  text files and extracts the input text
         original_text_path = os.path.join(
             "/", *path_parts[:-1], uttid + ".normalized.txt"
@@ -165,9 +197,6 @@ def create_json(wav_list, json_file, sample_rate):
             resampled_signal = resampler(signal)
             os.unlink(wav_file)
             torchaudio.save(wav_file, resampled_signal, sample_rate=sample_rate)
-
-        # Gets the speaker-id from the utterance-id
-        spk_id = uttid.split("_")[0]
 
         # Creates an entry for the utterance
         json_dict[uttid] = {

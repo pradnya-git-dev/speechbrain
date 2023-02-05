@@ -97,7 +97,7 @@ kl_loss_weight: 1.0
 
 train_dataloader_opts:
   batch_size: !ref <batch_size>
-  drop_last: False  #True #False
+  drop_last: True  #True #False
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
 
@@ -285,8 +285,8 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
     speaker_embedding_model: !ref <speaker_embedding_model>
     mean_var_norm: !ref <mean_var_norm>
   paths:
-    model: /content/drive/MyDrive/mstts_saved_models/TTS/exp9_random_speaker_sampling/exp91_vae_models/exp911_ljspeech_base/exp9111_tacotron2_ecapa/exp9111_tacotron2_ecapa_frozen_ljspeech_e300/model.ckpt
-    random_sampler: /content/drive/MyDrive/mstts_saved_models/TTS/exp9_random_speaker_sampling/exp91_vae_models/exp911_ljspeech_base/exp9111_tacotron2_ecapa/exp9111_tacotron2_ecapa_frozen_ljspeech_e300/random_sampler.ckpt
+    model: /workspace/mstts_saved_models/exp9111_tacotron2_ecapa_frozen_ljspeech_e300/model.ckpt
+    random_sampler: /workspace/mstts_saved_models/exp9111_tacotron2_ecapa_frozen_ljspeech_e300/random_sampler.ckpt
 
     speaker_embedding_model: /workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80_voxceleb12/embedding_model.ckpt
     mean_var_norm: /workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80_voxceleb12/normalizer.ckpt
