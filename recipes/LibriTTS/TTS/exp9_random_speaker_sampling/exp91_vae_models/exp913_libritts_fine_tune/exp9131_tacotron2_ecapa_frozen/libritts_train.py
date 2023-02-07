@@ -53,9 +53,9 @@ class Tacotron2Brain(sb.Brain):
         
         self.last_loss_stats = {}
 
-        for name, param in self.modules.speaker_embedding_model.named_parameters():
-          if param.requires_grad:
-            param.requires_grad = False
+        # for name, param in self.modules.speaker_embedding_model.named_parameters():
+        #   if param.requires_grad:
+        #     param.requires_grad = False
         
         return super().on_fit_start()
 
@@ -83,17 +83,23 @@ class Tacotron2Brain(sb.Brain):
         target_mels = inputs[2]
 
         target_mels = torch.transpose(target_mels, 1, 2)
-        target_feats = self.modules.mean_var_norm(target_mels, torch.ones(target_mels.shape[0], device=self.device))
 
-        if self.hparams.epoch_counter.current == 1:
-          param_counter = 0
-          for name, param in self.modules.speaker_embedding_model.named_parameters():
-            if param.requires_grad:
-              param_counter += 1
-          if param_counter == 0:
-            print("self.modules.speaker_embedding_model is FROZEN.")
+        # Freezing the normalizer and the speaker embedding model
+        with torch.no_grad():
+          self.modules.mean_var_norm.eval()
+          self.modules.speaker_embedding_model.eval()
 
-        spk_embs = self.modules.speaker_embedding_model(target_feats)
+          target_feats = self.modules.mean_var_norm(target_mels, torch.ones(target_mels.shape[0], device=self.device))
+
+          if self.hparams.epoch_counter.current == 1:
+            param_counter = 0
+            for name, param in self.modules.speaker_embedding_model.named_parameters():
+              if param.requires_grad:
+                param_counter += 1
+            if param_counter == 0:
+              print("self.modules.speaker_embedding_model is FROZEN.")
+
+          spk_embs = self.modules.speaker_embedding_model(target_feats)
         spk_embs = spk_embs.squeeze()
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
 

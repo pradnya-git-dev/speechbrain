@@ -99,38 +99,32 @@ def prepare_libritts(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
     )
 
-    # if len(split_ratio) == 1:
-    #   create_json(wav_list, save_json_train, sample_rate)
-    #   return
-
-    # Random split the signal list into train, valid, and test sets.
-    data_split = split_sets(wav_list, split_ratio)
     # Creating json files
 
-    # dev-clean train split - 30 speakers
+    # dev-clean train split - 34 speakers
     train_spk_ids = [
-      "7976", "6319", "1993", "2902", "174", "6241", "422", "1272", "6313", "2035", "1673", "7850", "3536", "5338", "2277", "3576", "3752", "652", "1462", "1988", "777", "3000", "6345", "3853", "2412", "2428", "251", "1919", "84", "3170"
+      "7976", "6319", "1993", "2902", "174", "6241", "422", "1272", "6313", "2035", "1673", "7850", "3536", "5338", "2277", "3576", "3752", "652", "1462", "1988", "777", "3000", "6345", "3853", "2412", "2428", "251", "1919", "3170", "3081", "2086", "2078", "6295", "5694"
     ]
     create_json(
-      data_split["train"],
+      wav_list,
       train_spk_ids, 
       save_json_train, 
       sample_rate
     )
 
-    # dev-clean valid split - 5 speakers
-    valid_spk_ids = ["8842", "3081", "2086", "2078", "6295"]
+    # dev-clean valid split - 6 speakers - 3M, 3F
+    valid_spk_ids = ["5895", "8297", "2803", "5536", "8842", "84" ]
     create_json(
-      data_split["valid"], 
+      wav_list, 
       valid_spk_ids, 
       save_json_valid, 
       sample_rate
     )
 
-    # dev-clean test split - 5 speakers
-    test_spk_ids = ["5895", "8297", "2803", "5536", "5694"]
+    # dev-clean test split - 0 speakers
+    test_spk_ids = []
     create_json(
-      data_split["test"],
+      wav_list,
       test_spk_ids, 
       save_json_test,
       sample_rate
@@ -153,6 +147,8 @@ def create_json(wav_list, split_spk_ids, json_file, sample_rate):
     json_dict = {}
     # Creates a resampler object with orig_freq set to LibriTTS sample rate (24KHz) and  new_freq set to SAMPLERATE
     resampler = Resample(orig_freq=24000, new_freq=sample_rate)
+
+    # sample_counter = 0
 
     # Processes all the wav files in the list
     for wav_file in wav_list:
@@ -207,6 +203,10 @@ def create_json(wav_list, split_spk_ids, json_file, sample_rate):
             "label_phoneme": label_phoneme,
             "segment": True if "train" in json_file else False,
         }
+
+        # sample_counter += 1
+        # if sample_counter == 35:
+        #   break
 
     # Writes the dictionary to the json file
     with open(json_file, mode="w") as json_f:
