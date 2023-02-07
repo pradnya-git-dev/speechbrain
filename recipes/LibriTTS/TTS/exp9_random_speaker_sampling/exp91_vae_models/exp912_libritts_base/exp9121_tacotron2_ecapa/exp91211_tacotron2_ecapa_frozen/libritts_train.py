@@ -53,9 +53,9 @@ class Tacotron2Brain(sb.Brain):
         
         self.last_loss_stats = {}
 
-        for name, param in self.modules.speaker_embedding_model.named_parameters():
-          if param.requires_grad:
-            param.requires_grad = False
+        # for name, param in self.modules.speaker_embedding_model.named_parameters():
+        #   if param.requires_grad:
+        #     param.requires_grad = False
         
         return super().on_fit_start()
 
@@ -83,17 +83,15 @@ class Tacotron2Brain(sb.Brain):
         target_mels = inputs[2]
 
         target_mels = torch.transpose(target_mels, 1, 2)
-        target_feats = self.modules.mean_var_norm(target_mels, torch.ones(target_mels.shape[0], device=self.device))
 
-        if self.hparams.epoch_counter.current == 1:
-          param_counter = 0
-          for name, param in self.modules.speaker_embedding_model.named_parameters():
-            if param.requires_grad:
-              param_counter += 1
-          if param_counter == 0:
-            print("self.modules.speaker_embedding_model is FROZEN.")
+        # Freezing the normalizer and the speaker embedding model
+        with torch.no_grad():
+          self.modules.mean_var_norm.eval()
+          self.modules.speaker_embedding_model.eval()
 
-        spk_embs = self.modules.speaker_embedding_model(target_feats)
+          target_feats = self.modules.mean_var_norm(target_mels, torch.ones(target_mels.shape[0], device=self.device))
+          spk_embs = self.modules.speaker_embedding_model(target_feats)
+
         spk_embs = spk_embs.squeeze()
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
 
@@ -446,10 +444,11 @@ class Tacotron2Brain(sb.Brain):
         spk_embs = spk_embs.squeeze()
         spk_embs = spk_embs.to(self.device, non_blocking=True).float()
 
-        z_spk_embs = self.modules.random_sampler.infer(spk_embs)
+        
+        z_spk_embs, z_mean, z_log_var = self.modules.random_sampler(spk_embs)
 
         mel_out, _, _ = self.hparams.model.infer(
-            text_padded[:1], z_spk_embs.unsqueeze(0), input_lengths[:1]
+            text_padded[:1], z_spk_embs[:1], input_lengths[:1]
         )
         self.hparams.progress_sample_logger.remember(
             inference_mel_out=self._get_spectrogram_sample(mel_out)
@@ -459,6 +458,17 @@ class Tacotron2Brain(sb.Brain):
             "INFERENCE - inference_mel_out.shape: ",
             self._get_spectrogram_sample(mel_out).shape,
         )
+
+        random_z_spk_emb = self.modules.random_sampler.infer()
+
+        rs_mel_out, _, _ = self.hparams.model.infer(
+            text_padded[:1], random_z_spk_emb.unsqueeze(0), input_lengths[:1]
+        )
+
+        self.hparams.progress_sample_logger.remember(
+            rs_inference_mel_out=self._get_spectrogram_sample(rs_mel_out)
+        )
+
 
         if stage == sb.Stage.VALID:
             # waveform_ss = self.vocoder.decode_batch(mel_out) # Extra Line
@@ -473,7 +483,7 @@ class Tacotron2Brain(sb.Brain):
             inf_sample_text = os.path.join(
                 self.hparams.progress_sample_path,
                 str(self.hparams.epoch_counter.current),
-                "inf_input_text.txt",
+                "inf_vc_input_text.txt",
             )
             with open(inf_sample_text, "w") as f:
                 f.write(labels[0])
@@ -481,7 +491,7 @@ class Tacotron2Brain(sb.Brain):
             inf_input_audio = os.path.join(
                 self.hparams.progress_sample_path,
                 str(self.hparams.epoch_counter.current),
-                "inf_input_audio.wav",
+                "inf_vc_input_audio.wav",
             )
             torchaudio.save(
                 inf_input_audio,
@@ -489,36 +499,57 @@ class Tacotron2Brain(sb.Brain):
                 self.hparams.sample_rate,
             )
 
-            waveform_ss = self.vocoder.decode_batch(mel_out)
-            inf_sample_audio = os.path.join(
+            waveform_vc = self.vocoder.decode_batch(mel_out)
+            inf_output_audio = os.path.join(
                 self.hparams.progress_sample_path,
                 str(self.hparams.epoch_counter.current),
-                "inf_output_audio.wav",
+                "inf_vc_output_audio.wav",
             )
             torchaudio.save(
-                inf_sample_audio,
-                waveform_ss.squeeze(1).cpu(),
+                inf_output_audio,
+                waveform_vc.squeeze(1).cpu(),
+                self.hparams.sample_rate,
+            )
+
+
+            waveform_rs = self.vocoder.decode_batch(rs_mel_out)
+            inf_rs_output_audio = os.path.join(
+                self.hparams.progress_sample_path,
+                str(self.hparams.epoch_counter.current),
+                "inf_rs_output_audio.wav",
+            )
+            torchaudio.save(
+                inf_rs_output_audio,
+                waveform_rs.squeeze(1).cpu(),
                 self.hparams.sample_rate,
             )
 
             if self.hparams.use_tensorboard:
                 self.tensorboard_logger.log_audio(
-                    f"{stage}/inf_audio_target",
+                    f"{stage}/inf_vc_audio_target",
                     sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0),
                     self.hparams.sample_rate,
                 )
                 self.tensorboard_logger.log_audio(
-                    f"{stage}/inf_audio_pred",
-                    waveform_ss.squeeze(1),
+                    f"{stage}/inf_vc_audio_pred",
+                    waveform_vc.squeeze(1),
+                    self.hparams.sample_rate,
+                )
+                self.tensorboard_logger.log_audio(
+                    f"{stage}/inf_rs_audio_pred",
+                    waveform_rs.squeeze(1),
                     self.hparams.sample_rate,
                 )
 
                 try:
                   self.tensorboard_logger.log_figure(
-                      f"{stage}/inf_mel_target", targets[0][0]
+                      f"{stage}/inf_vc_mel_target", targets[0][0]
                   )
                   self.tensorboard_logger.log_figure(
-                      f"{stage}/inf_mel_pred", mel_out
+                      f"{stage}/inf_vc_mel_pred", mel_out
+                  )
+                  self.tensorboard_logger.log_figure(
+                      f"{stage}/inf_rs_mel_pred", rs_mel_out
                   )
                 except Exception as ex:
                   pass
