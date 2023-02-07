@@ -148,7 +148,7 @@ def create_json(wav_list, split_spk_ids, json_file, sample_rate):
     # Creates a resampler object with orig_freq set to LibriTTS sample rate (24KHz) and  new_freq set to SAMPLERATE
     resampler = Resample(orig_freq=24000, new_freq=sample_rate)
 
-    # sample_counter = 0
+    sample_counter = 0
 
     # Processes all the wav files in the list
     for wav_file in wav_list:
@@ -204,9 +204,9 @@ def create_json(wav_list, split_spk_ids, json_file, sample_rate):
             "segment": True if "train" in json_file else False,
         }
 
-        # sample_counter += 1
-        # if sample_counter == 35:
-        #   break
+        sample_counter += 1
+        if sample_counter == 35:
+          break
 
     # Writes the dictionary to the json file
     with open(json_file, mode="w") as json_f:
