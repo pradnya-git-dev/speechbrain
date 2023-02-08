@@ -30,6 +30,9 @@ import torchaudio
 from speechbrain.pretrained import EncoderClassifier
 import pickle
 import random
+import tensorflow as tf
+import tensorboard as tb
+tf.io.gfile = tb.compat.tensorflow_stub.io.gfile
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 logger = logging.getLogger(__name__)
@@ -433,7 +436,7 @@ class Tacotron2Brain(sb.Brain):
         if self.last_batch is None:
             return
         inputs, targets, _, labels, wavs = self.last_batch
-        text_padded, input_lengths, _, _, _, _ = inputs
+        text_padded, input_lengths, _, _, _, spk_ids = inputs
 
         target_mels = inputs[2]
 
@@ -446,6 +449,8 @@ class Tacotron2Brain(sb.Brain):
 
         
         z_spk_embs, z_mean, z_log_var = self.modules.random_sampler(spk_embs)
+
+        # import pdb; pdb.set_trace()
 
         mel_out, _, _ = self.hparams.model.infer(
             text_padded[:1], z_spk_embs[:1], input_lengths[:1]
@@ -553,6 +558,22 @@ class Tacotron2Brain(sb.Brain):
                   )
                 except Exception as ex:
                   pass
+
+                # Logging ECAPA-TDNN emebddings
+                # import pdb; pdb.set_trace()
+                combined_embs = torch.cat((spk_embs, z_spk_embs, random_z_spk_emb.unsqueeze(0)))
+                spk_embs_labels = ["spk_embs_" + spk_id for spk_id in spk_ids]
+                z_spk_embs_labels =  ["z_spk_embs_" + spk_id for spk_id in spk_ids]
+                spk_embs_labels.extend(z_spk_embs_labels)
+                spk_embs_labels.append("random_z_spk_emb")
+
+                self.tensorboard_logger.writer.add_embedding(
+                  combined_embs,
+                  metadata=spk_embs_labels,
+                  tag="epoch_"+ str(self.hparams.epoch_counter.current),
+                )
+                
+
 
 def dataio_prepare(hparams):
     # Define audio pipeline:
