@@ -15,7 +15,7 @@ __set_seed: !apply:torch.manual_seed [!ref <seed>]
 output_folder: !ref ./results/tacotron2/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
-epochs: 100
+epochs: 150
 keep_checkpoint_interval: 50
 use_tensorboard: True
 device: cuda
@@ -84,7 +84,7 @@ spk_emb_sample_rate: 16000
 ################################
 # Optimization Hyperparameters #
 ################################
-learning_rate: 0.0001
+learning_rate: 0.001
 weight_decay: 0.000006
 batch_size: 32 #minimum 2
 mask_padding: True
@@ -98,17 +98,19 @@ kl_loss_weight: 1.0
 
 train_dataloader_opts:
   batch_size: !ref <batch_size>
-  drop_last: False  #True #False
+  drop_last: True  #True #False
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
 
 valid_dataloader_opts:
   batch_size: !ref <batch_size>
+  drop_last: True
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
 
 test_dataloader_opts:
   batch_size: !ref <batch_size>
+  drop_last: True
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
 
@@ -253,11 +255,11 @@ train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
 lr_annealing: !new:speechbrain.nnet.schedulers.IntervalScheduler
   intervals:
     - steps: 6000
-      lr: 0.00005
+      lr: 0.0005
     - steps: 8000
-      lr: 0.00003
+      lr: 0.0003
     - steps: 10000
-      lr: 0.00001
+      lr: 0.0001
 
 #checkpointer
 checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
