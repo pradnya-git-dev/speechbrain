@@ -93,7 +93,6 @@ def prepare_libritts(
 
         # Collects all files matching the provided extension
         wav_list.extend(get_all_files(subset_folder, match_and=extension))
-        # wav_list = wav_list[:100]
         
     logger.info(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
@@ -102,11 +101,10 @@ def prepare_libritts(
     # Creating json files
 
     # dev-clean train split - 34 speakers
-    # train_spk_ids = [
-    #   "7976", "6319", "1993", "2902", "174", "6241", "422", "1272", "6313", "2035", "1673", "7850", "3536", "5338", "2277", "3576", "3752", "652", "1462", "1988", "777", "3000", "6345", "3853", "2412", "2428", "251", "1919", "3170", "3081", "2086", "2078", "6295", "5694"
-    # ]
+    train_spk_ids = [
+      "7976", "6319", "1993", "2902", "174", "6241", "422", "1272", "6313", "2035", "1673", "7850", "3536", "5338", "2277", "3576", "3752", "652", "1462", "1988", "777", "3000", "6345", "3853", "2412", "2428", "251", "1919", "3170", "3081", "2086", "2078", "6295", "5694"
+    ]
 
-    train_spk_ids = ["5895", "8297"]
     create_json(
       wav_list,
       train_spk_ids, 
@@ -115,8 +113,7 @@ def prepare_libritts(
     )
 
     # dev-clean valid split - 6 speakers - 3M, 3F
-    # valid_spk_ids = ["5895", "8297", "2803", "5536", "8842", "84" ]
-    valid_spk_ids = ["5895", "8297"]
+    valid_spk_ids = ["5895", "8297", "2803", "5536", "8842", "84" ]
     create_json(
       wav_list, 
       valid_spk_ids, 
@@ -151,10 +148,6 @@ def create_json(wav_list, split_spk_ids, json_file, sample_rate):
     # Creates a resampler object with orig_freq set to LibriTTS sample rate (24KHz) and  new_freq set to SAMPLERATE
     resampler = Resample(orig_freq=24000, new_freq=sample_rate)
 
-    # m_sample_counter = 0
-    # f_sample_counter = 0
-    # sample_counter = 0
-
     # Processes all the wav files in the list
     for wav_file in wav_list:
 
@@ -177,17 +170,7 @@ def create_json(wav_list, split_spk_ids, json_file, sample_rate):
 
         if spk_id not in split_spk_ids:
           continue
-        """
-        if spk_id == "8297":
-          m_sample_counter += 1
-          if m_sample_counter > 16:
-            continue
-        if spk_id == "5895":
-          f_sample_counter += 1
-          if f_sample_counter > 16:
-            continue
-        """
-
+        
         # Gets the path for the  text files and extracts the input text
         original_text_path = os.path.join(
             "/", *path_parts[:-1], uttid + ".normalized.txt"
@@ -218,10 +201,6 @@ def create_json(wav_list, split_spk_ids, json_file, sample_rate):
             "label_phoneme": label_phoneme,
             "segment": True if "train" in json_file else False,
         }
-
-        # sample_counter += 1
-        # if sample_counter == 32:
-        #   break
 
     # Writes the dictionary to the json file
     with open(json_file, mode="w") as json_f:

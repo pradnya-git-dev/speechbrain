@@ -1255,11 +1255,11 @@ class Sampler(nn.Module):
     self.linear3_size = int((self.linear2_size + self.z_spk_emb_size) / 2)
 
     self.linear1 = LinearNorm(self.spk_emb_size, self.linear1_size)
-    self.lnorm1 = LayerNorm(self.spk_emb_size, self.linear1_size)
+    self.lnorm1 = LayerNorm(input_size=self.linear1_size)
     self.linear2 = LinearNorm(self.linear1_size, self.linear2_size)
-    self.lnorm2 = LayerNorm(self.linear1_size, self.linear2_size)
+    self.lnorm2 = LayerNorm(input_size=self.linear2_size)
     self.linear3 = LinearNorm(self.linear2_size, self.linear3_size)
-    self.lnorm3 = LayerNorm(self.linear2_size, self.linear3_size)
+    self.lnorm3 = LayerNorm(input_size=self.linear3_size)
     self.mean = LinearNorm(self.linear3_size, self.z_spk_emb_size)
     self.log_var = LinearNorm(self.linear3_size, self.z_spk_emb_size)
     
