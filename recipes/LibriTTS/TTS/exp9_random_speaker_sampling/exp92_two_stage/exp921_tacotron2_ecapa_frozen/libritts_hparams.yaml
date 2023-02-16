@@ -15,7 +15,7 @@ __set_seed: !apply:torch.manual_seed [!ref <seed>]
 output_folder: !ref ./results/tacotron2/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
-epochs: 300
+epochs: 100
 keep_checkpoint_interval: 50
 use_tensorboard: True
 device: cuda
@@ -47,6 +47,10 @@ data_folder: !PLACEHOLDER # e.g, /localscratch/ljspeech
 train_json: !ref <save_folder>/train.json
 valid_json: !ref <save_folder>/valid.json
 test_json: !ref <save_folder>/test.json
+
+train_speaker_embeddings_pickle: !ref <save_folder>/train_speaker_embeddings.pickle
+valid_speaker_embeddings_pickle: !ref <save_folder>/valid_speaker_embeddings.pickle
+test_speaker_embeddings_pickle: !ref <save_folder>/test_speaker_embeddings.pickle
 
 splits: ["train", "valid"]
 split_ratio: [90, 10]
@@ -84,9 +88,9 @@ spk_emb_sample_rate: 16000
 ################################
 # Optimization Hyperparameters #
 ################################
-learning_rate: 0.001
+learning_rate: 0.0001
 weight_decay: 0.000006
-batch_size: 32 #minimum 2
+batch_size: 16 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 75.0
@@ -94,42 +98,26 @@ guided_attention_weight_half_life: 10.
 guided_attention_hard_stop: 50
 gate_loss_weight: 1.0
 mel_loss_weight: 1.0
-kl_loss_weight: 1.0
+triplet_loss_weight: 1.0
 
 train_dataloader_opts:
   batch_size: !ref <batch_size>
-  drop_last: True  #True #False
+  drop_last: False  #True #False
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
+    speaker_embeddings_pickle: !ref <train_speaker_embeddings_pickle>
 
 valid_dataloader_opts:
   batch_size: !ref <batch_size>
-  drop_last: True
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
+    speaker_embeddings_pickle: !ref <valid_speaker_embeddings_pickle>
 
 test_dataloader_opts:
   batch_size: !ref <batch_size>
-  drop_last: True
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
-
-###########################
-# Speaker embedding model #
-###########################
-mean_var_norm: !new:speechbrain.processing.features.InputNormalization
-    norm_type: sentence
-    std_norm: False
-
-# Modules
-speaker_embedding_model: !new:speechbrain.lobes.models.ECAPA_TDNN.ECAPA_TDNN
-    input_size: !ref <n_mel_channels>
-    channels: [1024, 1024, 1024, 1024, 3072]
-    kernel_sizes: [5, 3, 3, 3, 1]
-    dilations: [1, 2, 3, 4, 1]
-    groups: [1, 1, 1, 1, 1]
-    attention_channels: 128
-    lin_neurons: 192
+    speaker_embeddings_pickle: !ref <test_speaker_embeddings_pickle>
 
 ##################
 # Random sampler #
@@ -137,6 +125,7 @@ speaker_embedding_model: !new:speechbrain.lobes.models.ECAPA_TDNN.ECAPA_TDNN
 random_sampler: !new:MSTacotron2.Sampler
   spk_emb_size: !ref <spk_emb_size>
   z_spk_emb_size: !ref <z_spk_emb_size>
+
 
 ################################
 # Model Parameters and model   #
@@ -231,13 +220,10 @@ criterion: !new:MSTacotron2.Loss
   guided_attention_scheduler: !ref <guided_attention_scheduler>
   guided_attention_hard_stop: !ref <guided_attention_hard_stop>
   mel_loss_weight: !ref <mel_loss_weight>
-  kl_loss_weight: !ref <kl_loss_weight>
+  triplet_loss_weight: !ref <triplet_loss_weight>
 
 modules:
   model: !ref <model>
-  random_sampler: !ref <random_sampler>
-  speaker_embedding_model: !ref <speaker_embedding_model>
-  mean_var_norm: !ref <mean_var_norm>
 
 #optimizer
 opt_class: !name:torch.optim.Adam
@@ -255,11 +241,11 @@ train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
 lr_annealing: !new:speechbrain.nnet.schedulers.IntervalScheduler
   intervals:
     - steps: 6000
-      lr: 0.0005
+      lr: 0.00005
     - steps: 8000
-      lr: 0.0003
+      lr: 0.00003
     - steps: 10000
-      lr: 0.0001
+      lr: 0.00001
 
 #checkpointer
 checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
@@ -268,9 +254,6 @@ checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
     model: !ref <model>
     counter: !ref <epoch_counter>
     scheduler: !ref <lr_annealing>
-    speaker_embedding_model: !ref <speaker_embedding_model>
-    mean_var_norm: !ref <mean_var_norm>
-    random_sampler: !ref <random_sampler>
 
 
 progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
@@ -283,11 +266,6 @@ progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
 pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
   collect_in: !ref <save_folder>
   loadables:
-    speaker_embedding_model: !ref <speaker_embedding_model>
-    mean_var_norm: !ref <mean_var_norm>
+    model: !ref <model>
   paths:
-    # speaker_embedding_model: /workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80_voxceleb12/embedding_model.ckpt
-    # mean_var_norm: /workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80_voxceleb12/normalizer.ckpt
-
-    speaker_embedding_model: /content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80/embedding_model.ckpt
-    mean_var_norm: /content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80/normalizer.ckpt
+    model: /content/drive/MyDrive/mstts_saved_models/TTS/exp6/6031_tacotron2_phoneme_film_mlp_ecapa_ljspeech/model.ckpt

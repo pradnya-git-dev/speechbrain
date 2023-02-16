@@ -30,9 +30,7 @@ import torchaudio
 from speechbrain.pretrained import EncoderClassifier
 import pickle
 import random
-import tensorflow as tf
-import tensorboard as tb
-tf.io.gfile = tb.compat.tensorflow_stub.io.gfile
+from spk_emb_pretrained_interfaces import MelSpectrogramEncoder
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 logger = logging.getLogger(__name__)
@@ -53,9 +51,15 @@ class Tacotron2Brain(sb.Brain):
             savedir="tmpdir_vocoder",
             run_opts={"device": self.device},
         )
+
+        self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
+          source="/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80",
+          run_opts={"device": self.device},
+          freeze_params=True
+        )
+
         
         self.last_loss_stats = {}
-        
         return super().on_fit_start()
 
     def compute_forward(self, batch, stage):
@@ -73,35 +77,17 @@ class Tacotron2Brain(sb.Brain):
         the model output
         """
         effective_batch = self.batch_to_device(batch)
-        inputs, y, num_items, _, _ = effective_batch
+        inputs, y, num_items, _, _, spk_embs, spk_ids = effective_batch
 
-        _, input_lengths, _, _, _, _ = inputs
+        _, input_lengths, _, _, _ = inputs
 
         max_input_length = input_lengths.max().item()
 
-        target_mels = inputs[2]
-
-        target_mels = torch.transpose(target_mels, 1, 2)
-
-        with torch.no_grad():
-          self.modules.mean_var_norm.eval()
-          self.modules.speaker_embedding_model.eval()
-
-          target_feats = self.modules.mean_var_norm(target_mels, torch.ones(target_mels.shape[0], device=self.device))
-
-          spk_embs = self.modules.speaker_embedding_model(target_feats)
-          spk_embs = spk_embs.squeeze()
-          spk_embs = spk_embs.to(self.device, non_blocking=True).float()
-
         z_mean = self.modules.random_sampler(spk_embs)
 
-        mel_outputs, mel_outputs_postnet, gate_outputs, alignments = self.modules.model(
+        return self.modules.model(
             inputs, z_mean, alignments_dim=max_input_length
         )
-
-        result = (mel_outputs, mel_outputs_postnet, gate_outputs, alignments, z_mean)
-        return result
-        
 
     def fit_batch(self, batch):
         """Fits a single batch and applies annealing
@@ -162,11 +148,41 @@ class Tacotron2Brain(sb.Brain):
         loss: torch.Tensor
             the loss value
         """
-        inputs, targets, num_items, labels, wavs = batch
-        text_padded, input_lengths, _, max_len, output_lengths, spk_ids = inputs
+        inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
+        text_padded, input_lengths, _, max_len, output_lengths = inputs
 
+        self.spk_emb_mel_spec_encoder.eval()
+
+        target_mels = targets[0].detach().clone()
+        pred_mels_postnet = predictions[1].detach().clone()
+
+        target_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(target_mels)
+        target_spk_embs = target_spk_embs.squeeze()
+        target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
+
+        preds_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(pred_mels_postnet)
+        preds_spk_embs = preds_spk_embs.squeeze()
+        preds_spk_embs = preds_spk_embs.to(self.device, non_blocking=True).float()
+
+        anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
+
+        spk_emb_triplets = (None, None, None)
+
+        if anchor_se_idx.shape[0] != 0:
+
+          anchor_se_idx = anchor_se_idx.to(self.device, non_blocking=True).long()
+          pos_se_idx = pos_se_idx.to(self.device, non_blocking=True).long()
+          neg_se_idx = neg_se_idx.to(self.device, non_blocking=True).long()
+          
+          anchor_spk_embs = target_spk_embs[anchor_se_idx]
+          pos_spk_embs = preds_spk_embs[pos_se_idx]
+          neg_spk_embs = preds_spk_embs[neg_se_idx]
+
+          spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
+
+        
         loss_stats = self.hparams.criterion(
-            predictions, targets, input_lengths, output_lengths, spk_ids, self.last_epoch
+            predictions, targets, input_lengths, output_lengths, spk_emb_triplets, self.last_epoch
         )
         self.last_loss_stats[stage] = scalarize(loss_stats)
         return loss_stats.loss
@@ -181,10 +197,10 @@ class Tacotron2Brain(sb.Brain):
         predictions: tuple
             predictions (raw output of the Tacotron model)
         """
-        inputs, targets, num_items, labels, wavs = batch
-        text_padded, input_lengths, _, max_len, output_lengths, spk_ids = inputs
+        inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
+        text_padded, input_lengths, _, max_len, output_lengths = inputs
         mel_target, _ = targets
-        mel_out, mel_out_postnet, gate_out, alignments, z_mean = predictions
+        mel_out, mel_out_postnet, gate_out, alignments = predictions
         alignments_max = (
             alignments[0]
             .max(dim=-1)
@@ -211,7 +227,8 @@ class Tacotron2Brain(sb.Brain):
                     "alignments": alignments,
                     "labels": labels,
                     "wavs": wavs,
-                    "spk_ids": spk_ids
+                    "spk_embs": spk_embs,
+                    "spk_ids": spk_ids,
                 }
             ),
         )
@@ -238,7 +255,8 @@ class Tacotron2Brain(sb.Brain):
             len_x,
             labels,
             wavs,
-            spk_ids
+            spk_embs,
+            spk_ids,
         ) = batch
         text_padded = text_padded.to(self.device, non_blocking=True).long()
         input_lengths = input_lengths.to(self.device, non_blocking=True).long()
@@ -249,10 +267,11 @@ class Tacotron2Brain(sb.Brain):
         output_lengths = output_lengths.to(
             self.device, non_blocking=True
         ).long()
-        x = (text_padded, input_lengths, mel_padded, max_len, output_lengths, spk_ids)
+        x = (text_padded, input_lengths, mel_padded, max_len, output_lengths)
         y = (mel_padded, gate_padded)
         len_x = torch.sum(output_lengths)
-        return (x, y, len_x, labels, wavs)
+        spk_embs = spk_embs.to(self.device, non_blocking=True).float()
+        return (x, y, len_x, labels, wavs, spk_embs, spk_ids)
 
     def _get_spectrogram_sample(self, raw):
         """Converts a raw spectrogram to one that can be saved as an image
@@ -301,8 +320,7 @@ class Tacotron2Brain(sb.Brain):
             if not os.path.exists(train_sample_path):
                 os.makedirs(train_sample_path)
 
-            inputs, targets, _, labels, wavs = self.last_batch
-            text_padded, input_lengths, _, _, _, spk_ids = inputs
+            _, targets, _, labels, wavs, spk_embs, spk_ids = self.last_batch
 
             # Extra lines
             # _, mel_out_postnet, _, _ = self.last_preds
@@ -327,19 +345,19 @@ class Tacotron2Brain(sb.Brain):
                 self.hparams.sample_rate,
             )
 
-            _, mel_out_postnet, _, _, _, _ = self.last_preds
+            _, mel_out_postnet, _, _ = self.last_preds
             waveform_ss = self.vocoder.decode_batch(mel_out_postnet[0])
             train_sample_audio = os.path.join(
                 self.hparams.progress_sample_path,
                 str(self.hparams.epoch_counter.current),
-                "train_vc_output_audio.wav",
+                "train_output_audio.wav",
             )
             torchaudio.save(
                 train_sample_audio,
                 waveform_ss.squeeze(1).cpu(),
                 self.hparams.sample_rate,
             )
-          
+
             if self.hparams.use_tensorboard:
                 self.tensorboard_logger.log_audio(
                     f"{stage}/train_audio_target",
@@ -347,21 +365,19 @@ class Tacotron2Brain(sb.Brain):
                     self.hparams.sample_rate,
                 )
                 self.tensorboard_logger.log_audio(
-                    f"{stage}/train_vc_audio_pred",
+                    f"{stage}/train_audio_pred",
                     waveform_ss.squeeze(1),
                     self.hparams.sample_rate,
                 )
-
                 try:
                   self.tensorboard_logger.log_figure(
                       f"{stage}/train_mel_target", targets[0][0]
                   )
                   self.tensorboard_logger.log_figure(
-                      f"{stage}/train_vc_mel_pred", mel_out_postnet[0]
+                      f"{stage}/train_mel_pred", mel_out_postnet[0]
                   )
                 except Exception as ex:
                   pass
-                
 
         # Store the train loss until the validation stage.
 
@@ -430,124 +446,102 @@ class Tacotron2Brain(sb.Brain):
     def run_inference_sample(self, stage):
         """Produces a sample in inference mode. This is called when producing
         samples and can be useful because"""
+        if self.last_batch is None:
+            return
+        inputs, targets, _, labels, wavs, spk_embs, spk_ids = self.last_batch
+        text_padded, input_lengths, _, _, _ = inputs
 
-        with torch.no_grad():
-          self.modules.mean_var_norm.eval()
-          self.modules.speaker_embedding_model.eval()
-          self.modules.random_sampler.eval()
-          self.hparams.model.eval()
+        z_mean = self.modules.random_sampler.infer(spk_embs)
 
-          if self.last_batch is None:
-              return
-          inputs, targets, _, labels, wavs = self.last_batch
-          text_padded, input_lengths, _, _, _, spk_ids = inputs
+        mel_out, _, _ = self.hparams.model.infer(
+            text_padded[:1], z_mean[:1], input_lengths[:1]
+        )
+        self.hparams.progress_sample_logger.remember(
+            inference_mel_out=self._get_spectrogram_sample(mel_out)
+        )
 
-          target_mels = inputs[2]
+        print(
+            "INFERENCE - inference_mel_out.shape: ",
+            self._get_spectrogram_sample(mel_out).shape,
+        )
 
-          target_mels = torch.transpose(target_mels, 1, 2)
-          # import pdb; pdb.set_trace()
-          target_feats = self.modules.mean_var_norm(target_mels, torch.ones(target_mels.shape[0], device=self.device))
+        if stage == sb.Stage.VALID:
+            # waveform_ss = self.vocoder.decode_batch(mel_out) # Extra Line
+            inf_sample_path = os.path.join(
+                self.hparams.progress_sample_path,
+                str(self.hparams.epoch_counter.current),
+            )
 
-          spk_embs = self.modules.speaker_embedding_model(target_feats)
-          spk_embs = spk_embs.squeeze()
-          spk_embs = spk_embs.to(self.device, non_blocking=True).float()
+            if not os.path.exists(inf_sample_path):
+                os.makedirs(inf_sample_path)
 
-          # import pdb; pdb.set_trace()
-          z_mean = self.modules.random_sampler.infer(spk_embs)
+            inf_sample_text = os.path.join(
+                self.hparams.progress_sample_path,
+                str(self.hparams.epoch_counter.current),
+                "inf_input_text.txt",
+            )
+            with open(inf_sample_text, "w") as f:
+                f.write(labels[0])
 
-          mel_out, _, _ = self.hparams.model.infer(
-              text_padded[:1], z_mean[:1], input_lengths[:1]
-          )
-          self.hparams.progress_sample_logger.remember(
-              inference_mel_out=self._get_spectrogram_sample(mel_out)
-          )
+            inf_input_audio = os.path.join(
+                self.hparams.progress_sample_path,
+                str(self.hparams.epoch_counter.current),
+                "inf_input_audio.wav",
+            )
+            torchaudio.save(
+                inf_input_audio,
+                sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0),
+                self.hparams.sample_rate,
+            )
 
-          print(
-              "INFERENCE - inference_mel_out.shape: ",
-              self._get_spectrogram_sample(mel_out).shape,
-          )
+            waveform_ss = self.vocoder.decode_batch(mel_out)
+            inf_sample_audio = os.path.join(
+                self.hparams.progress_sample_path,
+                str(self.hparams.epoch_counter.current),
+                "inf_output_audio.wav",
+            )
+            torchaudio.save(
+                inf_sample_audio,
+                waveform_ss.squeeze(1).cpu(),
+                self.hparams.sample_rate,
+            )
 
-          if stage == sb.Stage.VALID:
-              # waveform_ss = self.vocoder.decode_batch(mel_out) # Extra Line
-              inf_sample_path = os.path.join(
-                  self.hparams.progress_sample_path,
-                  str(self.hparams.epoch_counter.current),
-              )
-
-              if not os.path.exists(inf_sample_path):
-                  os.makedirs(inf_sample_path)
-
-              inf_sample_text = os.path.join(
-                  self.hparams.progress_sample_path,
-                  str(self.hparams.epoch_counter.current),
-                  "inf_vc_input_text.txt",
-              )
-              with open(inf_sample_text, "w") as f:
-                  f.write(labels[0])
-
-              inf_input_audio = os.path.join(
-                  self.hparams.progress_sample_path,
-                  str(self.hparams.epoch_counter.current),
-                  "inf_vc_input_audio.wav",
-              )
-              torchaudio.save(
-                  inf_input_audio,
-                  sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0),
-                  self.hparams.sample_rate,
-              )
-
-              waveform_vc = self.vocoder.decode_batch(mel_out)
-              inf_output_audio = os.path.join(
-                  self.hparams.progress_sample_path,
-                  str(self.hparams.epoch_counter.current),
-                  "inf_vc_output_audio.wav",
-              )
-              torchaudio.save(
-                  inf_output_audio,
-                  waveform_vc.squeeze(1).cpu(),
-                  self.hparams.sample_rate,
-              )
-
-              if self.hparams.use_tensorboard:
-                  self.tensorboard_logger.log_audio(
-                      f"{stage}/inf_vc_audio_target",
-                      sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0),
-                      self.hparams.sample_rate,
+            if self.hparams.use_tensorboard:
+                self.tensorboard_logger.log_audio(
+                    f"{stage}/inf_audio_target",
+                    sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0),
+                    self.hparams.sample_rate,
+                )
+                self.tensorboard_logger.log_audio(
+                    f"{stage}/inf_audio_pred",
+                    waveform_ss.squeeze(1),
+                    self.hparams.sample_rate,
+                )
+                try:
+                  self.tensorboard_logger.log_figure(
+                      f"{stage}/inf_mel_target", targets[0][0]
                   )
-                  self.tensorboard_logger.log_audio(
-                      f"{stage}/inf_vc_audio_pred",
-                      waveform_vc.squeeze(1),
-                      self.hparams.sample_rate,
+                  self.tensorboard_logger.log_figure(
+                      f"{stage}/inf_mel_pred", mel_out
                   )
+                except Exception as ex:
+                  pass
 
-                  try:
-                    self.tensorboard_logger.log_figure(
-                        f"{stage}/inf_vc_mel_target", targets[0][0]
-                    )
-                    self.tensorboard_logger.log_figure(
-                        f"{stage}/inf_vc_mel_pred", mel_out
-                    )
-                    
-                  except Exception as ex:
-                    pass
 
-                  # Logging ECAPA-TDNN emebddings
-                  # import pdb; pdb.set_trace()
-                  spk_embs_labels = ["spk_embs_" + spk_id for spk_id in spk_ids]
-                  
-                  z_spk_embs_labels =  ["z_spk_embs_" + spk_id for spk_id in spk_ids]
+    def get_triplets(self, spk_ids):  
+      anchor_se_idx, pos_se_idx, neg_se_idx = None, None, None
+      spk_idx_pairs = list()
+      for i in range(len(spk_ids)):
+        for j in range(i, len(spk_ids)):
+          if spk_ids[i] != spk_ids[j]:
+            spk_idx_pairs.append((i, j))
+      
+      anchor_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
+      pos_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
+      neg_se_idx = torch.LongTensor([j for (i, j) in spk_idx_pairs])
 
-                  self.tensorboard_logger.writer.add_embedding(
-                    spk_embs,
-                    metadata=spk_embs_labels,
-                    tag="spk_embs_epoch_"+ str(self.hparams.epoch_counter.current),
-                  )
+      return (anchor_se_idx, pos_se_idx, neg_se_idx)
 
-                  self.tensorboard_logger.writer.add_embedding(
-                    z_mean,
-                    metadata=z_spk_embs_labels,
-                    tag="z_spk_embs_epoch_"+ str(self.hparams.epoch_counter.current),
-                  )
 
 def dataio_prepare(hparams):
     # Define audio pipeline:
@@ -586,7 +580,7 @@ def dataio_prepare(hparams):
                 json_path=data_info[dataset],
                 replacements={"data_root": hparams["data_folder"]},
                 dynamic_items=[audio_pipeline],
-                output_keys=["mel_text_pair", "wav", "label", "spk_id"],
+                output_keys=["mel_text_pair", "wav", "label", "uttid"],
             )
     except Exception as ex:
         print("SECOND EXCEPTION: ", ex)
@@ -629,7 +623,36 @@ if __name__ == "__main__":
         },
     )
 
-    
+    from compute_ecapa_embeddings import compute_speaker_embeddings
+
+    sb.utils.distributed.run_on_main(
+        compute_speaker_embeddings,
+        kwargs={
+            "input_filepaths": [hparams["train_json"], hparams["valid_json"]],
+            "output_file_paths": [
+                hparams["train_speaker_embeddings_pickle"],
+                hparams["valid_speaker_embeddings_pickle"],
+            ],
+            "data_folder": hparams["data_folder"],
+            "audio_sr": hparams["sample_rate"],
+            "spk_emb_sr": hparams["spk_emb_sample_rate"],
+            "mel_spec_params": {
+              "sample_rate": hparams["sample_rate"],
+              "hop_length": hparams["hop_length"],
+              "win_length": hparams["win_length"],
+              "n_mel_channels": hparams["n_mel_channels"],
+              "n_fft": hparams["n_fft"],
+              "mel_fmin": hparams["mel_fmin"],
+              "mel_fmax": hparams["mel_fmax"],
+              "mel_normalized": hparams["mel_normalized"],
+              "power": hparams["power"],
+              "norm": hparams["norm"],
+              "mel_scale": hparams["mel_scale"],
+              "dynamic_range_compression": hparams["dynamic_range_compression"]
+            }
+        },
+    )
+
     datasets = dataio_prepare(hparams)
 
     

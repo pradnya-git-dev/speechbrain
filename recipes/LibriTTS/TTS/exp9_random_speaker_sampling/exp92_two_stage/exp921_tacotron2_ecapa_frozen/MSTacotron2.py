@@ -41,7 +41,7 @@ Authors
 from math import sqrt
 from speechbrain.nnet.loss.guidedattn_loss import GuidedAttentionLoss
 import torch
-from torch import nn, select
+from torch import nn
 from torch.nn import functional as F
 from collections import namedtuple
 import speechbrain as sb
@@ -1261,9 +1261,13 @@ class Sampler(nn.Module):
     self.linear3 = LinearNorm(self.linear2_size, self.linear3_size)
     self.lnorm3 = LayerNorm(input_size=self.linear3_size)
     self.mean = LinearNorm(self.linear3_size, self.z_spk_emb_size)
+    # self.log_var = LinearNorm(self.linear3_size, self.z_spk_emb_size)
+    
+    # self.normal = torch.distributions.Normal(0,1)
 
   def forward(self, spk_embs):
 
+    
     out = self.linear1(spk_embs)
     out = self.lnorm1(out)
     out = F.relu(out)
@@ -1274,16 +1278,24 @@ class Sampler(nn.Module):
     out = self.lnorm3(out)
     out = F.relu(out)
     z_mean = self.mean(out)
+    # z_log_var = self.log_var(out)
 
+    # ToDo: Move these to GPU if available
+    # self.normal.loc = self.normal.loc.to(spk_embs.device)
+    # self.normal.scale = self.normal.scale.to(spk_embs.device)
+    
+    # random_sample = self.normal.sample([spk_embs.shape[0], self.z_spk_emb_size])
+
+    # z_spk_embs = z_mean + torch.exp(0.5 * z_log_var) * random_sample
+
+    # return z_spk_embs, z_mean, z_log_var
     return z_mean
 
   @torch.jit.export
   def infer(self, spk_embs):
+      return self.forward(spk_embs)
 
-    z_mean= self.forward(spk_embs)
-    return z_mean.squeeze()
 
-  
 class Tacotron2(nn.Module):
     """The Tactron2 text-to-speech model, based on the NVIDIA implementation.
 
@@ -1466,6 +1478,18 @@ class Tacotron2(nn.Module):
         self.ms_film_hidden = LinearNorm(spk_emb_size, self.ms_film_hidden_size)
         self.ms_film_h = LinearNorm(self.ms_film_hidden_size, encoder_embedding_dim)
         self.ms_film_g = LinearNorm(self.ms_film_hidden_size, encoder_embedding_dim)
+        
+        """
+        self.conv_spk_post_decoder = Conv1d(
+            in_channels=spk_emb_size,
+            out_channels=n_mel_channels,
+            kernel_size=7,
+            stride=1,
+            padding="same",
+            skip_transpose=True,
+            weight_norm=True,
+        )
+        """
 
     def parse_output(self, outputs, output_lengths, alignments_dim=None):
         """
@@ -1530,7 +1554,7 @@ class Tacotron2(nn.Module):
         output_legnths: torch.Tensor
             length of the output without padding
         """
-        inputs, input_lengths, targets, max_len, output_lengths, spk_ids = inputs
+        inputs, input_lengths, targets, max_len, output_lengths = inputs
         input_lengths, output_lengths = input_lengths.data, output_lengths.data
 
         embedded_inputs = self.embedding(inputs).transpose(1, 2)
@@ -1539,11 +1563,11 @@ class Tacotron2(nn.Module):
         spk_embs_shared = F.relu(self.ms_film_hidden(spk_embs))
         
         spk_embs_h = self.ms_film_h(spk_embs_shared)
-        spk_embs_h = torch.unsqueeze(spk_embs_h, -2).repeat(1, encoder_outputs.shape[1], 1)
+        spk_embs_h = torch.unsqueeze(spk_embs_h, 1).repeat(1, encoder_outputs.shape[1], 1)
         encoder_outputs = encoder_outputs * spk_embs_h
 
         spk_embs_g = self.ms_film_g(spk_embs_shared)
-        spk_embs_g = torch.unsqueeze(spk_embs_g, -2).repeat(1, encoder_outputs.shape[1], 1)
+        spk_embs_g = torch.unsqueeze(spk_embs_g, 1).repeat(1, encoder_outputs.shape[1], 1)
         encoder_outputs = encoder_outputs + spk_embs_g
 
 
@@ -1589,11 +1613,11 @@ class Tacotron2(nn.Module):
         spk_embs_shared = F.relu(self.ms_film_hidden(spk_embs))
         
         spk_embs_h = self.ms_film_h(spk_embs_shared)
-        spk_embs_h = torch.unsqueeze(spk_embs_h, -2).repeat(1, encoder_outputs.shape[1], 1)
+        spk_embs_h = torch.unsqueeze(spk_embs_h, 1).repeat(1, encoder_outputs.shape[1], 1)
         encoder_outputs = encoder_outputs * spk_embs_h
 
         spk_embs_g = self.ms_film_g(spk_embs_shared)
-        spk_embs_g = torch.unsqueeze(spk_embs_g, -2).repeat(1, encoder_outputs.shape[1], 1)
+        spk_embs_g = torch.unsqueeze(spk_embs_g, 1).repeat(1, encoder_outputs.shape[1], 1)
         encoder_outputs = encoder_outputs + spk_embs_g
 
         mel_outputs, gate_outputs, alignments, mel_lengths = self.decoder.infer(
@@ -1657,7 +1681,7 @@ def infer(model, text_sequences, input_lengths):
 
 
 LossStats = namedtuple(
-    "TacotronLoss", "loss mel_loss gate_loss attn_loss attn_weight"
+    "TacotronLoss", "loss mel_loss spk_emb_triplet_loss gate_loss attn_loss attn_weight"
 )
 
 
@@ -1710,10 +1734,10 @@ class Loss(nn.Module):
         guided_attention_sigma=None,
         gate_loss_weight=1.0,
         mel_loss_weight=1.0,
+        triplet_loss_weight=1.0,
         guided_attention_weight=1.0,
         guided_attention_scheduler=None,
         guided_attention_hard_stop=None,
-        kl_loss_weight=1.0,
     ):
         super().__init__()
         if guided_attention_weight == 0:
@@ -1721,6 +1745,7 @@ class Loss(nn.Module):
         self.guided_attention_weight = guided_attention_weight
         self.gate_loss_weight = gate_loss_weight
         self.mel_loss_weight = mel_loss_weight
+        self.triplet_loss_weight = triplet_loss_weight
 
 
         self.mse_loss = nn.MSELoss()
@@ -1728,14 +1753,15 @@ class Loss(nn.Module):
         self.guided_attention_loss = GuidedAttentionLoss(
             sigma=guided_attention_sigma
         )
+        self.spk_emb_triplet_loss = torch.nn.TripletMarginWithDistanceLoss(
+          distance_function=lambda x, y: 1.0 - F.cosine_similarity(x, y)
+        )
         
         self.guided_attention_scheduler = guided_attention_scheduler
         self.guided_attention_hard_stop = guided_attention_hard_stop
 
-        # self.kl_loss_weight = kl_loss_weight
-
     def forward(
-        self, model_output, targets, input_lengths, target_lengths, spk_ids, epoch
+        self, model_output, targets, input_lengths, target_lengths, spk_emb_triplets, epoch
     ):
         """Computes the loss
 
@@ -1765,7 +1791,8 @@ class Loss(nn.Module):
         gate_target.requires_grad = False
         gate_target = gate_target.view(-1, 1)
 
-        mel_out, mel_out_postnet, gate_out, alignments, z_mean = model_output
+        mel_out, mel_out_postnet, gate_out, alignments = model_output
+        anchor_spk_embs, pos_spk_embs, neg_spk_embs = spk_emb_triplets
 
         gate_out = gate_out.view(-1, 1)
         mel_loss = self.mse_loss(mel_out, mel_target) + self.mse_loss(
@@ -1779,13 +1806,15 @@ class Loss(nn.Module):
             alignments, input_lengths, target_lengths, epoch
         )
 
-        # kl_loss_t = -0.5 * torch.sum(1 + z_log_var - z_mean ** 2 - torch.exp(z_log_var), dim=-1)
-        # kl_loss = torch.mean(kl_loss_t)
-        # kl_loss = self.kl_loss_weight * kl_loss
+        if anchor_spk_embs != None:
+          spk_emb_triplet_loss = self.spk_emb_triplet_loss(anchor_spk_embs, pos_spk_embs, neg_spk_embs)
+          spk_emb_triplet_loss = self.triplet_loss_weight * spk_emb_triplet_loss
+        else:
+          spk_emb_triplet_loss = torch.Tensor([0]).to(mel_loss.device)
 
-        total_loss = mel_loss + gate_loss + attn_loss
+        total_loss = mel_loss + spk_emb_triplet_loss + gate_loss + attn_loss
         return LossStats(
-            total_loss, mel_loss, gate_loss, attn_loss, attn_weight
+            total_loss, mel_loss, spk_emb_triplet_loss, gate_loss, attn_loss, attn_weight
         )
 
     def get_attention_loss(
@@ -1836,10 +1865,12 @@ class Loss(nn.Module):
 
 class TextMelCollate:
     """ Zero-pads model inputs and targets based on number of frames per step
+
     Arguments
     ---------
     n_frames_per_step: int
         the number of output frames per step
+
     Returns
     -------
     result: tuple
@@ -1855,8 +1886,10 @@ class TextMelCollate:
     """
 
     def __init__(self,
+      speaker_embeddings_pickle,
       n_frames_per_step=1,):
         self.n_frames_per_step = n_frames_per_step
+        self.speaker_embeddings_pickle = speaker_embeddings_pickle
         
     # TODO: Make this more intuitive, use the pipeline
     def __call__(self, batch):
@@ -1902,7 +1935,9 @@ class TextMelCollate:
         gate_padded = torch.FloatTensor(len(batch), max_target_len)
         gate_padded.zero_()
         output_lengths = torch.LongTensor(len(batch))
-        labels, wavs, spk_ids = [], [], []
+        labels, wavs, spk_embs_list, spk_ids = [], [], [], []
+        with open(self.speaker_embeddings_pickle, "rb") as speaker_embeddings_file:
+            speaker_embeddings = pickle.load(speaker_embeddings_file)
 
         for i in range(len(ids_sorted_decreasing)):
             idx = ids_sorted_decreasing[i]
@@ -1912,7 +1947,13 @@ class TextMelCollate:
             output_lengths[i] = mel.size(1)
             labels.append(raw_batch[idx]["label"])
             wavs.append(raw_batch[idx]["wav"])
-            spk_ids.append(raw_batch[idx]["spk_id"])
+
+            spk_emb = speaker_embeddings[raw_batch[idx]["uttid"]]
+            spk_embs_list.append(spk_emb)
+
+            spk_ids.append(raw_batch[idx]["uttid"].split("_")[0])
+
+        spk_embs = torch.stack(spk_embs_list)
 
         # count number of items - characters in text
         len_x = [x[2] for x in batch]
@@ -1926,9 +1967,9 @@ class TextMelCollate:
             len_x,
             labels,
             wavs,
+            spk_embs,
             spk_ids
         )
-
 
 
 def dynamic_range_compression(x, C=1, clip_val=1e-5):
