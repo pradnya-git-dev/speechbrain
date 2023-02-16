@@ -31,6 +31,10 @@ from speechbrain.pretrained import EncoderClassifier
 import pickle
 import random
 from spk_emb_pretrained_interfaces import MelSpectrogramEncoder
+import tensorflow as tf
+import tensorboard as tb
+tf.io.gfile = tb.compat.tensorflow_stub.io.gfile
+
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 logger = logging.getLogger(__name__)
@@ -83,11 +87,14 @@ class Tacotron2Brain(sb.Brain):
 
         max_input_length = input_lengths.max().item()
 
-        z_mean = self.modules.random_sampler(spk_embs)
+        z_spk_embs, z_mean, z_log_var = self.modules.random_sampler(spk_embs)
 
-        return self.modules.model(
-            inputs, z_mean, alignments_dim=max_input_length
+        mel_outputs, mel_outputs_postnet, gate_outputs, alignments = self.modules.model(
+            inputs, z_spk_embs, alignments_dim=max_input_length
         )
+
+        result = (mel_outputs, mel_outputs_postnet, gate_outputs, alignments, z_mean, z_log_var)
+        return result
 
     def fit_batch(self, batch):
         """Fits a single batch and applies annealing
@@ -200,7 +207,7 @@ class Tacotron2Brain(sb.Brain):
         inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         mel_target, _ = targets
-        mel_out, mel_out_postnet, gate_out, alignments = predictions
+        mel_out, mel_out_postnet, gate_out, alignments, z_mean, z_log_var = predictions
         alignments_max = (
             alignments[0]
             .max(dim=-1)
@@ -320,7 +327,8 @@ class Tacotron2Brain(sb.Brain):
             if not os.path.exists(train_sample_path):
                 os.makedirs(train_sample_path)
 
-            _, targets, _, labels, wavs, spk_embs, spk_ids = self.last_batch
+            inputs, targets, _, labels, wavs, spk_embs, spk_ids = self.last_batch
+            text_padded, input_lengths, _, _, _ = inputs
 
             # Extra lines
             # _, mel_out_postnet, _, _ = self.last_preds
@@ -345,18 +353,46 @@ class Tacotron2Brain(sb.Brain):
                 self.hparams.sample_rate,
             )
 
-            _, mel_out_postnet, _, _ = self.last_preds
+            _, mel_out_postnet, _, _, z_mean, z_log_var = self.last_preds
             waveform_ss = self.vocoder.decode_batch(mel_out_postnet[0])
             train_sample_audio = os.path.join(
                 self.hparams.progress_sample_path,
                 str(self.hparams.epoch_counter.current),
-                "train_output_audio.wav",
+                "train_vc_output_audio.wav",
             )
             torchaudio.save(
                 train_sample_audio,
                 waveform_ss.squeeze(1).cpu(),
                 self.hparams.sample_rate,
             )
+
+            with torch.no_grad():
+              self.modules.model.eval()
+              self.modules.random_sampler.eval()
+
+              random_z_spk_emb = self.modules.random_sampler.infer()
+
+              rs_mel_out, _, _ = self.hparams.model.infer(
+                  text_padded[:1], random_z_spk_emb.unsqueeze(0), input_lengths[:1]
+              )
+
+              self.hparams.progress_sample_logger.remember(
+                  rs_train_mel_out=self._get_spectrogram_sample(rs_mel_out)
+              )
+
+              waveform_rs = self.vocoder.decode_batch(rs_mel_out)
+              train_rs_output_audio = os.path.join(
+                  self.hparams.progress_sample_path,
+                  str(self.hparams.epoch_counter.current),
+                  "train_rs_output_audio.wav",
+              )
+              torchaudio.save(
+                  train_rs_output_audio,
+                  waveform_rs.squeeze(1).cpu(),
+                  self.hparams.sample_rate,
+              )
+
+
 
             if self.hparams.use_tensorboard:
                 self.tensorboard_logger.log_audio(
@@ -365,16 +401,24 @@ class Tacotron2Brain(sb.Brain):
                     self.hparams.sample_rate,
                 )
                 self.tensorboard_logger.log_audio(
-                    f"{stage}/train_audio_pred",
+                    f"{stage}/train_vc_audio_pred",
                     waveform_ss.squeeze(1),
                     self.hparams.sample_rate,
                 )
+                self.tensorboard_logger.log_audio(
+                      f"{stage}/train_rs_audio_pred",
+                      waveform_rs.squeeze(1),
+                      self.hparams.sample_rate,
+                  )
                 try:
                   self.tensorboard_logger.log_figure(
                       f"{stage}/train_mel_target", targets[0][0]
                   )
                   self.tensorboard_logger.log_figure(
-                      f"{stage}/train_mel_pred", mel_out_postnet[0]
+                      f"{stage}/train_vc_mel_pred", mel_out_postnet[0]
+                  )
+                  self.tensorboard_logger.log_figure(
+                      f"{stage}/train_rs_mel_pred", rs_mel_out
                   )
                 except Exception as ex:
                   pass
@@ -465,6 +509,16 @@ class Tacotron2Brain(sb.Brain):
             self._get_spectrogram_sample(mel_out).shape,
         )
 
+        random_z_spk_emb = self.modules.random_sampler.infer()
+
+        rs_mel_out, _, _ = self.hparams.model.infer(
+            text_padded[:1], random_z_spk_emb.unsqueeze(0), input_lengths[:1]
+        )
+
+        self.hparams.progress_sample_logger.remember(
+            rs_inference_mel_out=self._get_spectrogram_sample(rs_mel_out)
+        )
+
         if stage == sb.Stage.VALID:
             # waveform_ss = self.vocoder.decode_batch(mel_out) # Extra Line
             inf_sample_path = os.path.join(
@@ -498,13 +552,26 @@ class Tacotron2Brain(sb.Brain):
             inf_sample_audio = os.path.join(
                 self.hparams.progress_sample_path,
                 str(self.hparams.epoch_counter.current),
-                "inf_output_audio.wav",
+                "inf_vc_output_audio.wav",
             )
             torchaudio.save(
                 inf_sample_audio,
                 waveform_ss.squeeze(1).cpu(),
                 self.hparams.sample_rate,
             )
+
+            waveform_rs = self.vocoder.decode_batch(rs_mel_out)
+            inf_rs_output_audio = os.path.join(
+                self.hparams.progress_sample_path,
+                str(self.hparams.epoch_counter.current),
+                "inf_rs_output_audio.wav",
+            )
+            torchaudio.save(
+                inf_rs_output_audio,
+                waveform_rs.squeeze(1).cpu(),
+                self.hparams.sample_rate,
+            )
+            
 
             if self.hparams.use_tensorboard:
                 self.tensorboard_logger.log_audio(
@@ -513,8 +580,13 @@ class Tacotron2Brain(sb.Brain):
                     self.hparams.sample_rate,
                 )
                 self.tensorboard_logger.log_audio(
-                    f"{stage}/inf_audio_pred",
+                    f"{stage}/inf_vc_audio_pred",
                     waveform_ss.squeeze(1),
+                    self.hparams.sample_rate,
+                )
+                self.tensorboard_logger.log_audio(
+                    f"{stage}/inf_rs_audio_pred",
+                    waveform_rs.squeeze(1),
                     self.hparams.sample_rate,
                 )
                 try:
@@ -522,10 +594,34 @@ class Tacotron2Brain(sb.Brain):
                       f"{stage}/inf_mel_target", targets[0][0]
                   )
                   self.tensorboard_logger.log_figure(
-                      f"{stage}/inf_mel_pred", mel_out
+                      f"{stage}/inf_vc_mel_pred", mel_out
+                  )
+                  self.tensorboard_logger.log_figure(
+                      f"{stage}/inf_rs_mel_pred", rs_mel_out
                   )
                 except Exception as ex:
                   pass
+
+                # Logging ECAPA-TDNN emebddings
+                # import pdb; pdb.set_trace()
+                combined_z_embs = torch.cat((z_mean, random_z_spk_emb.unsqueeze(0)))
+                spk_embs_labels = ["spk_embs_" + spk_id for spk_id in spk_ids]
+                
+                z_spk_embs_labels =  ["z_spk_embs_" + spk_id for spk_id in spk_ids]
+                z_spk_embs_labels.append("random_z_spk_emb")
+
+                self.tensorboard_logger.writer.add_embedding(
+                  spk_embs,
+                  metadata=spk_embs_labels,
+                  tag="spk_embs_epoch_"+ str(self.hparams.epoch_counter.current),
+                )
+
+                self.tensorboard_logger.writer.add_embedding(
+                  combined_z_embs,
+                  metadata=z_spk_embs_labels,
+                  tag="z_spk_embs_epoch_"+ str(self.hparams.epoch_counter.current),
+                )
+
 
 
     def get_triplets(self, spk_ids):  

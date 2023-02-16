@@ -1261,9 +1261,9 @@ class Sampler(nn.Module):
     self.linear3 = LinearNorm(self.linear2_size, self.linear3_size)
     self.lnorm3 = LayerNorm(input_size=self.linear3_size)
     self.mean = LinearNorm(self.linear3_size, self.z_spk_emb_size)
-    # self.log_var = LinearNorm(self.linear3_size, self.z_spk_emb_size)
+    self.log_var = LinearNorm(self.linear3_size, self.z_spk_emb_size)
     
-    # self.normal = torch.distributions.Normal(0,1)
+    self.normal = torch.distributions.Normal(0,1)
 
   def forward(self, spk_embs):
 
@@ -1278,22 +1278,27 @@ class Sampler(nn.Module):
     out = self.lnorm3(out)
     out = F.relu(out)
     z_mean = self.mean(out)
-    # z_log_var = self.log_var(out)
+    z_log_var = self.log_var(out)
 
     # ToDo: Move these to GPU if available
-    # self.normal.loc = self.normal.loc.to(spk_embs.device)
-    # self.normal.scale = self.normal.scale.to(spk_embs.device)
+    self.normal.loc = self.normal.loc.to(spk_embs.device)
+    self.normal.scale = self.normal.scale.to(spk_embs.device)
     
-    # random_sample = self.normal.sample([spk_embs.shape[0], self.z_spk_emb_size])
+    random_sample = self.normal.sample([spk_embs.shape[0], self.z_spk_emb_size])
 
-    # z_spk_embs = z_mean + torch.exp(0.5 * z_log_var) * random_sample
+    z_spk_embs = z_mean + torch.exp(0.5 * z_log_var) * random_sample
 
-    # return z_spk_embs, z_mean, z_log_var
-    return z_mean
-
+    return z_spk_embs, z_mean, z_log_var
+    
   @torch.jit.export
-  def infer(self, spk_embs):
-      return self.forward(spk_embs)
+  def infer(self, spk_embs=None):
+
+    if spk_embs != None:
+      z_spk_embs, z_mean, z_log_var = self.forward(spk_embs)
+      return z_mean.squeeze()
+    else:
+      z_spk_embs = self.normal.sample([self.z_spk_emb_size])
+      return z_spk_embs
 
 
 class Tacotron2(nn.Module):
@@ -1681,7 +1686,7 @@ def infer(model, text_sequences, input_lengths):
 
 
 LossStats = namedtuple(
-    "TacotronLoss", "loss mel_loss spk_emb_triplet_loss gate_loss attn_loss attn_weight"
+    "TacotronLoss", "loss mel_loss kl_loss spk_emb_triplet_loss gate_loss attn_loss attn_weight"
 )
 
 
@@ -1736,6 +1741,7 @@ class Loss(nn.Module):
         mel_loss_weight=1.0,
         triplet_loss_weight=1.0,
         guided_attention_weight=1.0,
+        kl_loss_weight=1.0,
         guided_attention_scheduler=None,
         guided_attention_hard_stop=None,
     ):
@@ -1759,6 +1765,8 @@ class Loss(nn.Module):
         
         self.guided_attention_scheduler = guided_attention_scheduler
         self.guided_attention_hard_stop = guided_attention_hard_stop
+
+        self.kl_loss_weight = kl_loss_weight
 
     def forward(
         self, model_output, targets, input_lengths, target_lengths, spk_emb_triplets, epoch
@@ -1791,7 +1799,7 @@ class Loss(nn.Module):
         gate_target.requires_grad = False
         gate_target = gate_target.view(-1, 1)
 
-        mel_out, mel_out_postnet, gate_out, alignments = model_output
+        mel_out, mel_out_postnet, gate_out, alignments, z_mean, z_log_var = model_output
         anchor_spk_embs, pos_spk_embs, neg_spk_embs = spk_emb_triplets
 
         gate_out = gate_out.view(-1, 1)
@@ -1812,9 +1820,14 @@ class Loss(nn.Module):
         else:
           spk_emb_triplet_loss = torch.Tensor([0]).to(mel_loss.device)
 
-        total_loss = mel_loss + spk_emb_triplet_loss + gate_loss + attn_loss
+
+        kl_loss_t = -0.5 * torch.sum(1 + z_log_var - z_mean ** 2 - torch.exp(z_log_var), dim=-1)
+        kl_loss = torch.mean(kl_loss_t)
+        kl_loss = self.kl_loss_weight * kl_loss
+
+        total_loss = mel_loss + kl_loss + spk_emb_triplet_loss + gate_loss + attn_loss
         return LossStats(
-            total_loss, mel_loss, spk_emb_triplet_loss, gate_loss, attn_loss, attn_weight
+            total_loss, mel_loss, kl_loss, spk_emb_triplet_loss, gate_loss, attn_loss, attn_weight
         )
 
     def get_attention_loss(
