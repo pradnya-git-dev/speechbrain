@@ -736,36 +736,6 @@ if __name__ == "__main__":
         },
     )
 
-    from compute_ecapa_embeddings import compute_speaker_embeddings
-
-    sb.utils.distributed.run_on_main(
-        compute_speaker_embeddings,
-        kwargs={
-            "input_filepaths": [hparams["train_json"], hparams["valid_json"]],
-            "output_file_paths": [
-                hparams["train_speaker_embeddings_pickle"],
-                hparams["valid_speaker_embeddings_pickle"],
-            ],
-            "data_folder": hparams["data_folder"],
-            "audio_sr": hparams["sample_rate"],
-            "spk_emb_sr": hparams["spk_emb_sample_rate"],
-            "mel_spec_params": {
-              "sample_rate": hparams["sample_rate"],
-              "hop_length": hparams["hop_length"],
-              "win_length": hparams["win_length"],
-              "n_mel_channels": hparams["n_mel_channels"],
-              "n_fft": hparams["n_fft"],
-              "mel_fmin": hparams["mel_fmin"],
-              "mel_fmax": hparams["mel_fmax"],
-              "mel_normalized": hparams["mel_normalized"],
-              "power": hparams["power"],
-              "norm": hparams["norm"],
-              "mel_scale": hparams["mel_scale"],
-              "dynamic_range_compression": hparams["dynamic_range_compression"]
-            }
-        },
-    )
-
     datasets = dataio_prepare(hparams)
 
     
