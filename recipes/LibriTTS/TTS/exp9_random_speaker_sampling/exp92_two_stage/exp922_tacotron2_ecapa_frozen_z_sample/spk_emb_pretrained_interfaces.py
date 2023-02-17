@@ -110,18 +110,17 @@ class MSTacotron2(Pretrained):
             ), "ipnut lengths must be sorted in decreasing order"
             input_lengths = torch.tensor(lens, device=self.device)
 
-            spk_embs = self.hparams.random_sampler.infer(spk_embs)
-            spk_embs = spk_embs.to(self.device)
+            z_spk_embs = self.hparams.random_sampler.infer(spk_embs)
+            z_spk_embs = z_spk_embs.to(self.device)
 
-            spk_embs = [spk_embs for i in range(len(texts))]
+            z_spk_embs = [z_spk_embs for i in range(len(texts))]
 
-            spk_embs = torch.stack(spk_embs)
-
+            z_spk_embs = torch.stack(z_spk_embs)
 
             mel_outputs_postnet, mel_lengths, alignments = self.infer(
-                inputs.text_sequences.data, spk_embs, input_lengths
+                inputs.text_sequences.data, z_spk_embs, input_lengths
             )
-        return mel_outputs_postnet, mel_lengths, alignments
+        return mel_outputs_postnet, mel_lengths, alignments, z_spk_embs
 
     def encode_text(self, text, spk_embs=None):
         """Runs inference for a single text str"""
