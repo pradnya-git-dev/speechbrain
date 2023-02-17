@@ -52,7 +52,7 @@ from speechbrain.processing.speech_augmentation import Resample
 from speechbrain.utils.data_utils import batch_pad_right
 import pickle
 import random
-from speechbrain.nnet.normalization import LayerNorm
+from speechbrain.nnet.normalization import BatchNorm1d
 
 
 class LinearNorm(torch.nn.Module):
@@ -1255,11 +1255,11 @@ class Sampler(nn.Module):
     self.linear3_size = int((self.linear2_size + self.z_spk_emb_size) / 2)
 
     self.linear1 = LinearNorm(self.spk_emb_size, self.linear1_size)
-    self.lnorm1 = LayerNorm(input_size=self.linear1_size)
+    self.bnorm1 = BatchNorm1d(input_size=self.linear1_size)
     self.linear2 = LinearNorm(self.linear1_size, self.linear2_size)
-    self.lnorm2 = LayerNorm(input_size=self.linear2_size)
+    self.bnorm2 = BatchNorm1d(input_size=self.linear2_size)
     self.linear3 = LinearNorm(self.linear2_size, self.linear3_size)
-    self.lnorm3 = LayerNorm(input_size=self.linear3_size)
+    self.bnorm3 = BatchNorm1d(input_size=self.linear3_size)
     self.mean = LinearNorm(self.linear3_size, self.z_spk_emb_size)
     self.log_var = LinearNorm(self.linear3_size, self.z_spk_emb_size)
     
@@ -1269,13 +1269,13 @@ class Sampler(nn.Module):
 
     
     out = self.linear1(spk_embs)
-    out = self.lnorm1(out)
+    out = self.bnorm1(out)
     out = F.relu(out)
     out = self.linear2(out)
-    out = self.lnorm2(out)
+    out = self.bnorm2(out)
     out = F.relu(out)
     out = self.linear3(out)
-    out = self.lnorm3(out)
+    out = self.bnorm3(out)
     out = F.relu(out)
     z_mean = self.mean(out)
     z_log_var = self.log_var(out)
