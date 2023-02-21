@@ -250,7 +250,7 @@ def create_json(wav_list,
           continue
 
         # Get alignments
-        textgrid = tgt.io.read_textgrid(textgrid_path)
+        textgrid = tgt.io.read_textgrid(textgrid_path, include_empty_intervals=True)
         phone, duration, start, end = get_alignment(
             textgrid.get_tier_by_name("phones"),
             sample_rate,
