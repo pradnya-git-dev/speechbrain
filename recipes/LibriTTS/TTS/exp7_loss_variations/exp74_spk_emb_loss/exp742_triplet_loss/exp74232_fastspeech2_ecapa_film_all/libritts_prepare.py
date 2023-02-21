@@ -14,7 +14,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 # Change the entries in the following "LIBRITTS_SUBSETS" to modify the downloaded subsets for LibriTTS
 # Used subsets ["dev-clean", "train-clean-100", "train-clean-360"]
-LIBRITTS_SUBSETS = ["train-clean-360"]
+LIBRITTS_SUBSETS = ["dev-clean"]
 LIBRITTS_URL_PREFIX = "https://www.openslr.org/resources/60/"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -120,17 +120,19 @@ def prepare_libritts(
     #   return
 
     # Random split the signal list into train, valid, and test sets.
-    data_split = split_sets(wav_list, split_ratio)
+    # data_split = split_sets(wav_list, split_ratio)
     # import pdb; pdb.set_trace()
 
     # Creating json files
-    if "train" in splits:
+    random.shuffle(wav_list)
 
-      # "train-clean-360" subset split - 35 speakers
-      train_spk_ids = [
-        "7962", "1851", "2039", "3094", "7342", "1825", "7705", "5604", "1337", "6038", "2882", "8464", "30", "4973", "8388", "1390", "1382", "2167", "2146", "4116", "7945", "5909", "7704", "5304", "1827", "6188", "6637", "6006", "2638", "7881"
-      ]
-      create_json(data_split["train"], 
+    # dev-clean train split - 34 speakers
+    train_spk_ids = [
+      "7976", "6319", "1993", "2902", "174", "6241", "422", "1272", "6313", "2035", "1673", "7850", "3536", "5338", "2277", "3576", "3752", "652", "1462", "1988", "777", "3000", "6345", "3853", "2412", "2428", "251", "1919", "3170", "3081", "2086", "2078", "6295", "5694"
+    ]
+    # train_spk_ids = ["5895", "8297"]
+    if "train" in splits:
+      create_json(wav_list, 
                   train_spk_ids,
                   save_json_train,
                   phoneme_alignments_folder, 
@@ -141,11 +143,11 @@ def prepare_libritts(
                   pitch_max_f0,
                   use_custom_cleaner)
 
+    # dev-clean valid split - 6 speakers - 3M, 3F
+    valid_spk_ids = ["5895", "8297", "2803", "5536", "8842", "84" ]
+    # valid_spk_ids = ["5895", "8297"]
     if "valid" in splits:
-
-      # "train-clean-360" subset split - 5 speakers
-      valid_spk_ids = ["6080", "1165", "1885", "4145", "3330"]
-      create_json(data_split["valid"], 
+      create_json(wav_list, 
                   valid_spk_ids,
                   save_json_valid,
                   phoneme_alignments_folder,
@@ -156,12 +158,11 @@ def prepare_libritts(
                   pitch_max_f0,
                   use_custom_cleaner)
     
+    # dev-clean test split - 0 speakers
+    test_spk_ids = []
     if "test" in splits:
-
-      # "train-clean-360" subset split - 5 speakers
-      test_spk_ids = ["4381", "6167", "7145", "1265", "3379"]
-      create_json(data_split["test"],
-                  test_spk_ids, 
+      create_json(wav_list, 
+                  test_spk_ids,
                   save_json_test,
                   phoneme_alignments_folder,
                   sample_rate,
@@ -172,7 +173,7 @@ def prepare_libritts(
                   use_custom_cleaner)
 
 
-def create_json(wav_list,
+def create_json(wav_list, 
                 split_spk_ids,
                 json_file,
                 phoneme_alignments_folder,
@@ -249,7 +250,7 @@ def create_json(wav_list,
           continue
 
         # Get alignments
-        textgrid = tgt.io.read_textgrid(textgrid_path)
+        textgrid = tgt.io.read_textgrid(textgrid_path, include_empty_intervals=True)
         phone, duration, start, end = get_alignment(
             textgrid.get_tier_by_name("phones"),
             sample_rate,
