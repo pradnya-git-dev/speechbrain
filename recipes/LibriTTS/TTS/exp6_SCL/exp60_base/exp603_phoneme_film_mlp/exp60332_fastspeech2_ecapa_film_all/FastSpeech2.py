@@ -348,16 +348,11 @@ class FiLM(nn.Module):
     spk_embs_shared_1 = F.relu(self.ms_film_hidden(spk_embs))
         
     spk_embs_h1 = self.ms_film_h(spk_embs_shared_1)
-
-    if len(hidden_states.size()) != len(spk_embs.size()):
-      diff_sz = hidden_states.size()[1]
-      spk_embs_h1 = torch.unsqueeze(spk_embs_h1, 1).repeat(1, diff_sz, 1)
+    spk_embs_h1 = torch.unsqueeze(spk_embs_h1, 1).repeat(1, hidden_states.size()[1], 1)
     hidden_states = hidden_states * spk_embs_h1
 
     spk_embs_g1 = self.ms_film_g(spk_embs_shared_1)
-    if len(hidden_states.size()) != len(spk_embs.size()):
-      diff_sz = hidden_states.size()[1]
-      spk_embs_g1 = torch.unsqueeze(spk_embs_g1, 1).repeat(1, diff_sz, 1)
+    spk_embs_g1 = torch.unsqueeze(spk_embs_g1, 1).repeat(1, hidden_states.size()[1], 1)
     hidden_states = hidden_states + spk_embs_g1
 
     return hidden_states
