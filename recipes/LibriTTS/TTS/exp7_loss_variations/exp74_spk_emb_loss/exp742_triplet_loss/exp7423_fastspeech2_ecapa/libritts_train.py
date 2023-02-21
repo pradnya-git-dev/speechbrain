@@ -40,7 +40,7 @@ class FastSpeech2Brain(sb.Brain):
         self.last_loss_stats = {}
 
         self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
-          source="/workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80_voxceleb12",
+          source="/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80",
           run_opts={"device": self.device},
           freeze_params=True
         )
@@ -482,6 +482,11 @@ def main():
 
     datasets = dataio_prepare(hparams)
 
+    # Load pretrained model if pretrained_separator is present in the yaml
+    if "pretrained_separator" in hparams:
+        hparams["pretrained_separator"].collect_files()
+        hparams["pretrained_separator"].load_collected()
+
     # Brain class initialization
     fastspeech2_brain = FastSpeech2Brain(
         modules=hparams["modules"],
@@ -490,6 +495,12 @@ def main():
         run_opts=run_opts,
         checkpointer=hparams["checkpointer"],
     )
+
+    # re-initialize the parameters if we don't use a pretrained model
+    if "pretrained_separator" not in hparams:
+        for module in fastspeech2_brain.modules.values():
+            fastspeech2_brain.reset_layer_recursively(module)
+
     # Training
     fastspeech2_brain.fit(
         fastspeech2_brain.hparams.epoch_counter,

@@ -120,12 +120,20 @@ def prepare_libritts(
     #   return
 
     # Random split the signal list into train, valid, and test sets.
-    data_split = split_sets(wav_list, split_ratio)
+    # data_split = split_sets(wav_list, split_ratio)
     # import pdb; pdb.set_trace()
 
     # Creating json files
+    random.shuffle(wav_list)
+
+    # dev-clean train split - 34 speakers
+    # train_spk_ids = [
+    #   "7976", "6319", "1993", "2902", "174", "6241", "422", "1272", "6313", "2035", "1673", "7850", "3536", "5338", "2277", "3576", "3752", "652", "1462", "1988", "777", "3000", "6345", "3853", "2412", "2428", "251", "1919", "3170", "3081", "2086", "2078", "6295", "5694"
+    # ]
+    train_spk_ids = ["5895", "8297"]
     if "train" in splits:
-      create_json(data_split["train"], 
+      create_json(wav_list, 
+                  train_spk_ids,
                   save_json_train,
                   phoneme_alignments_folder, 
                   sample_rate,
@@ -135,8 +143,12 @@ def prepare_libritts(
                   pitch_max_f0,
                   use_custom_cleaner)
 
+    # dev-clean valid split - 6 speakers - 3M, 3F
+    # valid_spk_ids = ["5895", "8297", "2803", "5536", "8842", "84" ]
+    valid_spk_ids = ["5895", "8297"]
     if "valid" in splits:
-      create_json(data_split["valid"], 
+      create_json(wav_list, 
+                  valid_spk_ids,
                   save_json_valid,
                   phoneme_alignments_folder,
                   sample_rate,
@@ -146,8 +158,11 @@ def prepare_libritts(
                   pitch_max_f0,
                   use_custom_cleaner)
     
+    # dev-clean test split - 0 speakers
+    test_spk_ids = []
     if "test" in splits:
-      create_json(data_split["test"], 
+      create_json(wav_list, 
+                  test_spk_ids,
                   save_json_test,
                   phoneme_alignments_folder,
                   sample_rate,
@@ -159,6 +174,7 @@ def prepare_libritts(
 
 
 def create_json(wav_list, 
+                split_spk_ids,
                 json_file,
                 phoneme_alignments_folder,
                 sample_rate,
@@ -200,6 +216,12 @@ def create_json(wav_list,
         uttid, _ = os.path.splitext(path_parts[-1])
         relative_path = os.path.join("{data_root}", *path_parts[-6:])
 
+        # Gets the speaker-id from the utterance-id
+        spk_id = uttid.split("_")[0]
+
+        if spk_id not in split_spk_ids:
+          continue
+
         # Gets the path for the  text files and extracts the input text
         normalized_text_path = os.path.join(
             "/", *path_parts[:-1], uttid + ".normalized.txt"
@@ -218,9 +240,6 @@ def create_json(wav_list,
             resampled_signal = resampler(signal)
             os.unlink(wav_file)
             torchaudio.save(wav_file, resampled_signal, sample_rate=sample_rate)
-
-        # Gets the speaker-id from the utterance-id
-        spk_id = uttid.split("_")[0]
 
         # Gets the path for the  text files and extracts the input text
         textgrid_path = os.path.join(
