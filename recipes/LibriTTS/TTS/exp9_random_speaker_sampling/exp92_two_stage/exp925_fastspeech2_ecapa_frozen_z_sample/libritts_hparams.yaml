@@ -13,7 +13,7 @@ __set_seed: !apply:torch.manual_seed [!ref <seed>]
 output_folder: !ref results/fastspeech2/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
-epochs: 150 # Note: 100 epochs are enough for good quality
+epochs: 300 # Note: 100 epochs are enough for good quality
 progress_samples: True
 progress_sample_path: !ref <output_folder>/samples
 progress_samples_min_run: 10
@@ -62,17 +62,25 @@ max_f0: 2093 #(torchaudio pyin values)
 ################################
 
 spk_emb_size: 192
+z_spk_emb_size: 192
 spk_emb_sample_rate: 16000
 spk_emb_inject_method: film
 
 ################################
 # Optimization Hyperparameters #
 ################################
-learning_rate: 0.0001
+learning_rate: 0.00001
 weight_decay: 0.000000001
 max_grad_norm: 1.0
-batch_size: 64 #minimum 2
+batch_size: 32 #minimum 2
 betas: [0.98, 0.99]
+
+##################
+# Random sampler #
+##################
+random_sampler: !new:FastSpeech2.Sampler
+  spk_emb_size: !ref <spk_emb_size>
+  z_spk_emb_size: !ref <z_spk_emb_size>
 
 
 ################################
@@ -190,7 +198,7 @@ model: !new:FastSpeech2.FastSpeech2
     pitch_pred_kernel_size: !ref <pitch_pred_kernel_size>
     energy_pred_kernel_size: !ref <energy_pred_kernel_size>
     variance_predictor_dropout: !ref <variance_predictor_dropout>
-    spk_emb_size: !ref <spk_emb_size>
+    spk_emb_size: !ref <z_spk_emb_size>
     spk_emb_inject_method: !ref <spk_emb_inject_method>
 
 mel_spectogram: !name:FastSpeech2.mel_spectogram
@@ -216,6 +224,7 @@ criterion: !new:FastSpeech2.Loss
     mel_loss_weight: 1.0
     postnet_mel_loss_weight: 1.0
     se_triplet_loss_weight: 1.0
+    kl_loss_weight: 1.0
 
 vocoder: "hifi-gan"
 pretrained_vocoder: True
@@ -226,6 +235,7 @@ vocoder_download_path: tmpdir_vocoder
 
 modules:
     model: !ref <model>
+    random_sampler: !ref <random_sampler>
 
 train_dataloader_opts:
     batch_size: !ref <batch_size>
@@ -261,6 +271,7 @@ checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
     recoverables:
         model: !ref <model>
         counter: !ref <epoch_counter>
+        random_sampler: !ref <random_sampler>
 
 input_encoder: !new:speechbrain.dataio.encoder.TextEncoder
 
@@ -276,5 +287,4 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
   loadables:
     model: !ref <model>
   paths:
-    # model: /workspace/mstts_saved_models/exp6033_fastspeech2_ecapa_vc12_ljspeech/model.ckpt
-    model: /content/drive/MyDrive/mstts_saved_models/FastSpeech2/exp6033_fastspeech2_ecapa_vc12_ljspeech/model.ckpt
+    model: /content/drive/MyDrive/mstts_saved_models/FastSpeech2/exp6033_fastspeech2_ecapa/exp6033_fastspeech2_ecapa_ljspeech_e300/model.ckpt

@@ -127,10 +127,10 @@ def prepare_libritts(
     random.shuffle(wav_list)
 
     # dev-clean train split - 34 speakers
-    # train_spk_ids = [
-    #   "7976", "6319", "1993", "2902", "174", "6241", "422", "1272", "6313", "2035", "1673", "7850", "3536", "5338", "2277", "3576", "3752", "652", "1462", "1988", "777", "3000", "6345", "3853", "2412", "2428", "251", "1919", "3170", "3081", "2086", "2078", "6295", "5694"
-    # ]
-    train_spk_ids = ["5895", "8297"]
+    train_spk_ids = [
+      "7976", "6319", "1993", "2902", "174", "6241", "422", "1272", "6313", "2035", "1673", "7850", "3536", "5338", "2277", "3576", "3752", "652", "1462", "1988", "777", "3000", "6345", "3853", "2412", "2428", "251", "1919", "3170", "3081", "2086", "2078", "6295", "5694"
+    ]
+    # train_spk_ids = ["5895", "8297"]
     if "train" in splits:
       create_json(wav_list, 
                   train_spk_ids,
@@ -144,8 +144,8 @@ def prepare_libritts(
                   use_custom_cleaner)
 
     # dev-clean valid split - 6 speakers - 3M, 3F
-    # valid_spk_ids = ["5895", "8297", "2803", "5536", "8842", "84" ]
-    valid_spk_ids = ["5895", "8297"]
+    valid_spk_ids = ["5895", "8297", "2803", "5536", "8842", "84" ]
+    # valid_spk_ids = ["5895", "8297"]
     if "valid" in splits:
       create_json(wav_list, 
                   valid_spk_ids,
@@ -250,7 +250,7 @@ def create_json(wav_list,
           continue
 
         # Get alignments
-        textgrid = tgt.io.read_textgrid(textgrid_path)
+        textgrid = tgt.io.read_textgrid(textgrid_path, include_empty_intervals=True)
         phone, duration, start, end = get_alignment(
             textgrid.get_tier_by_name("phones"),
             sample_rate,
@@ -295,7 +295,7 @@ def create_json(wav_list,
             "durations": duration_file_path,
             "pitch": pitch_file_path
         }
-
+        
     # Writes the dictionary to the json file
     with open(json_file, mode="w") as json_f:
         json.dump(json_dict, json_f, indent=2)

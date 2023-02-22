@@ -321,21 +321,83 @@ class FiLM(nn.Module):
 
     spk_embs_shared_1 = F.relu(self.ms_film_hidden(spk_embs))
         
-    spk_embs_h1 = F.relu(self.ms_film_h(spk_embs_shared_1))
-
-    if len(hidden_states.size()) != len(spk_embs.size()):
-      diff_sz = hidden_states.size()[1]
-      spk_embs_h1 = torch.unsqueeze(spk_embs_h1, 1).repeat(1, diff_sz, 1)
+    spk_embs_h1 = self.ms_film_h(spk_embs_shared_1)
+    spk_embs_h1 = torch.unsqueeze(spk_embs_h1, 1).repeat(1, hidden_states.size()[1], 1)
     hidden_states = hidden_states * spk_embs_h1
 
-    spk_embs_g1 = F.relu(self.ms_film_g(spk_embs_shared_1))
-    if len(hidden_states.size()) != len(spk_embs.size()):
-      diff_sz = hidden_states.size()[1]
-      spk_embs_g1 = torch.unsqueeze(spk_embs_g1, 1).repeat(1, diff_sz, 1)
+    spk_embs_g1 = self.ms_film_g(spk_embs_shared_1)
+    spk_embs_g1 = torch.unsqueeze(spk_embs_g1, 1).repeat(1, hidden_states.size()[1], 1)
     hidden_states = hidden_states + spk_embs_g1
 
     return hidden_states
 
+
+class Sampler(nn.Module):
+  """
+  This module takes a speaker embedding as an input. A transformation is applied
+  to the speaker embedding to map it to a latent space thant should be Gaussian.
+  The output of this module is used as the speaker embedding for the TTS.
+  """
+  def __init__(
+    self,
+    spk_emb_size,
+    z_spk_emb_size,
+  ):
+    super().__init__()
+    self.spk_emb_size = spk_emb_size
+    self.z_spk_emb_size = z_spk_emb_size
+
+    # import pdb; pdb.set_trace()
+    self.linear1_size = int(self.spk_emb_size * 3/2)
+    self.linear2_size = int(self.linear1_size * 3/2)
+    self.linear3_size = int((self.linear2_size + self.z_spk_emb_size) / 2)
+
+    self.linear1 = LinearNorm(self.spk_emb_size, self.linear1_size)
+    self.lnorm1 = LayerNorm(input_size=self.linear1_size)
+    self.linear2 = LinearNorm(self.linear1_size, self.linear2_size)
+    self.lnorm2 = LayerNorm(input_size=self.linear2_size)
+    self.linear3 = LinearNorm(self.linear2_size, self.linear3_size)
+    self.lnorm3 = LayerNorm(input_size=self.linear3_size)
+    self.mean = LinearNorm(self.linear3_size, self.z_spk_emb_size)
+    self.log_var = LinearNorm(self.linear3_size, self.z_spk_emb_size)
+    
+    self.normal = torch.distributions.Normal(0,1)
+
+  def forward(self, spk_embs):
+
+    
+    out = self.linear1(spk_embs)
+    out = self.lnorm1(out)
+    out = F.relu(out)
+    out = self.linear2(out)
+    out = self.lnorm2(out)
+    out = F.relu(out)
+    out = self.linear3(out)
+    out = self.lnorm3(out)
+    out = F.relu(out)
+    z_mean = self.mean(out)
+    z_log_var = self.log_var(out)
+
+    # ToDo: Move these to GPU if available
+    self.normal.loc = self.normal.loc.to(spk_embs.device)
+    self.normal.scale = self.normal.scale.to(spk_embs.device)
+    
+    random_sample = self.normal.sample([spk_embs.shape[0], self.z_spk_emb_size])
+
+    z_spk_embs = z_mean + torch.exp(0.5 * z_log_var) * random_sample
+
+    return z_spk_embs, z_mean, z_log_var
+    
+  @torch.jit.export
+  def infer(self, spk_embs=None):
+
+    if spk_embs != None:
+      z_spk_embs, z_mean, z_log_var = self.forward(spk_embs)
+      return z_mean.squeeze()
+    else:
+      z_spk_embs = self.normal.sample([self.z_spk_emb_size])
+      return z_spk_embs
+      
 
 class FastSpeech2(nn.Module):
     """The FastSpeech2 text-to-speech model.
@@ -854,7 +916,8 @@ class Loss(nn.Module):
         energy_loss_weight,
         mel_loss_weight,
         postnet_mel_loss_weight,
-        se_triplet_loss_weight
+        se_triplet_loss_weight,
+        kl_loss_weight=1.0,
     ):
         super().__init__()
 
@@ -876,6 +939,9 @@ class Loss(nn.Module):
         self.spk_emb_triplet_loss = torch.nn.TripletMarginWithDistanceLoss(
           distance_function=lambda x, y: 1.0 - F.cosine_similarity(x, y)
         )
+
+        # For KL divergence
+        self.kl_loss_weight = kl_loss_weight
 
     def forward(self, predictions, targets, spk_emb_triplets):
         """Computes the value of the loss function and updates stats
@@ -905,7 +971,9 @@ class Loss(nn.Module):
             log_durations,
             predicted_pitch,
             predicted_energy,
-            mel_lens
+            mel_lens,
+            z_mean,
+            z_log_var,
         ) = predictions
         predicted_pitch = predicted_pitch.squeeze()
         predicted_energy = predicted_energy.squeeze()
@@ -974,8 +1042,12 @@ class Loss(nn.Module):
         else:
           spk_emb_triplet_loss = torch.Tensor([0]).to(mel_loss.device)
 
+        kl_loss_t = -0.5 * torch.sum(1 + z_log_var - z_mean ** 2 - torch.exp(z_log_var), dim=-1)
+        kl_loss = torch.mean(kl_loss_t)
+
         total_loss = mel_loss*self.mel_loss_weight \
                     + postnet_mel_loss*self.postnet_mel_loss_weight \
+                    + kl_loss * self.kl_loss_weight \
                     + spk_emb_triplet_loss*self.se_triplet_loss_weight \
                     + dur_loss*self.duration_loss_weight \
                     + pitch_loss*self.pitch_loss_weight \
@@ -985,6 +1057,7 @@ class Loss(nn.Module):
             "total_loss": total_loss,
             "mel_loss": mel_loss*self.mel_loss_weight,
             "postnet_mel_loss": postnet_mel_loss*self.postnet_mel_loss_weight,
+            "kl_loss": kl_loss*self.kl_loss_weight,
             "spk_emb_triplet_loss": spk_emb_triplet_loss*self.se_triplet_loss_weight,
             "dur_loss": dur_loss*self.duration_loss_weight,
             "pitch_loss": pitch_loss*self.pitch_loss_weight,

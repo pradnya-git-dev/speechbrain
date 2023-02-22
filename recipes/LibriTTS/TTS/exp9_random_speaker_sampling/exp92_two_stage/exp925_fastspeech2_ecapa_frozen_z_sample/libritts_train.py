@@ -40,7 +40,7 @@ class FastSpeech2Brain(sb.Brain):
         self.last_loss_stats = {}
 
         self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
-          source="/workspace/mstts_saved_models/ecapa_tdnn_mel_spec_80_voxceleb12",
+          source="/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80",
           run_opts={"device": self.device},
           freeze_params=True
         )
@@ -62,7 +62,14 @@ class FastSpeech2Brain(sb.Brain):
         the model output
         """
         inputs, _ = self.batch_to_device(batch)
-        return self.hparams.model(*inputs)
+        phonemes, spk_embs, durations, pitch, energy = inputs
+
+        z_spk_embs, z_mean, z_log_var = self.modules.random_sampler(spk_embs)
+
+        mel_post, postnet_output, predict_durations, predict_pitch, predict_energy, mel_lens = self.hparams.model(phonemes, z_spk_embs, durations, pitch, energy)
+
+        result = (mel_post, postnet_output, predict_durations, predict_pitch, predict_energy, mel_lens, z_mean, z_log_var)
+        return result
 
     def fit_batch(self, batch):
         """Fits a single batch
@@ -165,6 +172,8 @@ class FastSpeech2Brain(sb.Brain):
             predict_pitch,
             predict_energy,
             predict_mel_lens,
+            z_mean,
+            z_log_var,
         ) = predictions
         self.hparams.progress_sample_logger.remember(
             target=self.process_mel(spectogram, mel_lengths),
@@ -181,6 +190,7 @@ class FastSpeech2Brain(sb.Brain):
                     "labels": labels,
                     "wavs": wavs,
                     "spk_embs": spk_embs,
+                    "z_mean": z_mean,
                 }
             ),
         )
@@ -237,9 +247,10 @@ class FastSpeech2Brain(sb.Brain):
 
             if output_progress_sample:
                 logger.info("Saving predicted samples")
-                inference_mel, mel_lens = self.run_inference()
+                vc_inference_mel, vc_mel_lens, rs_inference_mel, rs_mel_lens = self.run_inference()
                 self.hparams.progress_sample_logger.save(epoch)
-                self.run_vocoder(inference_mel, mel_lens)
+                self.run_vocoder(vc_inference_mel, vc_mel_lens, sample_type="vc")
+                self.run_vocoder(rs_inference_mel, rs_mel_lens, sample_type="rs")
             # Save the current checkpoint and delete previous checkpoints.
             # UNCOMMENT THIS
             self.checkpointer.save_and_keep_only(
@@ -260,13 +271,22 @@ class FastSpeech2Brain(sb.Brain):
             return
         tokens, spk_embs, *_ = self.last_batch
 
-        _, postnet_mel_out, _, _, _, predict_mel_lens =  self.hparams.model(tokens, spk_embs)
+        # Inference for voice cloning
+        z_mean = self.modules.random_sampler.infer(spk_embs)
+
+        _, postnet_mel_out, _, _, _, predict_mel_lens =  self.hparams.model(tokens, z_mean)
         self.hparams.progress_sample_logger.remember(
             infer_output=self.process_mel(postnet_mel_out, [len(postnet_mel_out[0])])
         )
-        return postnet_mel_out, predict_mel_lens
 
-    def run_vocoder(self, inference_mel, mel_lens):
+        # Inference for random speaker generation
+        random_z_spk_emb = self.modules.random_sampler.infer()
+        random_z_spk_embs = random_z_spk_emb.repeat(tokens.shape[0], 1)
+        _, rs_postnet_mel_out, _, _, _, rs_predict_mel_lens =  self.hparams.model(tokens, random_z_spk_embs)
+
+        return postnet_mel_out, predict_mel_lens, rs_postnet_mel_out, rs_predict_mel_lens
+
+    def run_vocoder(self, inference_mel, mel_lens, sample_type=""):
         """Uses a pretrained vocoder to generate audio from predicted mel
         spectogram. By default, uses speechbrain hifigan.
         Arguments
@@ -302,7 +322,7 @@ class FastSpeech2Brain(sb.Brain):
             path = os.path.join(
                 self.hparams.progress_sample_path,
                 str(self.last_epoch),
-                f"pred_{Path(wavs[idx]).stem}.wav",
+                f"pred_{sample_type}_{Path(wavs[idx]).stem}.wav",
             )
             torchaudio.save(path, wav, self.hparams.sample_rate)
 
@@ -482,6 +502,11 @@ def main():
 
     datasets = dataio_prepare(hparams)
 
+    # Load pretrained model if pretrained_separator is present in the yaml
+    if "pretrained_separator" in hparams:
+        hparams["pretrained_separator"].collect_files()
+        hparams["pretrained_separator"].load_collected()
+
     # Brain class initialization
     fastspeech2_brain = FastSpeech2Brain(
         modules=hparams["modules"],
@@ -490,6 +515,12 @@ def main():
         run_opts=run_opts,
         checkpointer=hparams["checkpointer"],
     )
+
+    # re-initialize the parameters if we don't use a pretrained model
+    if "pretrained_separator" not in hparams:
+        for module in fastspeech2_brain.modules.values():
+            fastspeech2_brain.reset_layer_recursively(module)
+
     # Training
     fastspeech2_brain.fit(
         fastspeech2_brain.hparams.epoch_counter,
