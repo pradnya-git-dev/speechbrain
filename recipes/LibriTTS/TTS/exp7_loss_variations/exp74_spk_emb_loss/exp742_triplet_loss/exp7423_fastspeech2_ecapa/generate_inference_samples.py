@@ -105,7 +105,7 @@ spk_emb_resampler = Resample(orig_freq=ORIGINAL_AUDIO_SR, new_freq=SPK_EMB_SR)
 mel_spec_resampler = Resample(orig_freq=ORIGINAL_AUDIO_SR, new_freq=EXP_AUDIO_SR)
 
 # Intialize TTS (tacotron2) and Vocoder (HiFIGAN)
-fastspeech2_ms = MSFastSpeech2.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/TTS/exp7_loss_variations/exp74_spk_emb_loss/exp742_triplet_loss/exp7423_fastspeech2_ecapa/exp7423_fastspeech2_ecapa_vc12_ldc_sub_e150",
+fastspeech2_ms = MSFastSpeech2.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/TTS/exp7_loss_variations/exp74_spk_emb_loss/exp742_triplet_loss/exp7423_fastspeech2_ecapa/exp7423_fastspeech2_ecapa_ldc_sub_e300",
                                         hparams_file="/content/speechbrain/recipes/LibriTTS/TTS/exp7_loss_variations/exp74_spk_emb_loss/exp742_triplet_loss/exp7423_fastspeech2_ecapa/fastspeech2_inf_hparams.yaml",
                                         run_opts={"device": DEVICE})
 
