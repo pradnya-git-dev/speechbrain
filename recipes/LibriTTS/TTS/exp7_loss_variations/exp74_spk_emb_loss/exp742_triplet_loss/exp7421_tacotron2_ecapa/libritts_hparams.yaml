@@ -44,6 +44,10 @@ progress_batch_sample_size: 3
 #################################
 data_folder: !PLACEHOLDER # e.g, /localscratch/ljspeech
 
+train_splits: ["train-clean-100", "train-clean-360", "train-other-500"]
+valid_splits: ["dev-clean"]
+test_splits: ["test-clean", "test-other"]
+
 train_json: !ref <save_folder>/train.json
 valid_json: !ref <save_folder>/valid.json
 test_json: !ref <save_folder>/test.json
@@ -51,9 +55,6 @@ test_json: !ref <save_folder>/test.json
 train_speaker_embeddings_pickle: !ref <save_folder>/train_speaker_embeddings.pickle
 valid_speaker_embeddings_pickle: !ref <save_folder>/valid_speaker_embeddings.pickle
 test_speaker_embeddings_pickle: !ref <save_folder>/test_speaker_embeddings.pickle
-
-splits: ["train", "valid"]
-split_ratio: [90, 10]
 
 skip_prep: False
 
@@ -259,4 +260,4 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
   loadables:
     model: !ref <model>
   paths:
-    model: /workspace/mstts_saved_models/exp6031_tacotron2_ecapa_vc12_ljspeech/model.ckpt
+    model: /content/drive/MyDrive/mstts_saved_models/TTS/exp6/6031_tacotron2_phoneme_film_mlp_ecapa_ljspeech/model.ckpt

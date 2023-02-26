@@ -614,7 +614,9 @@ if __name__ == "__main__":
             "save_json_valid": hparams["valid_json"],
             "save_json_test": hparams["test_json"],
             "sample_rate": hparams["sample_rate"],
-            "split_ratio": hparams["split_ratio"],
+            "train_splits": hparams["train_splits"],
+            "valid_splits": hparams["valid_splits"],
+            "test_splits": hparams["test_splits"],
             "seed": hparams["seed"],
         },
     )
