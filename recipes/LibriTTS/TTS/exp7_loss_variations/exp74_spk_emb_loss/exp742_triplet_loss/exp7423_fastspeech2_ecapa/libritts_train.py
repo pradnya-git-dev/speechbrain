@@ -403,7 +403,7 @@ def dataio_prepare(hparams):
     datasets = {}
 
     # import pdb; pdb.set_trace()
-    for dataset in hparams["splits"]:
+    for dataset in ["train", "valid", "test"]:
         datasets[dataset] = sb.dataio.dataset.DynamicItemDataset.from_json(
             json_path=hparams[f"{dataset}_json"],
             replacements={"data_root": hparams["data_folder"]},
@@ -437,8 +437,9 @@ def main():
             "save_json_valid": hparams["valid_json"],
             "save_json_test": hparams["test_json"],
             "sample_rate": hparams["sample_rate"],
-            "splits": hparams["splits"],
-            "split_ratio": hparams["split_ratio"],
+            "train_splits": hparams["train_splits"],
+            "valid_splits": hparams["valid_splits"],
+            "test_splits": hparams["test_splits"],
             "model_name": hparams["model"].__class__.__name__,
             "seed": hparams["seed"],
             "pitch_n_fft": hparams["n_fft"],
