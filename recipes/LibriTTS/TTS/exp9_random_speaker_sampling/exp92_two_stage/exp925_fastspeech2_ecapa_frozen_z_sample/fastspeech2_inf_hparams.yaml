@@ -8,8 +8,16 @@
 ################################
 
 spk_emb_size: 192
+z_spk_emb_size: 192
 spk_emb_sample_rate: 16000
 spk_emb_inject_method: film
+
+##################
+# Random sampler #
+##################
+random_sampler: !new:FastSpeech2.Sampler
+  spk_emb_size: !ref <spk_emb_size>
+  z_spk_emb_size: !ref <z_spk_emb_size>
 
 
 # Input parameters
@@ -124,7 +132,7 @@ model: !new:FastSpeech2.FastSpeech2
     pitch_pred_kernel_size: !ref <pitch_pred_kernel_size>
     energy_pred_kernel_size: !ref <energy_pred_kernel_size>
     variance_predictor_dropout: !ref <variance_predictor_dropout>
-    spk_emb_size: !ref <spk_emb_size>
+    spk_emb_size: !ref <z_spk_emb_size>
     spk_emb_inject_method: !ref <spk_emb_inject_method>
 
 
@@ -132,7 +140,9 @@ input_encoder: !new:speechbrain.dataio.encoder.TextEncoder
 
 modules:
     model: !ref <model>
+    random_sampler: !ref <random_sampler>
 
 pretrainer: !new:speechbrain.utils.parameter_transfer.Pretrainer
     loadables:
         model: !ref <model>
+        random_sampler: !ref <random_sampler>

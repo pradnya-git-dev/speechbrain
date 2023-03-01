@@ -253,7 +253,7 @@ class MSFastSpeech2(Pretrained):
     >>> waveforms = hifi_gan.decode_batch(mel_output)
     """
 
-    HPARAMS_NEEDED = ["model", "input_encoder"]
+    HPARAMS_NEEDED = ["model", "input_encoder", "random_sampler"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -264,7 +264,7 @@ class MSFastSpeech2(Pretrained):
         self.input_encoder.add_unk()
         self.g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p")
 
-    def encode_batch(self, texts, spk_embs, pace=1.1):
+    def encode_batch(self, texts, spk_embs=None, pace=1.1):
         """Computes mel-spectrogram for a list of texts
 
         Arguments
@@ -301,16 +301,23 @@ class MSFastSpeech2(Pretrained):
             inputs = speechbrain.dataio.batch.PaddedBatch(inputs).to(self.device)
             spk_embs = spk_embs.to(self.device)
 
+            z_spk_embs = self.hparams.random_sampler.infer(spk_embs)
+            z_spk_embs = z_spk_embs.to(self.device)
+
+            z_spk_embs = [z_spk_embs for i in range(len(texts))]
+
+            z_spk_embs = torch.stack(z_spk_embs)
+
             mel_outputs, _, durations, pitch, energy, _ = self.hparams.model(
-                inputs.phoneme_sequences.data, spk_embs, pace=pace
+                inputs.phoneme_sequences.data, z_spk_embs, pace=pace
             )
 
             # Transposes to make in compliant with HiFI GAN expected format
             mel_outputs = mel_outputs.transpose(-1, 1)
 
-        return mel_outputs, durations, pitch, energy
+        return mel_outputs, durations, pitch, energy, z_spk_embs
 
-    def encode_text(self, text, spk_embs, pace=1.1):
+    def encode_text(self, text, spk_embs=None, pace=1.1):
         """Runs inference for a single text str
         Arguments
         ---------
@@ -321,7 +328,7 @@ class MSFastSpeech2(Pretrained):
         """
         return self.encode_batch([text], spk_embs, pace=pace)
 
-    def forward(self, texts, spk_embs, pace=1.1):
+    def forward(self, texts, spk_embs=None, pace=1.1):
         """Encodes the input texts.
         Arguments
         ---------

@@ -8,9 +8,11 @@ from speechbrain.utils.data_utils import get_all_files
 import os
 import torchaudio
 from torch import nn
-
 from speechbrain.pretrained import GraphemeToPhoneme
-import torch
+from torch.utils.tensorboard import SummaryWriter
+import tensorflow as tf
+import tensorboard as tb
+tf.io.gfile = tb.compat.tensorflow_stub.io.gfile
 
 DEVICE = "cuda:0"
 
@@ -19,6 +21,10 @@ ORIGINAL_AUDIO_SR = 24000
 EXP_AUDIO_SR = 16000
 SPK_EMB_SR = 16000
 PHONEME_INPUT = False
+TB_LOG_DIR = "/content/speechbrain/recipes/LibriTTS/TTS/exp9_random_speaker_sampling/exp92_two_stage/exp925_fastspeech2_ecapa_frozen_z_sample/inf_tensorboard"
+if not os.path.exists(TB_LOG_DIR):
+  os.mkdir(TB_LOG_DIR)
+tb_writer = SummaryWriter(TB_LOG_DIR)
 
 
 def dynamic_range_compression(x, C=1, clip_val=1e-5):
@@ -117,6 +123,9 @@ wav_list = get_all_files(INF_SAMPLE_DIR, match_and=extension)
 
 cos_sim_score = nn.CosineSimilarity()
 COS_SIM_SCORES_FILE = INF_SAMPLE_DIR + "/cos_sim_scores.txt"
+
+embs_list = list()
+embs_labels_list = list()
 with open(COS_SIM_SCORES_FILE, "w+") as cs_f:
 
   for wav_file in wav_list:
@@ -173,11 +182,16 @@ with open(COS_SIM_SCORES_FILE, "w+") as cs_f:
 
     print("Speaker embedding shape: ", spk_emb.shape)
 
-    mel_output_ms, durations, pitch, energy= fastspeech2_ms.encode_text(original_text, spk_emb)
+    mel_output_ms, durations, pitch, energy, z_spk_emb = fastspeech2_ms.encode_text(original_text, spk_emb)
     waveform_ms = hifi_gan.decode_batch(mel_output_ms)
     print("mel_output_ms.shape: ", mel_output_ms.shape)
     synthesized_audio_path = os.path.join("/", *path_parts[:-1], uttid + "_synthesized.wav")
     torchaudio.save(synthesized_audio_path, waveform_ms.squeeze(1).cpu(), EXP_AUDIO_SR)
+
+    embs_list.append(spk_emb.squeeze())
+    embs_labels_list.append("spk_emb_" + uttid.split("_")[0])
+    embs_list.append(z_spk_emb.squeeze())
+    embs_labels_list.append("z_spk_emb_" + uttid.split("_")[0])
 
     common_phrase = "Mary had a little lamb."
     if PHONEME_INPUT:
@@ -187,7 +201,7 @@ with open(COS_SIM_SCORES_FILE, "w+") as cs_f:
       common_phrase = "{" + common_phrase + "}"
       print(common_phrase)
 
-    mel_output_cp, durations, pitch, energy = fastspeech2_ms.encode_text(common_phrase, spk_emb)
+    mel_output_cp, durations, pitch, energy, z_spk_emb = fastspeech2_ms.encode_text(common_phrase)
     waveform_cp = hifi_gan.decode_batch(mel_output_cp)
     print("mel_output_ms.shape: ", mel_output_ms.shape)
     cp_audio_path = os.path.join("/", *path_parts[:-1], uttid + "_synthesized_common_phrase.wav")
@@ -206,3 +220,9 @@ with open(COS_SIM_SCORES_FILE, "w+") as cs_f:
 
     print("{} {:.3f} {:.3f}\n".format(uttid, cs_synthesized, cs_cp_syntheseized))
     cs_f.write("{} {:.3f} {:.3f}\n".format(uttid, cs_synthesized, cs_cp_syntheseized))
+
+combined_embs = torch.stack(embs_list)
+tb_writer.add_embedding(
+  combined_embs,
+  metadata=embs_labels_list,
+)
