@@ -299,7 +299,9 @@ class MSFastSpeech2(Pretrained):
                 for item in phoneme_seqs
             ]
             inputs = speechbrain.dataio.batch.PaddedBatch(inputs).to(self.device)
-            spk_embs = spk_embs.to(self.device)
+
+            if spk_embs != None:
+              spk_embs = spk_embs.to(self.device)
 
             z_spk_embs = self.hparams.random_sampler.infer(spk_embs)
             z_spk_embs = z_spk_embs.to(self.device)
