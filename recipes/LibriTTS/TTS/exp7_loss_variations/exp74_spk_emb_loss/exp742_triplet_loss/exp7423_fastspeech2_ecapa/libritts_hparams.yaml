@@ -13,7 +13,7 @@ __set_seed: !apply:torch.manual_seed [!ref <seed>]
 output_folder: !ref results/fastspeech2/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
-epochs: 300 # Note: 100 epochs are enough for good quality
+epochs: 1 # Note: 100 epochs are enough for good quality
 progress_samples: True
 progress_sample_path: !ref <output_folder>/samples
 progress_samples_min_run: 10
@@ -33,8 +33,9 @@ train_speaker_embeddings_pickle: !ref <save_folder>/train_speaker_embeddings.pic
 valid_speaker_embeddings_pickle: !ref <save_folder>/valid_speaker_embeddings.pickle
 test_speaker_embeddings_pickle: !ref <save_folder>/test_speaker_embeddings.pickle
 
-splits: ["train", "valid"]
-split_ratio: [90, 10]
+train_splits: ["dev-clean"]
+valid_splits: ["dev-clean"]
+test_splits: ["dev-clean"]
 
 skip_prep: False
 
@@ -71,7 +72,7 @@ spk_emb_inject_method: film
 learning_rate: 0.00001
 weight_decay: 0.000000001
 max_grad_norm: 1.0
-batch_size: 64 #minimum 2
+batch_size: 16 #minimum 2
 betas: [0.98, 0.99]
 
 
@@ -243,6 +244,14 @@ valid_dataloader_opts:
     collate_fn: !new:FastSpeech2.TextMelCollate
       speaker_embeddings_pickle: !ref <valid_speaker_embeddings_pickle>
 
+test_dataloader_opts:
+    batch_size: !ref <batch_size>
+    drop_last: True
+    num_workers: 4
+    shuffle: False
+    collate_fn: !new:FastSpeech2.TextMelCollate
+      speaker_embeddings_pickle: !ref <test_speaker_embeddings_pickle>
+
 #optimizer
 opt_class: !name:torch.optim.Adam
     lr: !ref <learning_rate>
@@ -278,4 +287,4 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
     model: !ref <model>
   paths:
     # model: /workspace/mstts_saved_models/exp6033_fastspeech2_ecapa_vc12_ljspeech/model.ckpt
-    model: /content/drive/MyDrive/mstts_saved_models/FastSpeech2/exp6033_fastspeech2_ecapa_vc12_ljspeech/model.ckpt
+    model: /content/drive/MyDrive/mstts_saved_models/FastSpeech2/exp6033_fastspeech2_ecapa/exp6033_fastspeech2_ecapa_ljspeech_e300/model.ckpt

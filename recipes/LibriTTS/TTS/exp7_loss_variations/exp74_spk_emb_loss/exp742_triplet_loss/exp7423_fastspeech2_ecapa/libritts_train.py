@@ -456,10 +456,11 @@ def main():
     sb.utils.distributed.run_on_main(
         compute_speaker_embeddings,
         kwargs={
-            "input_filepaths": [hparams["train_json"], hparams["valid_json"]],
+            "input_filepaths": [hparams["train_json"], hparams["valid_json"], hparams["test_json"]],
             "output_file_paths": [
                 hparams["train_speaker_embeddings_pickle"],
                 hparams["valid_speaker_embeddings_pickle"],
+                hparams["test_speaker_embeddings_pickle"],
             ],
             "data_folder": hparams["data_folder"],
             "audio_sr": hparams["sample_rate"],
@@ -510,6 +511,13 @@ def main():
         train_loader_kwargs=hparams["train_dataloader_opts"],
         valid_loader_kwargs=hparams["valid_dataloader_opts"],
     )
+
+    # Test
+    if "test" in datasets:
+        fastspeech2_brain.evaluate(
+            datasets["test"],
+            test_loader_kwargs=hparams["test_dataloader_opts"],
+        )
 
 
 if __name__ == "__main__":

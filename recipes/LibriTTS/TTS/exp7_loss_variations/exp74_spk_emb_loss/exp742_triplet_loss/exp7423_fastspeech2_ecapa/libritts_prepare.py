@@ -12,9 +12,6 @@ import tgt
 import numpy as np
 
 logger = logging.getLogger(__name__)
-# Change the entries in the following "LIBRITTS_SUBSETS" to modify the downloaded subsets for LibriTTS
-# Used subsets ["dev-clean", "train-clean-100", "train-clean-360"]
-LIBRITTS_SUBSETS = ["dev-clean"]
 LIBRITTS_URL_PREFIX = "https://www.openslr.org/resources/60/"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -71,15 +68,16 @@ def prepare_libritts(
         logger.info("Preparation completed in previous run, skipping.")
         return
 
-
     phoneme_alignments_folder = os.path.join(data_folder, "TextGrid")
+
+    """
     duration_folder = os.path.join(data_folder, "durations")
     if not os.path.exists(duration_folder):
       os.makedirs(duration_folder)
     pitch_folder = os.path.join(data_folder, "pitch")
     if not os.path.exists(pitch_folder):
       os.makedirs(pitch_folder)
-
+    """
 
     prepare_split(
       data_folder, 
@@ -203,6 +201,8 @@ def create_json(wav_list,
     # Creates a resampler object with orig_freq set to LibriTTS sample rate (24KHz) and  new_freq set to SAMPLERATE
     resampler = Resample(orig_freq=24000, new_freq=sample_rate)
 
+    sample_counter = 0
+
     # Processes all the wav files in the list
     for wav_file in wav_list:
 
@@ -242,7 +242,7 @@ def create_json(wav_list,
             phoneme_alignments_folder, spk_id, f"{uttid}.TextGrid"
         )
         if not os.path.exists(textgrid_path):
-          print("Skipping because this does not exist: ", textgrid_path)
+          print("Skipping because this textgrid does not exist: ", textgrid_path)
           continue
 
         # Get alignments
@@ -254,7 +254,7 @@ def create_json(wav_list,
         )
         label_phoneme = " ".join(phone)
         if start >= end:
-            print(f"Skipping {uttid}")
+            print(f"Skipping {uttid} because start time >= end time ")
             continue
 
         duration_file_path = os.path.join("/", *path_parts[:-1], uttid + "_durations.npy")
@@ -291,6 +291,10 @@ def create_json(wav_list,
             "durations": duration_file_path,
             "pitch": pitch_file_path
         }
+
+        sample_counter += 1
+        if sample_counter > 64:
+          break
 
     # Writes the dictionary to the json file
     with open(json_file, mode="w") as json_f:
