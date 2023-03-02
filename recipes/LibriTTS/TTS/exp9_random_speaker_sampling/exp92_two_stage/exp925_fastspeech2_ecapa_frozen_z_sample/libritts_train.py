@@ -101,7 +101,7 @@ class FastSpeech2Brain(sb.Brain):
             A one-element tensor used for backpropagating the gradient.
         """
         x, y, metadata = self.batch_to_device(batch, return_metadata=True)
-        self.last_batch = [x[0], x[1], y[-1], y[-2], predictions[0], *metadata]
+        self.last_batch = [x[0], x[1], y[0], y[-1], y[-2], predictions[0], *metadata]
         self._remember_sample([x[0], x[1], *y, *metadata], predictions)
 
         self.spk_emb_mel_spec_encoder.eval()
@@ -249,6 +249,9 @@ class FastSpeech2Brain(sb.Brain):
                 logger.info("Saving predicted samples")
                 vc_inference_mel, vc_mel_lens, rs_inference_mel, rs_mel_lens = self.run_inference()
                 self.hparams.progress_sample_logger.save(epoch)
+
+                _, _, target_mel_spec, target_mel_lens, *_ = self.last_batch
+                self.run_vocoder(target_mel_spec, target_mel_lens, sample_type="target")
                 self.run_vocoder(vc_inference_mel, vc_mel_lens, sample_type="vc")
                 self.run_vocoder(rs_inference_mel, rs_mel_lens, sample_type="rs")
             # Save the current checkpoint and delete previous checkpoints.
@@ -280,8 +283,13 @@ class FastSpeech2Brain(sb.Brain):
         )
 
         # Inference for random speaker generation
-        random_z_spk_emb = self.modules.random_sampler.infer()
-        random_z_spk_embs = random_z_spk_emb.repeat(tokens.shape[0], 1)
+        
+        random_z_spk_embs = []
+        for i in range(tokens.shape[0]):
+          random_z_spk_embs.append(self.modules.random_sampler.infer().squeeze())
+
+        random_z_spk_embs = torch.stack(random_z_spk_embs)
+
         _, rs_postnet_mel_out, _, _, _, rs_predict_mel_lens =  self.hparams.model(tokens, random_z_spk_embs)
 
         return postnet_mel_out, predict_mel_lens, rs_postnet_mel_out, rs_predict_mel_lens
