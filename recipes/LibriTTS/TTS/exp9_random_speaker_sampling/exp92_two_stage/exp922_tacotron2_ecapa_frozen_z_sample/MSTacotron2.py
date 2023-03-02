@@ -1295,7 +1295,7 @@ class Sampler(nn.Module):
 
     if spk_embs != None:
       z_spk_embs, z_mean, z_log_var = self.forward(spk_embs)
-      return z_mean.squeeze()
+      return z_mean.squeeze(), z_log_var.squeeze()
     else:
       z_spk_embs = self.normal.sample([self.z_spk_emb_size])
       return z_spk_embs

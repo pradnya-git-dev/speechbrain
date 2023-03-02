@@ -1,3 +1,4 @@
+from re import I
 import speechbrain
 from speechbrain.pretrained import Pretrained
 from speechbrain.utils.text_to_sequence import text_to_sequence
@@ -102,25 +103,40 @@ class MSTacotron2(Pretrained):
                 }
                 for item in texts
             ]
-            inputs = speechbrain.dataio.batch.PaddedBatch(inputs)
+            # inputs = speechbrain.dataio.batch.PaddedBatch(inputs)
 
             lens = [self.text_to_seq(item)[1] for item in texts]
             assert lens == sorted(
                 lens, reverse=True
             ), "ipnut lengths must be sorted in decreasing order"
+            # input_lengths = torch.tensor(lens, device=self.device)
+
+            if spk_embs != None:
+              z_mean, z_log_var = self.hparams.random_sampler.infer(spk_embs)
+              z_mean = z_mean.to(self.device)
+
+              k = 1
+              top_indices = torch.topk(z_log_var, k).indices
+
+              inputs = inputs * (k*7)
+              lens = lens * (k*7)
+              z_mean = z_mean.unsqueeze(0).repeat(k*7, 1)
+              for idx in range(k):
+                for sd in range(0, 7):
+                  z_mean[idx * k + sd][top_indices[idx].item()] = sd - 3
+            else:
+              z_mean = self.hparams.random_sampler.infer(spk_embs)
+              z_mean = z_mean.to(self.device)
+              z_mean = [z_mean for i in range(len(texts))]
+              z_mean = torch.stack(z_mean)
+
+            inputs = speechbrain.dataio.batch.PaddedBatch(inputs)
             input_lengths = torch.tensor(lens, device=self.device)
-
-            z_spk_embs = self.hparams.random_sampler.infer(spk_embs)
-            z_spk_embs = z_spk_embs.to(self.device)
-
-            z_spk_embs = [z_spk_embs for i in range(len(texts))]
-
-            z_spk_embs = torch.stack(z_spk_embs)
-
+            # combined_z_spk_embs = torch.stack(combined_z_spk_embs)
             mel_outputs_postnet, mel_lengths, alignments = self.infer(
-                inputs.text_sequences.data, z_spk_embs, input_lengths
+                inputs.text_sequences.data, z_mean, input_lengths
             )
-        return mel_outputs_postnet, mel_lengths, alignments, z_spk_embs
+        return mel_outputs_postnet, mel_lengths, alignments, z_mean
 
     def encode_text(self, text, spk_embs=None):
         """Runs inference for a single text str"""

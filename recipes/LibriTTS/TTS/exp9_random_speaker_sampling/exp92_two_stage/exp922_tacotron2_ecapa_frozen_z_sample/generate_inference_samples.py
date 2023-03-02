@@ -183,11 +183,13 @@ with open(COS_SIM_SCORES_FILE, "w+") as cs_f:
 
     print("Speaker embedding shape: ", spk_emb.shape)
 
+    import pdb; pdb.set_trace()
     mel_output_ms, mel_length_ms, alignment_ms, z_spk_emb = tacotron2_ms.encode_text(original_text, spk_emb)
     waveform_ms = hifi_gan.decode_batch(mel_output_ms)
     print("mel_output_ms.shape: ", mel_output_ms.shape)
-    synthesized_audio_path = os.path.join("/", *path_parts[:-1], uttid + "_synthesized.wav")
-    torchaudio.save(synthesized_audio_path, waveform_ms.squeeze(1).cpu(), EXP_AUDIO_SR)
+    for i in range(-3, 4):
+      synthesized_audio_path = os.path.join("/", *path_parts[:-1], uttid + f"_{i}_synthesized.wav")
+      torchaudio.save(synthesized_audio_path, waveform_ms[i].squeeze(1).cpu(), EXP_AUDIO_SR)
 
     embs_list.append(spk_emb.squeeze())
     embs_labels_list.append("spk_emb_" + uttid.split("_")[0])
