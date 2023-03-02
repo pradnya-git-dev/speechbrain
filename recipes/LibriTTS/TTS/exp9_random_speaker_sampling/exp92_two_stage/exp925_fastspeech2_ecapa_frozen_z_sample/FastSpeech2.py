@@ -943,7 +943,7 @@ class Loss(nn.Module):
         # For KL divergence
         self.kl_loss_weight = kl_loss_weight
 
-    def forward(self, predictions, targets, spk_emb_triplets):
+    def forward(self, predictions, targets, spk_emb_triplets, spk_ids):
         """Computes the value of the loss function and updates stats
         Arguments
         ---------
@@ -1034,7 +1034,7 @@ class Loss(nn.Module):
         pitch_loss = torch.div(pitch_loss, len(mel_target))
         energy_loss = torch.div(energy_loss, len(mel_target))
 
-        # Triplet loss calculation for speaker embeddings
+        # Triplet loss calculation for speaker embeddings after speech synthesis
         anchor_spk_embs, pos_spk_embs, neg_spk_embs = spk_emb_triplets
 
         if anchor_spk_embs != None:
@@ -1042,12 +1042,16 @@ class Loss(nn.Module):
         else:
           spk_emb_triplet_loss = torch.Tensor([0]).to(mel_loss.device)
 
+        # Triplet loss calculation for z_spk_embs
+        z_spk_emb_loss = self.get_spk_emb_triplet_loss(spk_ids, z_mean)
+
         kl_loss_t = -0.5 * torch.sum(1 + z_log_var - z_mean ** 2 - torch.exp(z_log_var), dim=-1)
         kl_loss = torch.mean(kl_loss_t)
 
         total_loss = mel_loss*self.mel_loss_weight \
                     + postnet_mel_loss*self.postnet_mel_loss_weight \
-                    + kl_loss * self.kl_loss_weight \
+                    + kl_loss*self.kl_loss_weight \
+                    + z_spk_emb_loss*self.se_triplet_loss_weight \
                     + spk_emb_triplet_loss*self.se_triplet_loss_weight \
                     + dur_loss*self.duration_loss_weight \
                     + pitch_loss*self.pitch_loss_weight \
@@ -1058,12 +1062,53 @@ class Loss(nn.Module):
             "mel_loss": mel_loss*self.mel_loss_weight,
             "postnet_mel_loss": postnet_mel_loss*self.postnet_mel_loss_weight,
             "kl_loss": kl_loss*self.kl_loss_weight,
+            "z_spk_emb_loss": z_spk_emb_loss*self.se_triplet_loss_weight ,
             "spk_emb_triplet_loss": spk_emb_triplet_loss*self.se_triplet_loss_weight,
             "dur_loss": dur_loss*self.duration_loss_weight,
             "pitch_loss": pitch_loss*self.pitch_loss_weight,
             "energy_loss": energy_loss*self.energy_loss_weight,
         }
         return loss
+
+    def get_spk_emb_triplet_loss(self, spk_ids, spk_embs):
+
+      # import pdb; pdb.set_trace()
+      spk_emb_triplet_loss = torch.Tensor([0]).to(spk_embs.device)
+      anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
+
+      if anchor_se_idx.shape[0] != 0:
+
+        anchor_se_idx = anchor_se_idx.to(spk_embs.device, non_blocking=True).long()
+        pos_se_idx = pos_se_idx.to(spk_embs.device, non_blocking=True).long()
+        neg_se_idx = neg_se_idx.to(spk_embs.device, non_blocking=True).long()
+        
+        anchor_spk_embs = spk_embs[anchor_se_idx]
+        pos_spk_embs = spk_embs[pos_se_idx]
+        neg_spk_embs = spk_embs[neg_se_idx]
+
+        # spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
+
+        spk_emb_triplet_loss = self.spk_emb_triplet_loss(anchor_spk_embs, pos_spk_embs, neg_spk_embs)
+
+      return spk_emb_triplet_loss
+
+
+
+    def get_triplets(self, spk_ids):  
+      anchor_se_idx, pos_se_idx, neg_se_idx = None, None, None
+      spk_idx_tuples = list()
+      for i in range(len(spk_ids) - 1):
+        for j in range(i + 1, len(spk_ids)):
+          if spk_ids[i] == spk_ids[j]:
+            for k in range(len(spk_ids)):
+              if spk_ids[j] != spk_ids[k]:
+                spk_idx_tuples.append((i, j, k))
+      
+      anchor_se_idx = torch.LongTensor([i for (i, j, k) in spk_idx_tuples])
+      pos_se_idx = torch.LongTensor([j for (i, j, k) in spk_idx_tuples])
+      neg_se_idx = torch.LongTensor([k for (i, j, k) in spk_idx_tuples])
+
+      return (anchor_se_idx, pos_se_idx, neg_se_idx)
 
 
 def mel_spectogram(

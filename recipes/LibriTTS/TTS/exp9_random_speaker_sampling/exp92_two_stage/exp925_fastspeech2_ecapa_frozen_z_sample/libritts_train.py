@@ -138,7 +138,7 @@ class FastSpeech2Brain(sb.Brain):
 
           spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
 
-        loss = self.hparams.criterion(predictions, y, spk_emb_triplets)
+        loss = self.hparams.criterion(predictions, y, spk_emb_triplets, spk_ids)
         self.last_loss_stats[stage] = scalarize(loss)
         return loss["total_loss"]
 

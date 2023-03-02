@@ -31,7 +31,7 @@ tb_writer = SummaryWriter(TB_LOG_DIR)
 g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p", run_opts={"device":DEVICE})
 
 # Intialize TTS (tacotron2) and Vocoder (HiFIGAN)
-fastspeech2_ms = MSFastSpeech2.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/FastSpeech2/exp9_random_speaker_sampling/exp92_two_stage/exp925_fastspeech2_ecapa_frozen_z_sample_b100_ldc_sub_e300",
+fastspeech2_ms = MSFastSpeech2.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/FastSpeech2/exp9_random_speaker_sampling/exp92_two_stage/exp925_fastspeech2_ecapa_frozen_z_sample_ldc_sub_e300",
                                         hparams_file="/content/speechbrain/recipes/LibriTTS/TTS/exp9_random_speaker_sampling/exp92_two_stage/exp925_fastspeech2_ecapa_frozen_z_sample/fastspeech2_inf_hparams.yaml",
                                         run_opts={"device": DEVICE})
 
@@ -41,7 +41,7 @@ hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-libritts-16kHz",
 embs_list = list()
 embs_labels_list = list()
 common_phrase = "Mary had a little lamb."
-for i in range(512):
+for i in range(5):
     if PHONEME_INPUT:
       print(common_phrase)
       common_phrase_phoneme_list = g2p(common_phrase)
