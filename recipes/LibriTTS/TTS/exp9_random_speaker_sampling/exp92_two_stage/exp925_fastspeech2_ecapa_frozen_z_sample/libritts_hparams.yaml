@@ -33,6 +33,11 @@ train_speaker_embeddings_pickle: !ref <save_folder>/train_speaker_embeddings.pic
 valid_speaker_embeddings_pickle: !ref <save_folder>/valid_speaker_embeddings.pickle
 test_speaker_embeddings_pickle: !ref <save_folder>/test_speaker_embeddings.pickle
 
+train_splits: ["dev-clean"]
+valid_splits: ["dev-clean"]
+test_splits: ["dev-clean"]
+
+# Remove for the big experiment
 splits: ["train", "valid"]
 split_ratio: [90, 10]
 
@@ -69,11 +74,13 @@ spk_emb_inject_method: film
 ################################
 # Optimization Hyperparameters #
 ################################
-learning_rate: 0.0001
+learning_rate: 0.00001
 weight_decay: 0.000000001
 max_grad_norm: 1.0
 batch_size: 32 #minimum 2
 betas: [0.98, 0.99]
+
+kl_loss_weight: 1.0
 
 ##################
 # Random sampler #
@@ -224,7 +231,7 @@ criterion: !new:FastSpeech2.Loss
     mel_loss_weight: 1.0
     postnet_mel_loss_weight: 1.0
     se_triplet_loss_weight: 1.0
-    kl_loss_weight: 1.0
+    kl_loss_weight: !ref <kl_loss_weight>
 
 vocoder: "hifi-gan"
 pretrained_vocoder: True
@@ -239,7 +246,7 @@ modules:
 
 train_dataloader_opts:
     batch_size: !ref <batch_size>
-    drop_last: False  #True #False
+    drop_last: True  #True #False
     num_workers: 16
     shuffle: True
     collate_fn: !new:FastSpeech2.TextMelCollate
@@ -247,10 +254,19 @@ train_dataloader_opts:
 
 valid_dataloader_opts:
     batch_size: !ref <batch_size>
+    drop_last: True
     num_workers: 4
     shuffle: False
     collate_fn: !new:FastSpeech2.TextMelCollate
       speaker_embeddings_pickle: !ref <valid_speaker_embeddings_pickle>
+
+test_dataloader_opts:
+    batch_size: !ref <batch_size>
+    drop_last: True
+    num_workers: 4
+    shuffle: False
+    collate_fn: !new:FastSpeech2.TextMelCollate
+      speaker_embeddings_pickle: !ref <test_speaker_embeddings_pickle>
 
 #optimizer
 opt_class: !name:torch.optim.Adam
@@ -287,4 +303,5 @@ pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
   loadables:
     model: !ref <model>
   paths:
+    # model: /workspace/mstts_saved_models/exp6033_fastspeech2_ecapa_vc12_ljspeech/model.ckpt
     model: /content/drive/MyDrive/mstts_saved_models/FastSpeech2/exp6033_fastspeech2_ecapa/exp6033_fastspeech2_ecapa_ljspeech_e300/model.ckpt

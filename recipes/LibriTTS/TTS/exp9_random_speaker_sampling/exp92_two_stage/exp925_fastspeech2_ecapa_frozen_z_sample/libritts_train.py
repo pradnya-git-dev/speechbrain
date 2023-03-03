@@ -62,13 +62,40 @@ class FastSpeech2Brain(sb.Brain):
         the model output
         """
         inputs, _ = self.batch_to_device(batch)
+
+        # inputs = (phonemes, spk_embs, durations, pitch, energy)
+
+        # Gets speaker embeddings from inputs
         phonemes, spk_embs, durations, pitch, energy = inputs
 
-        z_spk_embs, z_mean, z_log_var = self.modules.random_sampler(spk_embs)
+        # Maps spk_embs to the latent space
+        z_spk_embs, z_mean, z_log_var = self.hparams.random_sampler(spk_embs)
 
-        mel_post, postnet_output, predict_durations, predict_pitch, predict_energy, mel_lens = self.hparams.model(phonemes, z_spk_embs, durations, pitch, energy)
+        # Runs input through the model
+        # Expected input = tokens, spk_embs, durations=None, pitch=None, energy=None, pace=1.0
+        # Expected output = mel_post, postnet_output, predict_durations, predict_pitch, predict_energy, mel_lens
 
-        result = (mel_post, postnet_output, predict_durations, predict_pitch, predict_energy, mel_lens, z_mean, z_log_var)
+        (
+          mel_post, 
+          postnet_output, 
+          predict_durations, 
+          predict_pitch, 
+          predict_energy, 
+          mel_lens
+        ) = self.hparams.model(phonemes, z_spk_embs, durations, pitch, energy)
+
+        # Constructs the results to be passed for loss computations
+        result = (
+          mel_post, 
+          postnet_output, 
+          predict_durations, 
+          predict_pitch, 
+          predict_energy, 
+          mel_lens,
+          z_mean,
+          z_log_var
+        )
+
         return result
 
     def fit_batch(self, batch):
@@ -101,6 +128,9 @@ class FastSpeech2Brain(sb.Brain):
             A one-element tensor used for backpropagating the gradient.
         """
         x, y, metadata = self.batch_to_device(batch, return_metadata=True)
+        # x = (phonemes, spk_embs, durations, pitch, energy)
+        # y = (spectogram, durations, pitch, energy, mel_lengths, input_lengths)
+
         self.last_batch = [x[0], x[1], y[0], y[-1], y[-2], predictions[0], *metadata]
         self._remember_sample([x[0], x[1], *y, *metadata], predictions)
 
@@ -138,7 +168,7 @@ class FastSpeech2Brain(sb.Brain):
 
           spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
 
-        loss = self.hparams.criterion(predictions, y, spk_emb_triplets, spk_ids)
+        loss = self.hparams.criterion(predictions, y, spk_emb_triplets)
         self.last_loss_stats[stage] = scalarize(loss)
         return loss["total_loss"]
 
@@ -173,7 +203,7 @@ class FastSpeech2Brain(sb.Brain):
             predict_energy,
             predict_mel_lens,
             z_mean,
-            z_log_var,
+            z_log_var
         ) = predictions
         self.hparams.progress_sample_logger.remember(
             target=self.process_mel(spectogram, mel_lengths),
@@ -190,7 +220,6 @@ class FastSpeech2Brain(sb.Brain):
                     "labels": labels,
                     "wavs": wavs,
                     "spk_embs": spk_embs,
-                    "z_mean": z_mean,
                 }
             ),
         )
@@ -250,7 +279,9 @@ class FastSpeech2Brain(sb.Brain):
                 vc_inference_mel, vc_mel_lens, rs_inference_mel, rs_mel_lens = self.run_inference()
                 self.hparams.progress_sample_logger.save(epoch)
 
-                _, _, target_mel_spec, target_mel_lens, *_ = self.last_batch
+                # import pdb; pdb.set_trace()
+
+                _, _, target_mel_spec, _, target_mel_lens, *_ = self.last_batch
                 self.run_vocoder(target_mel_spec, target_mel_lens, sample_type="target")
                 self.run_vocoder(vc_inference_mel, vc_mel_lens, sample_type="vc")
                 self.run_vocoder(rs_inference_mel, rs_mel_lens, sample_type="rs")
@@ -275,21 +306,20 @@ class FastSpeech2Brain(sb.Brain):
         tokens, spk_embs, *_ = self.last_batch
 
         # Inference for voice cloning
-        z_mean = self.modules.random_sampler.infer(spk_embs)
+        # Maps spk_embs to the latent space
+        z_spk_embs = self.hparams.random_sampler.infer(spk_embs)
 
-        _, postnet_mel_out, _, _, _, predict_mel_lens =  self.hparams.model(tokens, z_mean)
+        _, postnet_mel_out, _, _, _, predict_mel_lens =  self.hparams.model(tokens, z_spk_embs)
         self.hparams.progress_sample_logger.remember(
             infer_output=self.process_mel(postnet_mel_out, [len(postnet_mel_out[0])])
         )
 
         # Inference for random speaker generation
-        
         random_z_spk_embs = []
         for i in range(tokens.shape[0]):
-          random_z_spk_embs.append(self.modules.random_sampler.infer().squeeze())
+          random_z_spk_embs.append(self.hparams.random_sampler.infer().squeeze())
 
         random_z_spk_embs = torch.stack(random_z_spk_embs)
-
         _, rs_postnet_mel_out, _, _, _, rs_predict_mel_lens =  self.hparams.model(tokens, random_z_spk_embs)
 
         return postnet_mel_out, predict_mel_lens, rs_postnet_mel_out, rs_predict_mel_lens
@@ -537,6 +567,13 @@ def main():
         train_loader_kwargs=hparams["train_dataloader_opts"],
         valid_loader_kwargs=hparams["valid_dataloader_opts"],
     )
+
+    # Test
+    if "test" in datasets:
+        fastspeech2_brain.evaluate(
+            datasets["test"],
+            test_loader_kwargs=hparams["test_dataloader_opts"],
+        )
 
 
 if __name__ == "__main__":
