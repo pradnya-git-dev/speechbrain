@@ -17,7 +17,7 @@ save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
 epochs: 150
 keep_checkpoint_interval: 50
-use_tensorboard: True
+use_tensorboard: False
 device: cuda
 
 ###################################
@@ -71,7 +71,7 @@ n_mel_channels: 80
 n_fft: 1024
 mel_fmin: 0.0
 mel_fmax: 8000.0
-mel_normalized: null
+mel_normalized: False
 power: 1
 norm: "slaney"
 mel_scale: "slaney"
@@ -90,7 +90,7 @@ spk_emb_sample_rate: 16000
 ################################
 learning_rate: 0.0001
 weight_decay: 0.000006
-batch_size: 64 #minimum 2
+batch_size: 16 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 75.0
@@ -102,19 +102,21 @@ triplet_loss_weight: 1.0
 
 train_dataloader_opts:
   batch_size: !ref <batch_size>
-  drop_last: False  #True #False
+  drop_last: True  #True #False
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <train_speaker_embeddings_pickle>
 
 valid_dataloader_opts:
   batch_size: !ref <batch_size>
+  drop_last: True
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <valid_speaker_embeddings_pickle>
 
 test_dataloader_opts:
   batch_size: !ref <batch_size>
+  drop_last: True
   num_workers: 8
   collate_fn: !new:MSTacotron2.TextMelCollate
     speaker_embeddings_pickle: !ref <test_speaker_embeddings_pickle>

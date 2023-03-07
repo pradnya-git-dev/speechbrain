@@ -671,7 +671,7 @@ def dataio_prepare(hparams):
     }
     try:
 
-        for dataset in hparams["splits"]:
+        for dataset in ["train", "valid", "test"]:
             datasets[dataset] = sb.dataio.dataset.DynamicItemDataset.from_json(
                 json_path=data_info[dataset],
                 replacements={"data_root": hparams["data_folder"]},
@@ -714,7 +714,9 @@ if __name__ == "__main__":
             "save_json_valid": hparams["valid_json"],
             "save_json_test": hparams["test_json"],
             "sample_rate": hparams["sample_rate"],
-            "split_ratio": hparams["split_ratio"],
+            "train_splits": hparams["train_splits"],
+            "valid_splits": hparams["valid_splits"],
+            "test_splits": hparams["test_splits"],
             "seed": hparams["seed"],
         },
     )
@@ -724,10 +726,11 @@ if __name__ == "__main__":
     sb.utils.distributed.run_on_main(
         compute_speaker_embeddings,
         kwargs={
-            "input_filepaths": [hparams["train_json"], hparams["valid_json"]],
+            "input_filepaths": [hparams["train_json"], hparams["valid_json"], hparams["test_json"]],
             "output_file_paths": [
                 hparams["train_speaker_embeddings_pickle"],
                 hparams["valid_speaker_embeddings_pickle"],
+                hparams["test_speaker_embeddings_pickle"],
             ],
             "data_folder": hparams["data_folder"],
             "audio_sr": hparams["sample_rate"],

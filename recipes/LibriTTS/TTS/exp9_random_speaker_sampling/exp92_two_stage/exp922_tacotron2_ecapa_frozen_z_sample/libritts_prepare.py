@@ -10,9 +10,7 @@ import torch
 from speechbrain.pretrained import GraphemeToPhoneme
 
 logger = logging.getLogger(__name__)
-# Change the entries in the following "LIBRITTS_SUBSETS" to modify the downloaded subsets for LibriTTS
-# Used subsets ["dev-clean", "train-clean-100", "train-clean-360"]
-LIBRITTS_SUBSETS = ["dev-clean"]
+
 LIBRITTS_URL_PREFIX = "https://www.openslr.org/resources/60/"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 g2p = GraphemeToPhoneme.from_hparams(
@@ -26,7 +24,9 @@ def prepare_libritts(
     save_json_valid,
     save_json_test,
     sample_rate,
-    split_ratio=[80, 10, 10],
+    train_splits=[],
+    valid_splits=[],
+    test_splits=[],
     seed=1234,
 ):
     """
@@ -63,77 +63,54 @@ def prepare_libritts(
         logger.info("Preparation completed in previous run, skipping.")
         return
 
-    extension = [".wav"]  # The expected extension for audio files
-    wav_list = list()  # Stores all audio file paths for the dataset
-
-    # For every subset of the dataset, if it doesn't exist, downloads it and sets flag to resample the subset
-    for subset_name in LIBRITTS_SUBSETS:
-
-        subset_folder = os.path.join(data_folder, subset_name)
-        subset_archive = os.path.join(subset_folder, subset_name + ".tar.gz")
-
-        subset_data = os.path.join(subset_folder, "LibriTTS")
-        if not check_folders(subset_data):
-            logger.info(
-                f"No data found for {subset_name}. Checking for an archive file."
-            )
-            if not os.path.isfile(subset_archive):
-                logger.info(
-                    f"No archive file found for {subset_name}. Downloading and unpacking."
-                )
-                subset_url = LIBRITTS_URL_PREFIX + subset_name + ".tar.gz"
-                download_file(subset_url, subset_archive)
-                logger.info(f"Downloaded data for subset {subset_name}.")
-            else:
-                logger.info(
-                    f"Found an archive file for {subset_name}. Unpacking."
-                )
-
-            shutil.unpack_archive(subset_archive, subset_folder)
-
-        # Collects all files matching the provided extension
-        wav_list.extend(get_all_files(subset_folder, match_and=extension))
-        
     logger.info(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
     )
 
     # Creating json files
-    random.shuffle(wav_list)
-
-    # dev-clean train split - 34 speakers
-    train_spk_ids = [
-      "7976", "6319", "1993", "2902", "174", "6241", "422", "1272", "6313", "2035", "1673", "7850", "3536", "5338", "2277", "3576", "3752", "652", "1462", "1988", "777", "3000", "6345", "3853", "2412", "2428", "251", "1919", "3170", "3081", "2086", "2078", "6295", "5694"
-    ]
-    # train_spk_ids = ["5895", "8297"]
-    create_json(
-      wav_list,
-      train_spk_ids, 
-      save_json_train, 
-      sample_rate
-    )
-
-    # dev-clean valid split - 6 speakers - 3M, 3F
-    valid_spk_ids = ["5895", "8297", "2803", "5536", "8842", "84" ]
-    # valid_spk_ids = ["5895", "8297"]
-    create_json(
-      wav_list, 
-      valid_spk_ids, 
-      save_json_valid, 
-      sample_rate
-    )
-
-    # dev-clean test split - 0 speakers
-    test_spk_ids = []
-    create_json(
-      wav_list,
-      test_spk_ids, 
-      save_json_test,
-      sample_rate
-    )
+    prepare_split(data_folder, train_splits, save_json_train, sample_rate)
+    prepare_split(data_folder, valid_splits, save_json_valid, sample_rate)
+    prepare_split(data_folder, test_splits, save_json_test, sample_rate)
 
 
-def create_json(wav_list, split_spk_ids, json_file, sample_rate):
+def prepare_split(data_folder, split_list, dest_json, sample_rate):
+
+  extension = [".wav"]  # The expected extension for audio files
+  wav_list = list()  # Stores all audio file paths for the dataset
+
+  # For every subset of the dataset, if it doesn't exist, downloads it and sets flag to resample the subset
+  for subset_name in split_list:
+
+      subset_folder = os.path.join(data_folder, subset_name)
+      subset_archive = os.path.join(subset_folder, subset_name + ".tar.gz")
+
+      subset_data = os.path.join(subset_folder, "LibriTTS")
+      if not check_folders(subset_data):
+          logger.info(
+              f"No data found for {subset_name}. Checking for an archive file."
+          )
+          if not os.path.isfile(subset_archive):
+              logger.info(
+                  f"No archive file found for {subset_name}. Downloading and unpacking."
+              )
+              subset_url = LIBRITTS_URL_PREFIX + subset_name + ".tar.gz"
+              download_file(subset_url, subset_archive)
+              logger.info(f"Downloaded data for subset {subset_name}.")
+          else:
+              logger.info(
+                  f"Found an archive file for {subset_name}. Unpacking."
+              )
+
+          shutil.unpack_archive(subset_archive, subset_folder)
+
+      # Collects all files matching the provided extension
+      wav_list.extend(get_all_files(subset_folder, match_and=extension))
+
+  random.shuffle(wav_list)
+  create_json(wav_list, dest_json, sample_rate)
+
+
+def create_json(wav_list, json_file, sample_rate):
     """
     Creates the json file given a list of wav files.
     Arguments
@@ -155,51 +132,49 @@ def create_json(wav_list, split_spk_ids, json_file, sample_rate):
 
         # Reads the signal
         signal, sig_sr = torchaudio.load(wav_file)
-        signal = signal.squeeze(0)
-
-        duration = signal.shape[0] / sig_sr
-        if duration > 10.10:
-            # print(signal.shape, duration, wav_file)
-            continue
 
         # Manipulates path to get relative path and uttid
         path_parts = wav_file.split(os.path.sep)
         uttid, _ = os.path.splitext(path_parts[-1])
         relative_path = os.path.join("{data_root}", *path_parts[-6:])
 
-        # Gets the speaker-id from the utterance-id
-        spk_id = uttid.split("_")[0]
-
-        if spk_id not in split_spk_ids:
-          continue
-
         # Gets the path for the  text files and extracts the input text
-        original_text_path = os.path.join(
+        normalized_text_path = os.path.join(
             "/", *path_parts[:-1], uttid + ".normalized.txt"
         )
-        with open(original_text_path) as f:
-            original_text = f.read()
-            if original_text.__contains__("{"):
-                original_text = original_text.replace("{", "")
-            if original_text.__contains__("}"):
-                original_text = original_text.replace("}", "")
+        with open(normalized_text_path) as f:
+            normalized_text = f.read()
+            if normalized_text.__contains__("{"):
+                normalized_text = normalized_text.replace("{", "")
+            if normalized_text.__contains__("}"):
+                normalized_text = normalized_text.replace("}", "")
 
-        label_phoneme_list = g2p(original_text)
-        label_phoneme = " ".join(label_phoneme_list)
+        phoneme_text_path = os.path.join(
+            "/", *path_parts[:-1], uttid + ".normalized_phoneme.txt"
+        )
+
+        if not os.path.exists(phoneme_text_path):
+          label_phoneme_list = g2p(normalized_text)
+          label_phoneme = " ".join(label_phoneme_list)
+        else:
+          with open(phoneme_text_path) as ph_f:
+            label_phoneme = ph_f.read()
 
         # Resamples the audio file if required
         if sig_sr != sample_rate:
-            signal = signal.unsqueeze(0)
             resampled_signal = resampler(signal)
             os.unlink(wav_file)
             torchaudio.save(wav_file, resampled_signal, sample_rate=sample_rate)
+
+        # Gets the speaker-id from the utterance-id
+        spk_id = uttid.split("_")[0]
 
         # Creates an entry for the utterance
         json_dict[uttid] = {
             "uttid": uttid,
             "wav": relative_path,
             "spk_id": spk_id,
-            "label": original_text,
+            "label": normalized_text,
             "label_phoneme": label_phoneme,
             "segment": True if "train" in json_file else False,
         }
@@ -227,41 +202,20 @@ def skip(*filenames):
     return True
 
 
-def split_sets(wav_list, split_ratio):
-    """Randomly splits the wav list into training, validation, and test lists.
-
-    Arguments
-    ---------
-    wav_list : list
-        list of all the signals in the dataset
-    split_ratio: list
-        List composed of three integers that sets split ratios for train, valid,
-        and test sets, respectively. For instance split_ratio=[80, 10, 10] will
-        assign 80% of the sentences to training, 10% for validation, and 10%
-        for test.
-    Returns
-    ------
-    dictionary containing train, valid, and test splits.
-    """
-    # Random shuffles the list
-    random.shuffle(wav_list)
-    tot_split = sum(split_ratio)
-    tot_snts = len(wav_list)
-    data_split = {}
-    splits = ["train", "valid"]
-
-    for i, split in enumerate(splits):
-        n_snts = int(tot_snts * split_ratio[i] / tot_split)
-        data_split[split] = wav_list[0:n_snts]
-        del wav_list[0:n_snts]
-    data_split["test"] = wav_list
-
-    return data_split
-
-
 def check_folders(*folders):
     """Returns False if any passed folder does not exist."""
     for folder in folders:
         if not os.path.exists(folder):
             return False
     return True
+
+
+if __name__ == "__main__":
+    prepare_libritts("/content/libritts_data",
+                     "train.json", 
+                     "valid.json", 
+                     "test.json",
+                     16000,
+                     train_splits=["train-clean-100"],
+                     valid_splits=["dev-clean"],
+                     test_splits=["test-clean", "test-other"],)
