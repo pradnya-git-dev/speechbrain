@@ -69,7 +69,7 @@ class FastSpeech2Brain(sb.Brain):
         phonemes, spk_embs, durations, pitch, energy = inputs
 
         # Maps spk_embs to the latent space
-        z_spk_embs, z_mean, z_log_var = self.hparams.random_sampler(spk_embs)
+        z_spk_embs, z_mean, z_log_var = self.modules.random_sampler(spk_embs)
 
         # Runs input through the model
         # Expected input = tokens, spk_embs, durations=None, pitch=None, energy=None, pace=1.0
@@ -82,7 +82,7 @@ class FastSpeech2Brain(sb.Brain):
           predict_pitch, 
           predict_energy, 
           mel_lens
-        ) = self.hparams.model(phonemes, z_spk_embs, durations, pitch, energy)
+        ) = self.modules.model(phonemes, z_spk_embs, durations, pitch, energy)
 
         # Constructs the results to be passed for loss computations
         result = (
@@ -307,9 +307,9 @@ class FastSpeech2Brain(sb.Brain):
 
         # Inference for voice cloning
         # Maps spk_embs to the latent space
-        z_spk_embs = self.hparams.random_sampler.infer(spk_embs)
+        z_spk_embs = self.modules.random_sampler.infer(spk_embs)
 
-        _, postnet_mel_out, _, _, _, predict_mel_lens =  self.hparams.model(tokens, z_spk_embs)
+        _, postnet_mel_out, _, _, _, predict_mel_lens =  self.modules.model(tokens, z_spk_embs)
         self.hparams.progress_sample_logger.remember(
             infer_output=self.process_mel(postnet_mel_out, [len(postnet_mel_out[0])])
         )
@@ -317,10 +317,10 @@ class FastSpeech2Brain(sb.Brain):
         # Inference for random speaker generation
         random_z_spk_embs = []
         for i in range(tokens.shape[0]):
-          random_z_spk_embs.append(self.hparams.random_sampler.infer().squeeze())
+          random_z_spk_embs.append(self.modules.random_sampler.infer().squeeze())
 
         random_z_spk_embs = torch.stack(random_z_spk_embs)
-        _, rs_postnet_mel_out, _, _, _, rs_predict_mel_lens =  self.hparams.model(tokens, random_z_spk_embs)
+        _, rs_postnet_mel_out, _, _, _, rs_predict_mel_lens =  self.modules.model(tokens, random_z_spk_embs)
 
         return postnet_mel_out, predict_mel_lens, rs_postnet_mel_out, rs_predict_mel_lens
 
