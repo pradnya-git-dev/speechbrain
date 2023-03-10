@@ -88,7 +88,7 @@ spk_emb_sample_rate: 16000
 ################################
 # Optimization Hyperparameters #
 ################################
-learning_rate: 0.0001
+learning_rate: 0.001
 weight_decay: 0.000006
 batch_size: 16 #minimum 2
 mask_padding: True

@@ -97,7 +97,9 @@ def prepare_libritts(
     logger.info(
         f"Creating {save_json_train}, {save_json_valid}, and {save_json_test}"
     )
+    random.shuffle(wav_list)
 
+    
     # Creating json files
 
     # dev-clean train split - 34 speakers
