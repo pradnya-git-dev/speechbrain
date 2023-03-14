@@ -176,18 +176,26 @@ def create_json(wav_list, split_spk_ids, json_file, sample_rate):
           continue
 
         # Gets the path for the  text files and extracts the input text
-        original_text_path = os.path.join(
+        normalized_text_path = os.path.join(
             "/", *path_parts[:-1], uttid + ".normalized.txt"
         )
-        with open(original_text_path) as f:
-            original_text = f.read()
-            if original_text.__contains__("{"):
-                original_text = original_text.replace("{", "")
-            if original_text.__contains__("}"):
-                original_text = original_text.replace("}", "")
+        with open(normalized_text_path) as f:
+            normalized_text = f.read()
+            if normalized_text.__contains__("{"):
+                normalized_text = normalized_text.replace("{", "")
+            if normalized_text.__contains__("}"):
+                normalized_text = normalized_text.replace("}", "")
 
-        label_phoneme_list = g2p(original_text)
-        label_phoneme = " ".join(label_phoneme_list)
+        phoneme_text_path = os.path.join(
+            "/", *path_parts[:-1], uttid + ".normalized_phoneme.txt"
+        )
+
+        if not os.path.exists(phoneme_text_path):
+          label_phoneme_list = g2p(normalized_text)
+          label_phoneme = " ".join(label_phoneme_list)
+        else:
+          with open(phoneme_text_path) as ph_f:
+            label_phoneme = ph_f.read()
 
         # Resamples the audio file if required
         if sig_sr != sample_rate:
@@ -201,7 +209,7 @@ def create_json(wav_list, split_spk_ids, json_file, sample_rate):
             "uttid": uttid,
             "wav": relative_path,
             "spk_id": spk_id,
-            "label": original_text,
+            "label": normalized_text,
             "label_phoneme": label_phoneme,
             "segment": True if "train" in json_file else False,
         }

@@ -1692,7 +1692,7 @@ def infer(model, text_sequences, input_lengths):
 
 
 LossStats = namedtuple(
-    "TacotronLoss", "loss mel_loss kl_loss spk_emb_triplet_loss gate_loss attn_loss attn_weight"
+    "TacotronLoss", "loss mel_loss kl_loss gate_loss attn_loss attn_weight"
 )
 
 
@@ -1765,9 +1765,6 @@ class Loss(nn.Module):
         self.guided_attention_loss = GuidedAttentionLoss(
             sigma=guided_attention_sigma
         )
-        self.spk_emb_triplet_loss = torch.nn.TripletMarginWithDistanceLoss(
-          distance_function=lambda x, y: 1.0 - F.cosine_similarity(x, y)
-        )
         
         self.guided_attention_scheduler = guided_attention_scheduler
         self.guided_attention_hard_stop = guided_attention_hard_stop
@@ -1775,7 +1772,7 @@ class Loss(nn.Module):
         self.kl_loss_weight = kl_loss_weight
 
     def forward(
-        self, model_output, targets, input_lengths, target_lengths, spk_emb_triplets, epoch
+        self, model_output, targets, input_lengths, target_lengths, epoch
     ):
         """Computes the loss
 
@@ -1806,7 +1803,6 @@ class Loss(nn.Module):
         gate_target = gate_target.view(-1, 1)
 
         mel_out, mel_out_postnet, gate_out, alignments, z_mean, z_log_var = model_output
-        anchor_spk_embs, pos_spk_embs, neg_spk_embs = spk_emb_triplets
 
         gate_out = gate_out.view(-1, 1)
         mel_loss = self.mse_loss(mel_out, mel_target) + self.mse_loss(
@@ -1820,20 +1816,13 @@ class Loss(nn.Module):
             alignments, input_lengths, target_lengths, epoch
         )
 
-        if anchor_spk_embs != None:
-          spk_emb_triplet_loss = self.spk_emb_triplet_loss(anchor_spk_embs, pos_spk_embs, neg_spk_embs)
-          spk_emb_triplet_loss = self.triplet_loss_weight * spk_emb_triplet_loss
-        else:
-          spk_emb_triplet_loss = torch.Tensor([0]).to(mel_loss.device)
-
-
         kl_loss_t = -0.5 * torch.sum(1 + z_log_var - z_mean ** 2 - torch.exp(z_log_var), dim=-1)
         kl_loss = torch.mean(kl_loss_t)
         kl_loss = self.kl_loss_weight * kl_loss
 
-        total_loss = mel_loss + kl_loss + spk_emb_triplet_loss + gate_loss + attn_loss
+        total_loss = mel_loss + kl_loss + gate_loss + attn_loss
         return LossStats(
-            total_loss, mel_loss, kl_loss, spk_emb_triplet_loss, gate_loss, attn_loss, attn_weight
+            total_loss, mel_loss, kl_loss, gate_loss, attn_loss, attn_weight
         )
 
     def get_attention_loss(
