@@ -1772,7 +1772,7 @@ class Loss(nn.Module):
         self.kl_loss_weight = kl_loss_weight
 
     def forward(
-        self, model_output, targets, input_lengths, target_lengths, epoch
+        self, model_output, targets, input_lengths, target_lengths, epoch, kl_beta=1
     ):
         """Computes the loss
 
@@ -1818,7 +1818,7 @@ class Loss(nn.Module):
 
         kl_loss_t = -0.5 * torch.sum(1 + z_log_var - z_mean ** 2 - torch.exp(z_log_var), dim=-1)
         kl_loss = torch.mean(kl_loss_t)
-        kl_loss = self.kl_loss_weight * kl_loss
+        kl_loss = kl_beta * kl_loss
 
         total_loss = mel_loss + kl_loss + gate_loss + attn_loss
         return LossStats(

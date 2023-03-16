@@ -57,6 +57,7 @@ class Tacotron2Brain(sb.Brain):
         )
         
         self.last_loss_stats = {}
+        self.kl_beta_step = 0
         return super().on_fit_start()
 
     def compute_forward(self, batch, stage):
@@ -148,11 +149,21 @@ class Tacotron2Brain(sb.Brain):
         loss: torch.Tensor
             the loss value
         """
+        kl_beta = 1
+        if stage == sb.Stage.TRAIN:
+          if (self.kl_beta_step // 6000) != 0:
+            self.kl_beta_step = 0
+            kl_beta = 0
+          else:
+            if (self.kl_beta_step // 3000) == 0:
+              kl_beta = self.kl_beta_step / 3000
+          self.kl_beta_step += 1
+        
         inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         
         loss_stats = self.hparams.criterion(
-            predictions, targets, input_lengths, output_lengths, self.last_epoch
+            predictions, targets, input_lengths, output_lengths, self.last_epoch, kl_beta
         )
         self.last_loss_stats[stage] = scalarize(loss_stats)
         return loss_stats.loss
