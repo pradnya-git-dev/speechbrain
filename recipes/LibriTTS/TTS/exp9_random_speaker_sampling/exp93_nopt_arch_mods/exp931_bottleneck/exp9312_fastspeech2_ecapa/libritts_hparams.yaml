@@ -1,0 +1,304 @@
+############################################################################
+# Model: FastSpeech2
+# Tokens: Phonemes (ARPABET)
+# Training: LJSpeech
+# Authors: Sathvik Udupa
+# ############################################################################
+
+###################################
+# Experiment Parameters and setup #
+###################################
+seed: 1234
+__set_seed: !apply:torch.manual_seed [!ref <seed>]
+output_folder: !ref results/fastspeech2/<seed>
+save_folder: !ref <output_folder>/save
+train_log: !ref <output_folder>/train_log.txt
+epochs: 600 # Note: 100 epochs are enough for good quality
+progress_samples: True
+progress_sample_path: !ref <output_folder>/samples
+progress_samples_min_run: 10
+progress_samples_interval: 10
+progress_batch_sample_size: 4
+
+#################################
+# Data files and pre-processing #
+#################################
+data_folder: #!PLACEHOLDER # e.g., /data/Database/LJSpeech-1.1
+
+train_json: !ref <save_folder>/train.json
+valid_json: !ref <save_folder>/valid.json
+test_json: !ref <save_folder>/test.json
+
+train_speaker_embeddings_pickle: !ref <save_folder>/train_speaker_embeddings.pickle
+valid_speaker_embeddings_pickle: !ref <save_folder>/valid_speaker_embeddings.pickle
+test_speaker_embeddings_pickle: !ref <save_folder>/test_speaker_embeddings.pickle
+
+train_splits: ["dev-clean"]
+valid_splits: ["dev-clean"]
+test_splits: ["dev-clean"]
+
+# Remove for the big experiment
+splits: ["train", "valid"]
+split_ratio: [90, 10]
+
+skip_prep: False
+
+################################
+# Audio Parameters             #
+################################
+sample_rate: 16000
+hop_length: 256
+win_length: null
+n_mel_channels: 80
+n_fft: 1024
+mel_fmin: 0.0
+mel_fmax: 8000.0
+power: 1
+norm: "slaney"
+mel_scale: "slaney"
+dynamic_range_compression: True
+mel_normalized: False
+min_max_energy_norm: True
+min_f0: 65  #(torchaudio pyin values)
+max_f0: 2093 #(torchaudio pyin values)
+
+################################
+# Speaker Embedding Parameters #
+################################
+
+spk_emb_size: 192
+z_spk_emb_size: 512
+spk_emb_sample_rate: 16000
+spk_emb_inject_method: film
+
+################################
+# Optimization Hyperparameters #
+################################
+learning_rate: 0.0001
+weight_decay: 0.000000001
+max_grad_norm: 1.0
+batch_size: 32 #minimum 2
+betas: [0.98, 0.99]
+
+kl_loss_weight: 1.0
+
+##################
+# Random sampler #
+##################
+random_sampler: !new:FastSpeech2.Sampler
+  spk_emb_size: !ref <spk_emb_size>
+  z_spk_emb_size: !ref <z_spk_emb_size>
+
+
+################################
+# Model Parameters and model   #
+################################
+# Input parameters
+lexicon:
+    - AA
+    - AE
+    - AH
+    - AO
+    - AW
+    - AY
+    - B
+    - CH
+    - D
+    - DH
+    - EH
+    - ER
+    - EY
+    - F
+    - G
+    - HH
+    - IH
+    - IY
+    - JH
+    - K
+    - L
+    - M
+    - N
+    - NG
+    - OW
+    - OY
+    - P
+    - R
+    - S
+    - SH
+    - T
+    - TH
+    - UH
+    - UW
+    - V
+    - W
+    - Y
+    - Z
+    - ZH
+    - spn
+
+n_symbols: 41 #fixed deppending on symbols in the lexicon +1 for a dummy symbol used for padding
+padding_idx: 0
+
+# Encoder parameters
+enc_num_layers: 4
+enc_num_head: 2
+enc_d_model: 256
+enc_ffn_dim: 1024
+enc_k_dim: 256
+enc_v_dim: 256
+enc_dropout: 0.2
+
+# Decoder parameters
+dec_num_layers: 4
+dec_num_head: 2
+dec_d_model: 256
+dec_ffn_dim: 1024
+dec_k_dim: 256
+dec_v_dim: 256
+dec_dropout: 0.2
+
+# Postnet parameters
+postnet_embedding_dim: 512
+postnet_kernel_size: 5
+postnet_n_convolutions: 5
+postnet_dropout: 0.5
+
+# common
+normalize_before: True
+ffn_type: 1dcnn #1dcnn or ffn
+ffn_cnn_kernel_size_list: [9, 1]
+
+# variance predictor
+dur_pred_kernel_size: 3
+pitch_pred_kernel_size: 3
+energy_pred_kernel_size: 3
+variance_predictor_dropout: 0.5
+
+
+#model
+model: !new:FastSpeech2.FastSpeech2
+    enc_num_layers: !ref <enc_num_layers>
+    enc_num_head: !ref <enc_num_head>
+    enc_d_model: !ref <enc_d_model>
+    enc_ffn_dim: !ref <enc_ffn_dim>
+    enc_k_dim: !ref <enc_k_dim>
+    enc_v_dim: !ref <enc_v_dim>
+    enc_dropout: !ref <enc_dropout>
+    dec_num_layers: !ref <dec_num_layers>
+    dec_num_head: !ref <dec_num_head>
+    dec_d_model: !ref <dec_d_model>
+    dec_ffn_dim: !ref <dec_ffn_dim>
+    dec_k_dim: !ref <dec_k_dim>
+    dec_v_dim: !ref <dec_v_dim>
+    dec_dropout: !ref <dec_dropout>
+    normalize_before: !ref <normalize_before>
+    ffn_type: !ref <ffn_type>
+    ffn_cnn_kernel_size_list: !ref <ffn_cnn_kernel_size_list>
+    n_char: !ref <n_symbols>
+    n_mels: !ref <n_mel_channels>
+    postnet_embedding_dim: !ref <postnet_embedding_dim>
+    postnet_kernel_size: !ref <postnet_kernel_size>
+    postnet_n_convolutions: !ref <postnet_n_convolutions>
+    postnet_dropout: !ref <postnet_dropout>
+    padding_idx: !ref <padding_idx>
+    dur_pred_kernel_size: !ref <dur_pred_kernel_size>
+    pitch_pred_kernel_size: !ref <pitch_pred_kernel_size>
+    energy_pred_kernel_size: !ref <energy_pred_kernel_size>
+    variance_predictor_dropout: !ref <variance_predictor_dropout>
+    spk_emb_size: !ref <z_spk_emb_size>
+    spk_emb_inject_method: !ref <spk_emb_inject_method>
+
+mel_spectogram: !name:FastSpeech2.mel_spectogram
+    sample_rate: !ref <sample_rate>
+    hop_length: !ref <hop_length>
+    win_length: !ref <win_length>
+    n_fft: !ref <n_fft>
+    n_mels: !ref <n_mel_channels>
+    f_min: !ref <mel_fmin>
+    f_max: !ref <mel_fmax>
+    power: !ref <power>
+    normalized: !ref <mel_normalized>
+    min_max_energy_norm: !ref <min_max_energy_norm>
+    norm: !ref <norm>
+    mel_scale: !ref <mel_scale>
+    compression: !ref <dynamic_range_compression>
+
+criterion: !new:FastSpeech2.Loss
+    log_scale_durations: True
+    duration_loss_weight: 1.0
+    pitch_loss_weight: 1.0
+    energy_loss_weight: 1.0
+    mel_loss_weight: 1.0
+    postnet_mel_loss_weight: 1.0
+    se_triplet_loss_weight: 1.0
+    kl_loss_weight: !ref <kl_loss_weight>
+
+vocoder: "hifi-gan"
+pretrained_vocoder: True
+vocoder_source: speechbrain/tts-hifigan-libritts-16kHz
+vocoder_download_path: tmpdir_vocoder
+
+
+
+modules:
+    model: !ref <model>
+    random_sampler: !ref <random_sampler>
+
+train_dataloader_opts:
+    batch_size: !ref <batch_size>
+    drop_last: True  #True #False
+    num_workers: 16
+    shuffle: True
+    collate_fn: !new:FastSpeech2.TextMelCollate
+      speaker_embeddings_pickle: !ref <train_speaker_embeddings_pickle>
+
+valid_dataloader_opts:
+    batch_size: !ref <batch_size>
+    drop_last: True
+    num_workers: 4
+    shuffle: False
+    collate_fn: !new:FastSpeech2.TextMelCollate
+      speaker_embeddings_pickle: !ref <valid_speaker_embeddings_pickle>
+
+test_dataloader_opts:
+    batch_size: !ref <batch_size>
+    drop_last: True
+    num_workers: 4
+    shuffle: False
+    collate_fn: !new:FastSpeech2.TextMelCollate
+      speaker_embeddings_pickle: !ref <test_speaker_embeddings_pickle>
+
+#optimizer
+opt_class: !name:torch.optim.Adam
+    lr: !ref <learning_rate>
+    weight_decay: !ref <weight_decay>
+    betas: !ref <betas>
+
+#epoch object
+epoch_counter: !new:speechbrain.utils.epoch_loop.EpochCounter
+    limit: !ref <epochs>
+
+train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
+    save_file: !ref <train_log>
+
+#checkpointer
+checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
+    checkpoints_dir: !ref <save_folder>
+    recoverables:
+        model: !ref <model>
+        counter: !ref <epoch_counter>
+        random_sampler: !ref <random_sampler>
+
+input_encoder: !new:speechbrain.dataio.encoder.TextEncoder
+
+progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
+    output_path: !ref <progress_sample_path>
+    batch_sample_size: !ref <progress_batch_sample_size>
+    formats:
+        raw_batch: raw
+
+# If you do not want to use the pretrained separator you can simply delete pretrained_separator field.
+pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
+  collect_in: !ref <save_folder>
+  loadables:
+  paths:
