@@ -631,6 +631,21 @@ class Tacotron2Brain(sb.Brain):
                   tag="z_spk_embs_epoch_"+ str(self.hparams.epoch_counter.current),
                 )
 
+                
+    def get_triplets(self, spk_ids):  
+      anchor_se_idx, pos_se_idx, neg_se_idx = None, None, None
+      spk_idx_pairs = list()
+      for i in range(len(spk_ids)):
+        for j in range(i, len(spk_ids)):
+          if spk_ids[i] != spk_ids[j]:
+            spk_idx_pairs.append((i, j))
+      
+      anchor_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
+      pos_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
+      neg_se_idx = torch.LongTensor([j for (i, j) in spk_idx_pairs])
+
+      return (anchor_se_idx, pos_se_idx, neg_se_idx)
+
 
 def dataio_prepare(hparams):
     # Define audio pipeline:
