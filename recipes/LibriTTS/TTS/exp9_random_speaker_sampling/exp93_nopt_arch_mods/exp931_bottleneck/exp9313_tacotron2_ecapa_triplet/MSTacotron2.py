@@ -1760,7 +1760,7 @@ class Loss(nn.Module):
         self.triplet_loss_weight = triplet_loss_weight
 
 
-        self.mse_loss = nn.MSELoss()
+        self.mse_loss = nn.MSELoss(reduction="sum")
         self.bce_loss = nn.BCEWithLogitsLoss()
         self.guided_attention_loss = GuidedAttentionLoss(
             sigma=guided_attention_sigma
@@ -1826,9 +1826,9 @@ class Loss(nn.Module):
         else:
           spk_emb_triplet_loss = torch.Tensor([0]).to(mel_loss.device)
 
-
-        kl_loss_t = -0.5 * torch.sum(1 + z_log_var - z_mean ** 2 - torch.exp(z_log_var), dim=-1)
-        kl_loss = torch.mean(kl_loss_t)
+        # kl_loss_t = -0.5 * torch.sum(1 + z_log_var - z_mean ** 2 - torch.exp(z_log_var), dim=-1)
+        # kl_loss = torch.mean(kl_loss_t)
+        kl_loss = -0.5 * torch.sum(1 + z_log_var - z_mean.pow(2) - z_log_var.exp())
         kl_loss = kl_beta * kl_loss
 
         total_loss = mel_loss + kl_loss + spk_emb_triplet_loss + gate_loss + attn_loss
