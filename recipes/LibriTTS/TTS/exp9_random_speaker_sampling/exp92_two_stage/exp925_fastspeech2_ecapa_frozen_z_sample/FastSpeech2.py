@@ -213,16 +213,7 @@ class DurationPredictor(nn.Module):
     torch.Size([3, 400, 1])
     """
 
-    def __init__(
-      self, 
-      in_channels, 
-      out_channels, 
-      kernel_size,
-      spk_emb_size,
-      dropout=0.0, 
-      n_units=1,
-      spk_emb_inject_method="film"
-      ):
+    def __init__(self, in_channels, out_channels, kernel_size, dropout=0.0, n_units=1):
         super().__init__()
         self.conv1 = CNN.Conv1d(
             in_channels=in_channels,
@@ -243,14 +234,7 @@ class DurationPredictor(nn.Module):
         self.dropout1 = nn.Dropout(dropout)
         self.dropout2 = nn.Dropout(dropout)
 
-        self.spk_emb_inject_method = spk_emb_inject_method
-
-        self.film = FiLM(
-          spk_emb_size,
-          in_channels
-        )
-
-    def forward(self, x, spk_embs=None):
+    def forward(self, x):
         """Computes the forward pass
         Arguments
         ---------
@@ -261,11 +245,6 @@ class DurationPredictor(nn.Module):
         output: torch.Tensor
             the duration predictor outputs
         """
-        # import pdb; pdb.set_trace()
-
-        # x.shape = torch.Size([10, 100, 256])
-        if spk_embs != None:
-          x = self.inject_spk_embs(x, spk_embs)
         x = self.relu(self.conv1(x))
         x = self.ln1(x).to(x.dtype)
         x = self.dropout1(x)
@@ -275,12 +254,6 @@ class DurationPredictor(nn.Module):
         x = self.dropout2(x)
 
         return self.linear(x)
-
-    def inject_spk_embs(self, hidden_states, spk_embs):
-
-      # import pdb; pdb.set_trace()
-      if self.spk_emb_inject_method == "film":
-        return self.film(hidden_states, spk_embs)
 
 
 class LinearNorm(torch.nn.Module):
@@ -598,25 +571,19 @@ class FastSpeech2(nn.Module):
             in_channels=enc_d_model,
             out_channels=enc_d_model,
             kernel_size=dur_pred_kernel_size,
-            spk_emb_size=spk_emb_size,
             dropout=variance_predictor_dropout,
-            spk_emb_inject_method=spk_emb_inject_method,
         )
         self.pitchPred = DurationPredictor(
             in_channels=enc_d_model,
             out_channels=enc_d_model,
             kernel_size=dur_pred_kernel_size,
-            spk_emb_size=spk_emb_size,
             dropout=variance_predictor_dropout,
-            spk_emb_inject_method=spk_emb_inject_method,
         )
         self.energyPred = DurationPredictor(
             in_channels=enc_d_model,
             out_channels=enc_d_model,
             kernel_size=dur_pred_kernel_size,
-            spk_emb_size=spk_emb_size,
             dropout=variance_predictor_dropout,
-            spk_emb_inject_method=spk_emb_inject_method,
         )
         self.pitchEmbed = CNN.Conv1d(
             in_channels=1,
@@ -718,7 +685,8 @@ class FastSpeech2(nn.Module):
 
         token_feats = self.inject_spk_embs(token_feats, spk_embs)
 
-        predict_durations = self.durPred(token_feats, spk_embs).squeeze()
+
+        predict_durations = self.durPred(token_feats).squeeze()
 
         if predict_durations.dim() == 1:
             predict_durations = predict_durations.unsqueeze(0)
@@ -744,7 +712,7 @@ class FastSpeech2(nn.Module):
             spec_feats.shape[1], srcmask, spec_feats.dtype
         )
 
-        predict_pitch = self.pitchPred(spec_feats, spk_embs)
+        predict_pitch = self.pitchPred(spec_feats)
         if pitch is not None:
             pitch = self.pitchEmbed(pitch.unsqueeze(1))
         else:
@@ -752,7 +720,7 @@ class FastSpeech2(nn.Module):
         pitch = pitch.permute(0, 2, 1)
         spec_feats = spec_feats.add(pitch)
 
-        predict_energy = self.energyPred(spec_feats, spk_embs)
+        predict_energy = self.energyPred(spec_feats)
         if energy is not None:
             energy = self.energyEmbed(energy.unsqueeze(1))
         else:

@@ -15,7 +15,7 @@ spk_emb_inject_method: film
 ##################
 # Random sampler #
 ##################
-random_sampler: !new:FastSpeech2.Sampler
+random_sampler: !new:CustomSampler.Sampler
   spk_emb_size: !ref <spk_emb_size>
   z_spk_emb_size: !ref <z_spk_emb_size>
 
