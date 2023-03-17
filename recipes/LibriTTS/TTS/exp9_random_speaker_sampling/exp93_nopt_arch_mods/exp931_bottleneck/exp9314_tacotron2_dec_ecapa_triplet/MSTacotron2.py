@@ -53,10 +53,10 @@ from speechbrain.utils.data_utils import batch_pad_right
 import pickle
 import random
 from speechbrain.nnet.normalization import LayerNorm
-# import logging
+import logging
 
 
-# logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class LinearNorm(torch.nn.Module):
@@ -1822,7 +1822,7 @@ class Loss(nn.Module):
         # kl_loss = -0.5 * torch.sum(1 + z_log_var - z_mean.pow(2) - z_log_var.exp())
         kl_loss = kl_beta * kl_loss
 
-        # logger.info(f"KL beta: {kl_beta}, KL loss: {kl_loss}, Reconstruction loss: {mel_loss}, Speaker embedding loss: {spk_emb_triplet_loss}")
+        logger.info(f"KL beta: {kl_beta}, KL loss: {kl_loss}, Reconstruction loss: {mel_loss}, Speaker embedding loss: {spk_emb_triplet_loss}")
 
         total_loss = mel_loss + kl_loss + spk_emb_triplet_loss + gate_loss + attn_loss
         return LossStats(

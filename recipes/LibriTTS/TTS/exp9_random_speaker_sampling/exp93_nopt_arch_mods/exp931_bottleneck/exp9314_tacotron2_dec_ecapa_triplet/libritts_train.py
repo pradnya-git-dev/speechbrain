@@ -155,15 +155,14 @@ class Tacotron2Brain(sb.Brain):
         loss: torch.Tensor
             the loss value
         """
-        kl_beta = 10
+        kl_beta = 1
         if stage == sb.Stage.TRAIN:
-          if (self.kl_beta_step // 1000) != 0:
+          if (self.kl_beta_step // 6000) != 0:
             self.kl_beta_step = 0
-            kl_beta = 10
+            kl_beta = 0
           else:
-            if (self.kl_beta_step // 500) == 0:
-              kl_beta = 10 * self.kl_beta_step / 500
-          # logger.info(f"KL beta step: {self.kl_beta_step}, KL beta = {kl_beta}")
+            if (self.kl_beta_step // 3000) == 0:
+              kl_beta = self.kl_beta_step / 3000
           self.kl_beta_step += 1
         
         inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
@@ -632,7 +631,7 @@ class Tacotron2Brain(sb.Brain):
                   tag="z_spk_embs_epoch_"+ str(self.hparams.epoch_counter.current),
                 )
 
-                
+
     def get_triplets(self, spk_ids):  
       anchor_se_idx, pos_se_idx, neg_se_idx = None, None, None
       spk_idx_pairs = list()
@@ -647,7 +646,7 @@ class Tacotron2Brain(sb.Brain):
 
       return (anchor_se_idx, pos_se_idx, neg_se_idx)
 
-
+      
 def dataio_prepare(hparams):
     # Define audio pipeline:
 
