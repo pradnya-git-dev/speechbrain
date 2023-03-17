@@ -828,10 +828,10 @@ class Decoder(nn.Module):
             w_init_gain="sigmoid",
         )
 
-        self.film_attn = FiLM(
-          spk_emb_size,
-          prenet_dim + encoder_embedding_dim
-        )
+        # self.film_attn = FiLM(
+        #   spk_emb_size,
+        #   prenet_dim + encoder_embedding_dim
+        # )
 
         self.film_decoder = FiLM(
           spk_emb_size,
@@ -1033,7 +1033,7 @@ class Decoder(nn.Module):
         """
         cell_input = torch.cat((decoder_input, attention_context), -1)
 
-        cell_input = self.film_attn(cell_input, spk_embs)
+        # cell_input = self.film_attn(cell_input, spk_embs)
 
         attention_hidden, attention_cell = self.attention_rnn(
             cell_input, (attention_hidden, attention_cell)
