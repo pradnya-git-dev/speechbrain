@@ -108,10 +108,10 @@ class Sampler(nn.Module):
     out = self.lnorm2(out)
     out = F.relu(out)
     out = self.linear3(out)
-    mlp_out = self.lnorm3(out)
-    mlp_out = F.relu(mlp_out)
-    z_mean = self.mean(out)
-    z_log_var = self.log_var(out)
+    out = self.lnorm3(out)
+    mlp_out = F.relu(out)
+    z_mean = self.mean(mlp_out)
+    z_log_var = self.log_var(mlp_out)
 
     # ToDo: Move these to GPU if available
     self.normal.loc = self.normal.loc.to(spk_embs.device)
