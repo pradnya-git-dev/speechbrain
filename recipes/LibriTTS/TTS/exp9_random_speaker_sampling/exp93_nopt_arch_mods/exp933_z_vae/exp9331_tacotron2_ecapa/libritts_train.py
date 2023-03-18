@@ -318,7 +318,7 @@ class Tacotron2Brain(sb.Brain):
                 self.hparams.sample_rate,
             )
 
-            _, mel_out_postnet, _, _, z_mean, z_log_var = self.last_preds
+            _, mel_out_postnet, _, _, spk_emb_rec, z_mean, z_log_var = self.last_preds
             waveform_ss = self.vocoder.decode_batch(mel_out_postnet[0])
             train_sample_audio = os.path.join(
                 self.hparams.progress_sample_path,

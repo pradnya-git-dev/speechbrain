@@ -1267,7 +1267,6 @@ class Sampler(nn.Module):
     self.dec_lin1 = LinearNorm(self.z_spk_emb_size, self.linear1_size)
     self.dec_lnorm1 = LayerNorm(input_size=self.linear1_size)
     self.dec_lin2 = LinearNorm(self.linear1_size, self.spk_emb_size)
-    # self.dec_lnorm2 = LayerNorm(input_size=self.spk_emb_size)
 
 
   def encode(self, spk_emb):
