@@ -1254,68 +1254,74 @@ class Sampler(nn.Module):
     # VAE Encoder
     self.enc_lin1 = LinearNorm(self.spk_emb_size, self.linear1_size)
     self.enc_lnorm1 = LayerNorm(input_size=self.linear1_size)
-    self.enc_lin2 = LinearNorm(self.linear1_size, self.linear1_size)
-    self.enc_lnorm2 = LayerNorm(input_size=self.linear1_size)
+    self.enc_lin2 = LinearNorm(self.linear1_size, self.z_spk_emb_size)
+    self.enc_lnorm2 = LayerNorm(input_size=self.z_spk_emb_size)
 
     # VAE sampling
-    self.mean = LinearNorm(self.linear1_size, self.z_spk_emb_size)
-    self.log_var = LinearNorm(self.linear1_size, self.z_spk_emb_size)
+    self.mean = LinearNorm(self.z_spk_emb_size, self.z_spk_emb_size)
+    self.log_var = LinearNorm(self.z_spk_emb_size, self.z_spk_emb_size)
+
+    self.normal = torch.distributions.Normal(0,1)
 
     # VAE Decoder
-    self.dec_lin1 = LinearNorm(self.linear1_size, self.linear1_size)
+    self.dec_lin1 = LinearNorm(self.z_spk_emb_size, self.linear1_size)
     self.dec_lnorm1 = LayerNorm(input_size=self.linear1_size)
     self.dec_lin2 = LinearNorm(self.linear1_size, self.spk_emb_size)
-    self.dec_lnorm2 = LayerNorm(input_size=self.spk_emb_size)
+    # self.dec_lnorm2 = LayerNorm(input_size=self.spk_emb_size)
 
 
-    def encode(self, spk_emb):
+  def encode(self, spk_emb):
 
-      out = self.enc_lin1(spk_emb)
-      out = self.enc_lnorm1(out)
-      out = F.relu(out)
-      out = self.enc_lin2(out)
-      out = self.enc_lnorm2(out)
-      out = F.relu(out)
-      z_mean = self.mean(out)
-      z_log_var = self.log_var(out)
+    out = self.enc_lin1(spk_emb)
+    out = self.enc_lnorm1(out)
+    out = F.relu(out)
+    out = self.enc_lin2(out)
+    out = self.enc_lnorm2(out)
+    out = F.relu(out)
+    z_mean = self.mean(out)
+    z_log_var = self.log_var(out)
 
-      return z_mean, z_log_var
-
-
-    def reparameterize(self, z_mean, z_log_var):
-
-      std = torch.exp(0.5*z_log_var)
-      eps = torch.randn_like(std)
-      z_spk_emb = z_mean + (eps * std)
-
-      return z_spk_emb
+    return z_mean, z_log_var
 
 
-    def decode(self, z_spk_emb):
+  def reparameterize(self, z_mean, z_log_var):
 
-      out = self.dec_lin1(z_spk_emb)
-      out = self.dec_lnorm1(out)
-      out = F.relu(out)
-      out = self.dec_lin2(out)
-      spk_emb_rec = self.dec_lnorm2(out)
+    self.normal.loc = self.normal.loc.to(z_mean.device)
+    self.normal.scale = self.normal.scale.to(z_mean.device)
+    
+    random_sample = self.normal.sample([z_mean.shape[0], self.z_spk_emb_size])
 
-      return spk_emb_rec
+    z_spk_emb = z_mean + torch.exp(0.5 * z_log_var) * random_sample
+
+    return z_spk_emb
+
+
+  def decode(self, z_spk_emb):
+
+    out = self.dec_lin1(z_spk_emb)
+    out = self.dec_lnorm1(out)
+    out = F.relu(out)
+    spk_emb_rec = self.dec_lin2(out) 
+
+    return spk_emb_rec
       
 
-    def forward(self, spk_emb):
-      z_mean, z_log_var = self.encode(spk_emb)
-      z_spk_emb = self.reparameterize(z_mean, z_log_var)
-      return self.decode(z_spk_emb), z_mean, z_log_var
+  def forward(self, spk_emb):
+    z_mean, z_log_var = self.encode(spk_emb)
+    z_spk_emb = self.reparameterize(z_mean, z_log_var)
+    spk_emb_rec = self.decode(z_spk_emb)
+    return spk_emb_rec, z_mean, z_log_var
     
   @torch.jit.export
   def infer(self, spk_emb=None):
 
     if spk_emb != None:
-      z_spk_emb, z_mean, z_log_var = self.forward(spk_emb)
-      return z_spk_emb.squeeze()
+      spk_emb_rec, z_mean, z_log_var = self.forward(spk_emb)
+      return spk_emb_rec.squeeze()
     else:
-      z_spk_emb = torch.randn(self.z_spk_emb_size)
-      return z_spk_emb
+      z_spk_emb = self.normal.sample([self.z_spk_emb_size])
+      spk_emb_rec = self.decode(z_spk_emb)
+      return spk_emb_rec
 
 
 class Tacotron2(nn.Module):
@@ -1703,7 +1709,7 @@ def infer(model, text_sequences, input_lengths):
 
 
 LossStats = namedtuple(
-    "TacotronLoss", "loss mel_loss kl_loss gate_loss attn_loss attn_weight"
+    "TacotronLoss", "loss mel_loss kl_loss spk_embs_loss gate_loss attn_loss attn_weight"
 )
 
 
@@ -1783,7 +1789,7 @@ class Loss(nn.Module):
         self.kl_loss_weight = kl_loss_weight
 
     def forward(
-        self, model_output, targets, input_lengths, target_lengths, epoch
+        self, model_output, targets, input_lengths, target_lengths, spk_embs, epoch
     ):
         """Computes the loss
 
@@ -1813,7 +1819,7 @@ class Loss(nn.Module):
         gate_target.requires_grad = False
         gate_target = gate_target.view(-1, 1)
 
-        mel_out, mel_out_postnet, gate_out, alignments, z_mean, z_log_var = model_output
+        mel_out, mel_out_postnet, gate_out, alignments, spk_embs_rec, z_mean, z_log_var = model_output
 
         gate_out = gate_out.view(-1, 1)
         mel_loss = self.mse_loss(mel_out, mel_target) + self.mse_loss(
@@ -1832,9 +1838,11 @@ class Loss(nn.Module):
         # kl_loss = torch.mean(-0.5 * torch.sum(1 + z_log_var - z_mean.pow(2) - z_log_var.exp()))
         kl_loss = self.kl_loss_weight * kl_loss
 
-        total_loss = mel_loss + kl_loss + gate_loss + attn_loss
+        spk_embs_loss = self.mse_loss(spk_embs_rec, spk_embs)
+
+        total_loss = mel_loss + kl_loss + spk_embs_loss + gate_loss + attn_loss
         return LossStats(
-            total_loss, mel_loss, kl_loss, gate_loss, attn_loss, attn_weight
+            total_loss, mel_loss, kl_loss, spk_embs_loss, gate_loss, attn_loss, attn_weight
         )
 
     def get_attention_loss(

@@ -210,7 +210,7 @@ model: !new:MSTacotron2.Tacotron2
   postnet_n_convolutions: !ref <postnet_n_convolutions>
   decoder_no_early_stopping: !ref <decoder_no_early_stopping>
   # speaker embeddings
-  spk_emb_size: !ref <z_spk_emb_size>
+  spk_emb_size: !ref <spk_emb_size>
 
 guided_attention_scheduler: !new:speechbrain.nnet.schedulers.StepScheduler
   initial_value: !ref <guided_attention_weight>

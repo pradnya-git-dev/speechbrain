@@ -81,13 +81,13 @@ class Tacotron2Brain(sb.Brain):
 
         max_input_length = input_lengths.max().item()
 
-        z_spk_embs, z_mean, z_log_var = self.modules.random_sampler(spk_embs)
+        spk_embs_rec, z_mean, z_log_var = self.modules.random_sampler(spk_embs)
 
         mel_outputs, mel_outputs_postnet, gate_outputs, alignments = self.modules.model(
-            inputs, z_spk_embs, alignments_dim=max_input_length
+            inputs, spk_embs_rec, alignments_dim=max_input_length
         )
 
-        result = (mel_outputs, mel_outputs_postnet, gate_outputs, alignments, z_mean, z_log_var)
+        result = (mel_outputs, mel_outputs_postnet, gate_outputs, alignments, spk_embs_rec, z_mean, z_log_var)
         return result
 
     def fit_batch(self, batch):
@@ -154,7 +154,7 @@ class Tacotron2Brain(sb.Brain):
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         
         loss_stats = self.hparams.criterion(
-            predictions, targets, input_lengths, output_lengths, self.last_epoch
+            predictions, targets, input_lengths, output_lengths, spk_embs, self.last_epoch
         )
         self.last_loss_stats[stage] = scalarize(loss_stats)
         return loss_stats.loss
@@ -172,7 +172,7 @@ class Tacotron2Brain(sb.Brain):
         inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         mel_target, _ = targets
-        mel_out, mel_out_postnet, gate_out, alignments, z_mean, z_log_var = predictions
+        mel_out, mel_out_postnet, gate_out, alignments, spk_embs_rec, z_mean, z_log_var = predictions
         alignments_max = (
             alignments[0]
             .max(dim=-1)
