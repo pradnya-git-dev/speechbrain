@@ -56,11 +56,13 @@ class Tacotron2Brain(sb.Brain):
             run_opts={"device": self.device},
         )
 
+        """
         self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
           source="/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80",
           run_opts={"device": self.device},
           freeze_params=True
         )
+        """
         
         self.last_loss_stats = {}
         
@@ -159,6 +161,7 @@ class Tacotron2Brain(sb.Brain):
         inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
 
+        """
         self.spk_emb_mel_spec_encoder.eval()
 
         target_mels = targets[0].detach().clone()
@@ -187,9 +190,10 @@ class Tacotron2Brain(sb.Brain):
           neg_spk_embs = preds_spk_embs[neg_se_idx]
 
           spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
-        
+        """
+
         loss_stats = self.hparams.criterion(
-            predictions, targets, input_lengths, output_lengths, spk_embs, spk_emb_triplets, self.last_epoch
+            predictions, targets, input_lengths, output_lengths, spk_embs, self.last_epoch
         )
         self.last_loss_stats[stage] = scalarize(loss_stats)
         return loss_stats.loss
