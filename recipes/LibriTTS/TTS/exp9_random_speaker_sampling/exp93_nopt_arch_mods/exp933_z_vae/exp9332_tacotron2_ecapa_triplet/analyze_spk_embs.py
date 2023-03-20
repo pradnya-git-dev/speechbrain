@@ -23,7 +23,7 @@ EXP_AUDIO_SR = 16000
 SPK_EMB_SR = 16000
 PHONEME_INPUT = True
 
-TB_LOG_DIR = "/content/speechbrain/recipes/LibriTTS/TTS/exp9_random_speaker_sampling/exp93_nopt_arch_mods/exp933_z_vae/exp9332_tacotron2_ecapa_triplet/inf_tensorboard"
+TB_LOG_DIR = "/content/speechbrain/recipes/LibriTTS/TTS/exp9_random_speaker_sampling/exp93_nopt_arch_mods/exp933_z_vae/exp9332_tacotron2_ecapa_triplet/inf_tensorboard_libritts_test_all"
 if not os.path.exists(TB_LOG_DIR):
   os.mkdir(TB_LOG_DIR)
 tb_writer = SummaryWriter(TB_LOG_DIR)
@@ -151,7 +151,7 @@ for phrase in same_spk_diff_phrases:
 processed_spk_ids = []
 
 with open(COS_SIM_SCORES_FILE, "w+") as cs_f:
-  sample_counter = 0
+  # sample_counter = 0
 
   for wav_file in wav_list:
 
@@ -166,9 +166,9 @@ with open(COS_SIM_SCORES_FILE, "w+") as cs_f:
       continue
     processed_spk_ids.append(spk_id)
 
-    sample_counter += 1
-    if sample_counter > 5:
-      break
+    # sample_counter += 1
+    # if sample_counter > 5:
+    #   break
 
     signal, fs = torchaudio.load(wav_file)
 
