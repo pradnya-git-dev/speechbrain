@@ -93,6 +93,9 @@ class MSTacotron2(Pretrained):
         -------
         tensors of output spectrograms, output lengths and alignments
         """
+        # import pdb; pdb.set_trace()
+        texts = sorted(texts, key=lambda x: (-len(x), x))
+
         with torch.no_grad():
             inputs = [
                 {
@@ -110,18 +113,25 @@ class MSTacotron2(Pretrained):
             ), "ipnut lengths must be sorted in decreasing order"
             input_lengths = torch.tensor(lens, device=self.device)
 
-            z_spk_embs = self.hparams.random_sampler.infer(spk_embs)
-            z_spk_embs = z_spk_embs.to(self.device)
+            if spk_embs != None:
+              spk_embs = spk_embs.to(self.device)
 
-            z_spk_embs = [z_spk_embs for i in range(len(texts))]
+            spk_emb_rec, z_mean, z_spk_emb = self.hparams.random_sampler.infer(spk_embs)
+            spk_emb_rec = spk_emb_rec.to(self.device)
 
-            z_spk_embs = torch.stack(z_spk_embs)
+            spk_emb_rec = [spk_emb_rec for i in range(len(texts))]
+            z_mean = [z_mean for i in range(len(texts))]
+            z_spk_emb = [z_spk_emb for i in range(len(texts))]
+
+            spk_emb_rec = torch.stack(spk_emb_rec)
+            z_mean = torch.stack(z_mean)
+            z_spk_emb = torch.stack(z_spk_emb)
 
 
             mel_outputs_postnet, mel_lengths, alignments = self.infer(
-                inputs.text_sequences.data, z_spk_embs, input_lengths
+                inputs.text_sequences.data, spk_emb_rec, input_lengths
             )
-        return mel_outputs_postnet, mel_lengths, alignments, z_spk_embs
+        return mel_outputs_postnet, mel_lengths, alignments, spk_emb_rec, z_mean, z_spk_emb
 
     def encode_text(self, text, spk_embs=None):
         """Runs inference for a single text str"""
