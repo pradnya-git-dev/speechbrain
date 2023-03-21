@@ -501,7 +501,7 @@ class Tacotron2Brain(sb.Brain):
 
         z_mean = self.modules.random_sampler.infer(spk_embs)
 
-        mel_out, _, _ = self.hparams.model.infer(
+        mel_out, _, _ = self.modules.model.infer(
             text_padded[:1], z_mean[:1], input_lengths[:1]
         )
         self.hparams.progress_sample_logger.remember(
@@ -515,7 +515,7 @@ class Tacotron2Brain(sb.Brain):
 
         random_z_spk_emb = self.modules.random_sampler.infer()
 
-        rs_mel_out, _, _ = self.hparams.model.infer(
+        rs_mel_out, _, _ = self.modules.model.infer(
             text_padded[:1], random_z_spk_emb.unsqueeze(0), input_lengths[:1]
         )
 

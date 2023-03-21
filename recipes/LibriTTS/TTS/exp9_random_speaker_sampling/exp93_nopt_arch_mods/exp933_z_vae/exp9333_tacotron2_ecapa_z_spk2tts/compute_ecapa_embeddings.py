@@ -109,15 +109,15 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
         return
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # spk_emb_encoder = MelSpectrogramEncoder.from_hparams(
-    #       source="/content/drive/MyDrive/ecapa_tdnn/mel_spec_input",
-    #       run_opts={"device": device}
-    #     )
-
     spk_emb_encoder = MelSpectrogramEncoder.from_hparams(
-          source="/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80",
+          source="/home/p_kandar/saved_models/mstts/ecapa_tdnn_mel_spec_80_voxceleb12",
           run_opts={"device": device}
         )
+
+    # spk_emb_encoder = MelSpectrogramEncoder.from_hparams(
+    #       source="/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80",
+    #       run_opts={"device": device}
+    #     )
 
     resampler = None
     resample_audio = False
