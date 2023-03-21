@@ -1,5 +1,6 @@
 # Import libraries
 import pickle
+from joblib import dump, load
 import numpy
 import torch
 import sklearn
@@ -33,7 +34,6 @@ for spk_emb_file in SPK_EMB_FILES:
 
       original_spk_emb_tensors.append(spk_emb) # For visualization
 
-# import pdb; pdb.set_trace()
 spk_embs = numpy.array(spk_embs)
 
 # Train GMM
@@ -71,8 +71,7 @@ tb_writer.add_embedding(
 )
 
 # Save the trained GMM model
-SAVE_GMM_PATH = "saved_gmm.pickle"
-with open(SAVE_GMM_PATH, "wb") as output_file:
-  pickle.dump(gmm, output_file, protocol=pickle.HIGHEST_PROTOCOL)
+SAVED_GMM_PATH = "/content/speechbrain/recipes/LibriTTS/TTS/exp9_random_speaker_sampling/exp94_offline_gmm/saved_gmm.joblib"
+dump(gmm, SAVED_GMM_PATH) 
 
 # Test speech synthesis with the new GMM
