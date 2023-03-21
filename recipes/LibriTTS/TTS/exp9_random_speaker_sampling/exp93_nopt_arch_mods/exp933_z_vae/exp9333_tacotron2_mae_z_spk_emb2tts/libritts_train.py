@@ -31,9 +31,9 @@ from speechbrain.pretrained import EncoderClassifier
 import pickle
 import random
 from spk_emb_pretrained_interfaces import MelSpectrogramEncoder
-import tensorflow as tf
-import tensorboard as tb
-tf.io.gfile = tb.compat.tensorflow_stub.io.gfile
+# import tensorflow as tf
+# import tensorboard as tb
+# tf.io.gfile = tb.compat.tensorflow_stub.io.gfile
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -501,130 +501,139 @@ class Tacotron2Brain(sb.Brain):
 
         z_mean = self.modules.random_sampler.infer(spk_embs)
 
+        num_samples = 4 if 4 < z_mean.shape[0] else z_mean.shape[0]
+
         mel_out, _, _ = self.modules.model.infer(
-            text_padded[:1], z_mean[:1], input_lengths[:1]
+            text_padded[:num_samples], z_mean[:num_samples], input_lengths[:num_samples]
         )
-        self.hparams.progress_sample_logger.remember(
-            inference_mel_out=self._get_spectrogram_sample(mel_out)
-        )
+        
+        for i in range(mel_out.shape[0]):
+          self.hparams.progress_sample_logger.remember(
+              inference_mel_out=self._get_spectrogram_sample(mel_out[i].unsqueeze(0))
+          )
 
-        print(
-            "INFERENCE - inference_mel_out.shape: ",
-            self._get_spectrogram_sample(mel_out).shape,
-        )
+          print(
+              "INFERENCE - inference_mel_out.shape: ",
+              self._get_spectrogram_sample(mel_out[i].unsqueeze(0)).shape,
+          )
 
-        random_z_spk_emb = self.modules.random_sampler.infer()
+          random_z_spk_emb = self.modules.random_sampler.infer()
 
-        rs_mel_out, _, _ = self.modules.model.infer(
-            text_padded[:1], random_z_spk_emb.unsqueeze(0), input_lengths[:1]
-        )
+          rs_mel_out, _, _ = self.modules.model.infer(
+              text_padded[i].unsqueeze(0), random_z_spk_emb.unsqueeze(0), input_lengths[i].unsqueeze(0)
+          )
 
-        self.hparams.progress_sample_logger.remember(
-            rs_inference_mel_out=self._get_spectrogram_sample(rs_mel_out)
-        )
+          # import pdb; pdb.set_trace()
+          self.hparams.progress_sample_logger.remember(
+              rs_inference_mel_out=self._get_spectrogram_sample(rs_mel_out)
+          )
 
-        if stage == sb.Stage.VALID:
-            # waveform_ss = self.vocoder.decode_batch(mel_out) # Extra Line
-            inf_sample_path = os.path.join(
-                self.hparams.progress_sample_path,
-                str(self.hparams.epoch_counter.current),
-            )
+          if stage == sb.Stage.VALID:
+              # waveform_ss = self.vocoder.decode_batch(mel_out) # Extra Line
+              inf_sample_path = os.path.join(
+                  self.hparams.progress_sample_path,
+                  str(self.hparams.epoch_counter.current),
+              )
 
-            if not os.path.exists(inf_sample_path):
-                os.makedirs(inf_sample_path)
+              if not os.path.exists(inf_sample_path):
+                  os.makedirs(inf_sample_path)
 
-            inf_sample_text = os.path.join(
-                self.hparams.progress_sample_path,
-                str(self.hparams.epoch_counter.current),
-                "inf_input_text.txt",
-            )
-            with open(inf_sample_text, "w") as f:
-                f.write(labels[0])
+              inf_sample_text = os.path.join(
+                  self.hparams.progress_sample_path,
+                  str(self.hparams.epoch_counter.current),
+                  f"inf_input_text_{i}.txt",
+              )
+              with open(inf_sample_text, "w") as f:
+                  f.write(labels[i])
 
-            inf_input_audio = os.path.join(
-                self.hparams.progress_sample_path,
-                str(self.hparams.epoch_counter.current),
-                "inf_input_audio.wav",
-            )
-            torchaudio.save(
-                inf_input_audio,
-                sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0),
-                self.hparams.sample_rate,
-            )
+              inf_input_audio = os.path.join(
+                  self.hparams.progress_sample_path,
+                  str(self.hparams.epoch_counter.current),
+                  f"inf_input_audio_{i}.wav",
+              )
+              torchaudio.save(
+                  inf_input_audio,
+                  sb.dataio.dataio.read_audio(wavs[i]).unsqueeze(0),
+                  self.hparams.sample_rate,
+              )
 
-            waveform_ss = self.vocoder.decode_batch(mel_out)
-            inf_sample_audio = os.path.join(
-                self.hparams.progress_sample_path,
-                str(self.hparams.epoch_counter.current),
-                "inf_vc_output_audio.wav",
-            )
-            torchaudio.save(
-                inf_sample_audio,
-                waveform_ss.squeeze(1).cpu(),
-                self.hparams.sample_rate,
-            )
+              # import pdb; pdb.set_trace()
 
-            waveform_rs = self.vocoder.decode_batch(rs_mel_out)
-            inf_rs_output_audio = os.path.join(
-                self.hparams.progress_sample_path,
-                str(self.hparams.epoch_counter.current),
-                "inf_rs_output_audio.wav",
-            )
-            torchaudio.save(
-                inf_rs_output_audio,
-                waveform_rs.squeeze(1).cpu(),
-                self.hparams.sample_rate,
-            )
+              waveform_ss = self.vocoder.decode_batch(mel_out[i].unsqueeze(0))
+              inf_sample_audio = os.path.join(
+                  self.hparams.progress_sample_path,
+                  str(self.hparams.epoch_counter.current),
+                  f"inf_vc_output_audio_{i}.wav",
+              )
+              torchaudio.save(
+                  inf_sample_audio,
+                  waveform_ss.squeeze(1).cpu(),
+                  self.hparams.sample_rate,
+              )
+
+              # import pdb; pdb.set_trace()
+
+              waveform_rs = self.vocoder.decode_batch(rs_mel_out)
+              inf_rs_output_audio = os.path.join(
+                  self.hparams.progress_sample_path,
+                  str(self.hparams.epoch_counter.current),
+                  f"inf_rs_output_audio_{i}.wav",
+              )
+              torchaudio.save(
+                  inf_rs_output_audio,
+                  waveform_rs.squeeze(1).cpu(),
+                  self.hparams.sample_rate,
+              )
             
 
-            if self.hparams.use_tensorboard:
-                self.tensorboard_logger.log_audio(
-                    f"{stage}/inf_audio_target",
-                    sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0),
-                    self.hparams.sample_rate,
-                )
-                self.tensorboard_logger.log_audio(
-                    f"{stage}/inf_vc_audio_pred",
-                    waveform_ss.squeeze(1),
-                    self.hparams.sample_rate,
-                )
-                self.tensorboard_logger.log_audio(
-                    f"{stage}/inf_rs_audio_pred",
-                    waveform_rs.squeeze(1),
-                    self.hparams.sample_rate,
-                )
-                try:
-                  self.tensorboard_logger.log_figure(
-                      f"{stage}/inf_mel_target", targets[0][0]
+              if self.hparams.use_tensorboard:
+                  self.tensorboard_logger.log_audio(
+                      f"{stage}/inf_audio_target",
+                      sb.dataio.dataio.read_audio(wavs[0]).unsqueeze(0),
+                      self.hparams.sample_rate,
                   )
-                  self.tensorboard_logger.log_figure(
-                      f"{stage}/inf_vc_mel_pred", mel_out
+                  self.tensorboard_logger.log_audio(
+                      f"{stage}/inf_vc_audio_pred",
+                      waveform_ss.squeeze(1),
+                      self.hparams.sample_rate,
                   )
-                  self.tensorboard_logger.log_figure(
-                      f"{stage}/inf_rs_mel_pred", rs_mel_out
+                  self.tensorboard_logger.log_audio(
+                      f"{stage}/inf_rs_audio_pred",
+                      waveform_rs.squeeze(1),
+                      self.hparams.sample_rate,
                   )
-                except Exception as ex:
-                  pass
+                  try:
+                    self.tensorboard_logger.log_figure(
+                        f"{stage}/inf_mel_target", targets[0][0]
+                    )
+                    self.tensorboard_logger.log_figure(
+                        f"{stage}/inf_vc_mel_pred", mel_out
+                    )
+                    self.tensorboard_logger.log_figure(
+                        f"{stage}/inf_rs_mel_pred", rs_mel_out
+                    )
+                  except Exception as ex:
+                    pass
 
-                # Logging ECAPA-TDNN emebddings
-                # import pdb; pdb.set_trace()
-                combined_z_embs = torch.cat((z_mean, random_z_spk_emb.unsqueeze(0)))
-                spk_embs_labels = ["spk_embs_" + spk_id for spk_id in spk_ids]
-                
-                z_spk_embs_labels =  ["z_spk_embs_" + spk_id for spk_id in spk_ids]
-                z_spk_embs_labels.append("random_z_spk_emb")
+                  # Logging ECAPA-TDNN emebddings
+                  # import pdb; pdb.set_trace()
+                  combined_z_embs = torch.cat((z_mean, random_z_spk_emb.unsqueeze(0)))
+                  spk_embs_labels = ["spk_embs_" + spk_id for spk_id in spk_ids]
+                  
+                  z_spk_embs_labels =  ["z_spk_embs_" + spk_id for spk_id in spk_ids]
+                  z_spk_embs_labels.append("random_z_spk_emb")
 
-                self.tensorboard_logger.writer.add_embedding(
-                  spk_embs,
-                  metadata=spk_embs_labels,
-                  tag="spk_embs_epoch_"+ str(self.hparams.epoch_counter.current),
-                )
+                  self.tensorboard_logger.writer.add_embedding(
+                    spk_embs,
+                    metadata=spk_embs_labels,
+                    tag="spk_embs_epoch_"+ str(self.hparams.epoch_counter.current),
+                  )
 
-                self.tensorboard_logger.writer.add_embedding(
-                  combined_z_embs,
-                  metadata=z_spk_embs_labels,
-                  tag="z_spk_embs_epoch_"+ str(self.hparams.epoch_counter.current),
-                )
+                  self.tensorboard_logger.writer.add_embedding(
+                    combined_z_embs,
+                    metadata=z_spk_embs_labels,
+                    tag="z_spk_embs_epoch_"+ str(self.hparams.epoch_counter.current),
+                  )
 
 
     def get_triplets(self, spk_ids):  

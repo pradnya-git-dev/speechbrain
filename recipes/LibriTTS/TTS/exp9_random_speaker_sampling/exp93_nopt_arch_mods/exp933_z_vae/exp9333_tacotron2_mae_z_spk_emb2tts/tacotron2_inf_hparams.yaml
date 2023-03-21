@@ -15,7 +15,7 @@ mel_scale: "slaney"
 dynamic_range_compression: True
 
 spk_emb_size: 192
-z_spk_emb_size: 64
+z_spk_emb_size: 128
 spk_emb_sample_rate: 16000
 
 ################################
