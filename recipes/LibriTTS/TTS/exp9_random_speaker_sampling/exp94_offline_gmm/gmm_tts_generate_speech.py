@@ -38,6 +38,10 @@ tacotron2_ms = MSTacotron2.from_hparams(source="/content/drive/MyDrive/mstts_sav
                                         hparams_file="/content/speechbrain/recipes/LibriTTS/TTS/exp9_random_speaker_sampling/exp94_offline_gmm/tacotron2_inf_hparams.yaml",
                                         run_opts={"device": DEVICE})
 
+# Load vocoder
+hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-libritts-16kHz",
+                                run_opts={"device": DEVICE})
+
 # Predict components for original speaker embeddings (LibriTTS dev-clean for now)
 # Parse speaker embedding files/generate embeddings
 SPK_EMB_FILES = ["train_speaker_embeddings.pickle", "valid_speaker_embeddings.pickle"]
@@ -75,11 +79,40 @@ common_phrase = " ".join(common_phrase_phoneme_list)
 common_phrase = "{" + common_phrase + "}"
 print(common_phrase)
 
+n_original_spk_embs = 10
+
+tb_embs_list, tb_embs_labels_list = list(), list()
+
 for (i, sampled_spk_emb) in enumerate(sampled_spk_embs_t):
   valid_original_spk_embs_idx = [idx for idx in range(len(original_spk_emb_gmm_labels)) if sampled_spk_emb_gmm_labels[i] == original_spk_emb_gmm_labels[idx]]
-  sample
-  import pdb; pdb.set_trace()
-# Generate speech for the common phrase "Mary had a little lamb"
+  original_spk_embs_idx = random.sample(valid_original_spk_embs_idx, k=n_original_spk_embs)
+
+  texts = [common_phrase for j in range(len(original_spk_embs_idx) + 1)]
+  tts_spk_embs = torch.cat((sampled_spk_emb.unsqueeze(0), original_spk_emb_t[original_spk_embs_idx]))
+
+  tb_embs_list.append(tts_spk_embs)
+  tb_embs_labels_list.append(str(sampled_spk_emb_gmm_labels[i]) + "_sampled")
+  tb_embs_labels_list.extend([str(sampled_spk_emb_gmm_labels[i]) + "_original" for x in range(n_original_spk_embs)])
+  # import pdb; pdb.set_trace()
+  # Generate speech for the common phrase "Mary had a little lamb"
+  mel_output_ms, mel_length_ms, alignment_ms = tacotron2_ms.encode_batch(texts, tts_spk_embs)
+  waveform_cp = hifi_gan.decode_batch(mel_output_ms)
+
+  for (a, waveform) in enumerate(waveform_cp):
+
+    tb_writer.add_audio(
+        str(sampled_spk_emb_gmm_labels[i]) + f"_{a}.wav",
+        waveform.squeeze(1),
+        sample_rate=16000
+      )
+
+# import pdb; pdb.set_trace()
+tb_writer.add_embedding(
+  torch.cat(tb_embs_list, dim=0),
+  metadata=tb_embs_labels_list,
+  tag="combined_spk_embs"
+)
+
 
 # Generate a few other samples with using speaker embeddings computed using ECAPA TDNN encoder (use LibriTTS test-clean)
 # This is not required but make sure everything is working 

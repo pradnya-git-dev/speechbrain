@@ -110,7 +110,7 @@ class MSTacotron2(Pretrained):
             ), "ipnut lengths must be sorted in decreasing order"
             input_lengths = torch.tensor(lens, device=self.device)
 
-
+            spk_embs = spk_embs.to(self.device).float()
 
             mel_outputs_postnet, mel_lengths, alignments = self.infer(
                 inputs.text_sequences.data, spk_embs, input_lengths
