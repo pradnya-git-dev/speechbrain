@@ -41,6 +41,7 @@ for spk_emb_file in SPK_EMB_FILES:
 
 custom_means = list()
 custom_means_labels = list()
+n_components = 0
 
 for spk_id in spk_embs_dict.keys():
   # import pdb; pdb.set_trace()
@@ -52,6 +53,8 @@ for spk_id in spk_embs_dict.keys():
   validation_spk_embs_labels.extend([spk_id + "_valid" for i in range(num_valid_embs)])
 
   num_train_embs = len(spk_embs_dict[spk_id]) - num_valid_embs
+  if num_train_embs >= 1:
+    n_components += 1
   train_spk_embs.extend(spk_embs_dict[spk_id][num_valid_embs:])
   train_spk_embs_labels.extend([spk_id + "_train" for i in range(num_train_embs)])
   
@@ -62,7 +65,7 @@ custom_means = numpy.array(custom_means)
 
 # Train GMM
 # gmm = sklearn.mixture.GaussianMixture(n_components=40, n_init=5, means_init=custom_means, random_state=0, verbose=2).fit(train_spk_embs)
-gmm = sklearn.mixture.GaussianMixture(n_components=40, n_init=5, random_state=0, verbose=2).fit(train_spk_embs)
+gmm = sklearn.mixture.GaussianMixture(n_components=n_components, n_init=5, random_state=0, verbose=2).fit(train_spk_embs)
 custom_means_gmm_labels = gmm.predict(custom_means).tolist()
 train_spk_emb_gmm_labels = gmm.predict(train_spk_embs).tolist()
 validation_spk_embs_gmm_labels = gmm.predict(validation_spk_embs).tolist()
