@@ -85,7 +85,7 @@ energy_pred_kernel_size: 3
 variance_predictor_dropout: 0.5
 
 #model
-model: !new:speechbrain.lobes.models.FastSpeech2.FastSpeech2
+model: !new:FastSpeech2.FastSpeech2
     enc_num_layers: !ref <enc_num_layers>
     enc_num_head: !ref <enc_num_head>
     enc_d_model: !ref <enc_d_model>

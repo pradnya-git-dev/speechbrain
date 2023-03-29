@@ -19,7 +19,9 @@ hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-libritts-16kHz",
 # import pdb; pdb.set_trace()
 # input_text = "It was also suggested that it would take a substantial period of time for the secret service to build up the skills necessary to meet the problem"
 # input_text = "Testing Speech Brain grapheme to phoneme model with the Fast Speech two model."
-input_text = "Testing homographs. I like to read. I read that book twice."
+# input_text = "Testing homographs. I like to read. I read that book twice."
+input_text = "Others who arrived just after the time of distribution were often forty-eight hours without food. The latter might also be six days without meat."
+
 print(input_text)
 # Convert text label into a phoneme label
 # phoneme_seq = g2p(input_text)
@@ -29,5 +31,5 @@ print(input_text)
 # Pass phoneme label through the TTS pipeline
 mel_output, durations, pitch, energy = fastspeech2.encode_text(input_text)
 waveforms = hifi_gan.decode_batch(mel_output)
-torchaudio.save(os.path.join("/content", "sample_audio.wav"),waveforms.squeeze(1), 16000)
+torchaudio.save(os.path.join("/content", "fs2_site_pred_5.wav"),waveforms.squeeze(1), 16000)
 

@@ -5,6 +5,7 @@ import torch
 from speechbrain.dataio.dataio import length_to_mask
 import os
 from speechbrain.pretrained import GraphemeToPhoneme
+import re, string
 
 class HIFIGAN(Pretrained):
     """
@@ -155,10 +156,10 @@ class FastSpeech2(Pretrained):
         lexicon = ["@@"] + lexicon
         self.input_encoder = self.hparams.input_encoder
         self.input_encoder.update_from_iterable(lexicon, sequence_input=False)
-        self.input_encoder.add_unk()
+        # self.input_encoder.add_unk()
         self.g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p")
 
-    def encode_batch(self, texts, pace=1.1):
+    def encode_batch(self, texts, pace=1):
         """Computes mel-spectrogram for a list of texts
 
         Arguments
@@ -176,9 +177,18 @@ class FastSpeech2(Pretrained):
         # Converts texts to their respective phoneme sequences
         phoneme_seqs = list()
         for text in texts:
-          phoneme_seq = self.g2p(text)
-          phoneme_seq = " ".join(phoneme_seq)
-          phoneme_seqs.append(phoneme_seq)
+          # import pdb; pdb.set_trace()
+          text_segs = re.split("[" + string.punctuation + "]+", text)
+          text_segs = [text_seg.strip() for text_seg in text_segs if text_seg != ""]
+          phoneme_segs = self.g2p(text_segs)
+          phoneme_segs = [" ".join(phoneme_seg) for phoneme_seg in phoneme_segs]
+          phoneme_segs = [re.sub(" +", " ", phoneme_seg) for phoneme_seg in phoneme_segs]
+          input_seq = " spn ".join(phoneme_segs)
+          input_seq = input_seq + " spn"
+
+          # phoneme_seq = self.g2p(text)
+          # phoneme_seq = " ".join(phoneme_seq)
+          phoneme_seqs.append(input_seq)
 
         # Sorts phoneme sequences in descending order of length
         phoneme_seqs = sorted(phoneme_seqs, key=lambda x: (-len(x), x))
@@ -194,7 +204,7 @@ class FastSpeech2(Pretrained):
             ]
             inputs = speechbrain.dataio.batch.PaddedBatch(inputs).to(self.device)
             mel_outputs, _, durations, pitch, energy, _ = self.hparams.model(
-                inputs.phoneme_sequences.data, pace=1.1
+                inputs.phoneme_sequences.data, pace=pace
             )
 
             # Transposes to make in compliant with HiFI GAN expected format
@@ -202,7 +212,7 @@ class FastSpeech2(Pretrained):
 
         return mel_outputs, durations, pitch, energy
 
-    def encode_text(self, text, pace=1.1):
+    def encode_text(self, text, pace=1):
         """Runs inference for a single text str
         Arguments
         ---------
@@ -213,7 +223,7 @@ class FastSpeech2(Pretrained):
         """
         return self.encode_batch([text], pace=pace)
 
-    def forward(self, texts, pace=1.1):
+    def forward(self, texts, pace=1):
         """Encodes the input texts.
         Arguments
         ---------
