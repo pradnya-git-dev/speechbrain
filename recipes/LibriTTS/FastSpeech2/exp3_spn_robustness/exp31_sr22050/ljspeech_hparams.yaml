@@ -59,7 +59,7 @@ max_f0: 2093 #(torchaudio pyin values)
 learning_rate: 0.0001
 weight_decay: 0.000000001
 max_grad_norm: 1.0
-batch_size: 16 #minimum 2
+batch_size: 64 #minimum 2
 betas: [0.98, 0.99]
 
 ################################
@@ -211,13 +211,13 @@ modules:
 train_dataloader_opts:
     batch_size: !ref <batch_size>
     drop_last: False  #True #False
-    num_workers: 0
+    num_workers: 16
     shuffle: True
     collate_fn: !new:FastSpeech2.TextMelCollate
 
 valid_dataloader_opts:
     batch_size: !ref <batch_size>
-    num_workers: 0
+    num_workers: 4
     shuffle: False
     collate_fn: !new:FastSpeech2.TextMelCollate
 
