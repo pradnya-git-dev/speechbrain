@@ -17,7 +17,8 @@ import logging
 import torchaudio
 import numpy as np
 import speechbrain as sb
-from speechbrain.pretrained import HIFIGAN
+# from speechbrain.pretrained import HIFIGAN
+from fs2_pretrained_interfaces import HIFIGAN
 from pathlib import Path
 from hyperpyyaml import load_hyperpyyaml
 from speechbrain.utils.data_utils import scalarize
@@ -49,7 +50,40 @@ class FastSpeech2Brain(sb.Brain):
         the model output
         """
         inputs, _ = self.batch_to_device(batch)
-        return self.hparams.model(*inputs)
+        phonemes, durations, pitch, energy, phonemes_no_spn = inputs
+        (
+          mel_post, 
+          postnet_output, 
+          predict_durations, 
+          predict_pitch, 
+          predict_energy, 
+          predict_mel_lens
+        ) = self.hparams.model(phonemes, durations, pitch, energy)
+
+        (
+          mel_post_no_spn, 
+          postnet_output_no_spn, 
+          predict_durations_no_spn, 
+          predict_pitch_no_spn, 
+          predict_energy_no_spn, 
+          predict_mel_lens_no_spn
+        ) = self.hparams.model(phonemes_no_spn)
+
+        # import pdb; pdb.set_trace()
+
+        return (
+          mel_post, 
+          postnet_output, 
+          predict_durations, 
+          predict_pitch, 
+          predict_energy, 
+          predict_mel_lens,
+          mel_post_no_spn, 
+          postnet_output_no_spn,
+        )
+
+
+
 
     def fit_batch(self, batch):
         """Fits a single batch
@@ -107,6 +141,7 @@ class FastSpeech2Brain(sb.Brain):
             input_lengths,
             labels,
             wavs,
+
         ) = batch
         (
             mel_post,
@@ -115,6 +150,8 @@ class FastSpeech2Brain(sb.Brain):
             predict_pitch,
             predict_energy,
             predict_mel_lens,
+            mel_post_no_spn, 
+            postnet_output_no_spn,
         ) = predictions
         self.hparams.progress_sample_logger.remember(
             target=self.process_mel(spectogram, mel_lengths),
@@ -242,6 +279,7 @@ class FastSpeech2Brain(sb.Brain):
             source=self.hparams.vocoder_source,
             savedir=self.hparams.vocoder_download_path,
         )
+        # import pdb; pdb.set_trace()
         waveforms = hifi_gan.decode_batch(
             inference_mel.transpose(2, 1), mel_lens, self.hparams.hop_length
         )
@@ -277,16 +315,18 @@ class FastSpeech2Brain(sb.Brain):
             len_x,
             labels,
             wavs,
+            text_padded_no_spn,
         ) = batch
 
         durations = durations.to(self.device, non_blocking=True).long()
         phonemes = text_padded.to(self.device, non_blocking=True).long()
+        phonemes_no_spn = text_padded_no_spn.to(self.device, non_blocking=True).long()
         input_lengths = input_lengths.to(self.device, non_blocking=True).long()
         spectogram = mel_padded.to(self.device, non_blocking=True).float()
         pitch = pitch_padded.to(self.device, non_blocking=True).float()
         energy = energy_padded.to(self.device, non_blocking=True).float()
         mel_lengths = output_lengths.to(self.device, non_blocking=True).long()
-        x = (phonemes, durations, pitch, energy)
+        x = (phonemes, durations, pitch, energy, phonemes_no_spn)
         y = (spectogram, durations, pitch, energy, mel_lengths, input_lengths)
         metadata = (labels, wavs)
         if return_metadata:
@@ -309,11 +349,16 @@ def dataio_prepare(hparams):
     @sb.utils.data_pipeline.provides("mel_text_pair")
     def audio_pipeline(wav, label_phoneme, dur, pitch, start, end):
 
+        # import pdb; pdb.set_trace()
         durs = np.load(dur)
         durs_seq = torch.from_numpy(durs).int()
         label_phoneme = label_phoneme.strip()
         text_seq = input_encoder.encode_sequence_torch(label_phoneme.split()).int()
         assert len(text_seq) == len(durs), f'{len(text_seq)}, {len(durs), len(label_phoneme)}, ({label_phoneme})'  # ensure every token has a duration
+
+        label_phoneme_no_spn = label_phoneme.replace("spn", "")
+        text_seq_no_spn = input_encoder.encode_sequence_torch(label_phoneme_no_spn.split()).int()
+
         audio, fs = torchaudio.load(wav)
         
         audio = audio.squeeze()
@@ -327,7 +372,8 @@ def dataio_prepare(hparams):
         pitch = np.load(pitch)
         pitch = torch.from_numpy(pitch)
         pitch = pitch[: mel.shape[-1]]
-        return text_seq, durs_seq, mel, pitch, energy, len(text_seq)
+
+        return text_seq, durs_seq, mel, pitch, energy, len(text_seq), text_seq_no_spn
 
     # define splits and load it as sb dataset
     datasets = {}

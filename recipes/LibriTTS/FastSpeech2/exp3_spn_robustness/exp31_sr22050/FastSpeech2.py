@@ -651,20 +651,30 @@ class TextMelCollate:
             torch.LongTensor([len(x[0]) for x in batch]), dim=0, descending=True
         )
         max_input_len = input_lengths[0]
+        
+        # Get the max length for text sequences without spn
+        input_lengths_no_spn, ids_sorted_decreasing_no_spn = torch.sort(
+            torch.LongTensor([len(x[-1]) for x in batch]), dim=0, descending=True
+        )
+        max_input_len_no_spn = input_lengths_no_spn[0]
 
+
+        # import pdb; pdb.set_trace()
         text_padded = torch.LongTensor(len(batch), max_input_len)
+        text_padded_no_spn = torch.LongTensor(len(batch), max_input_len_no_spn)
         dur_padded = torch.LongTensor(len(batch), max_input_len)
         text_padded.zero_()
+        text_padded_no_spn.zero_()
         dur_padded.zero_()
 
         for i in range(len(ids_sorted_decreasing)):
             text = batch[ids_sorted_decreasing[i]][0]
-
+            text_no_spn = batch[ids_sorted_decreasing[i]][-1]
             dur = batch[ids_sorted_decreasing[i]][1]
-            # print(text, dur)
-            dur_padded[i, : dur.size(0)] = dur
+
             text_padded[i, : text.size(0)] = text
-            # print(dur_padded, text_padded)
+            text_padded_no_spn[i, : text_no_spn.size(0)] = text_no_spn
+            dur_padded[i, : dur.size(0)] = dur
 
         # Right zero-pad mel-spec
         num_mels = batch[0][2].size(0)
@@ -706,6 +716,7 @@ class TextMelCollate:
             len_x,
             labels,
             wavs,
+            text_padded_no_spn,
         )
 
 
@@ -778,7 +789,9 @@ class Loss(nn.Module):
             log_durations,
             predicted_pitch,
             predicted_energy,
-            mel_lens
+            mel_lens,
+            mel_out_no_spn, 
+            postnet_mel_out_no_spn,
         ) = predictions
         predicted_pitch = predicted_pitch.squeeze()
         predicted_energy = predicted_energy.squeeze()
@@ -795,9 +808,18 @@ class Loss(nn.Module):
                     mel_out[i, : mel_length[i], :],
                     mel_target[i, : mel_length[i], :],
                 )
+                # import pdb; pdb.set_trace()
+                mel_loss_no_spn = self.mel_loss(
+                    mel_out_no_spn[i, : min(mel_length[i], mel_out_no_spn.shape[1]), :],
+                    mel_target[i, : min(mel_length[i], mel_out_no_spn.shape[1]), :],
+                )
                 postnet_mel_loss = self.postnet_mel_loss(
                     postnet_mel_out[i, :mel_length[i], :],
                     mel_target[i, :mel_length[i], :],
+                )
+                postnet_mel_loss_no_spn = self.postnet_mel_loss(
+                    postnet_mel_out_no_spn[i, :min(mel_length[i], postnet_mel_out_no_spn.shape[1]), :],
+                    mel_target[i, :min(mel_length[i], postnet_mel_out_no_spn.shape[1]), :],
                 )
                 dur_loss = self.dur_loss(
                     log_durations[i, : phon_len[i]],
@@ -816,9 +838,17 @@ class Loss(nn.Module):
                     mel_out[i, : mel_length[i], :],
                     mel_target[i, : mel_length[i], :],
                 )
+                mel_loss_no_spn = mel_loss_no_spn + self.mel_loss(
+                    mel_out_no_spn[i, : min(mel_length[i], mel_out_no_spn.shape[1]), :],
+                    mel_target[i, : min(mel_length[i], mel_out_no_spn.shape[1]), :],
+                )
                 postnet_mel_loss = postnet_mel_loss + self.postnet_mel_loss(
                     postnet_mel_out[i, :mel_length[i], :],
                     mel_target[i, :mel_length[i], :],
+                )
+                postnet_mel_loss_no_spn = postnet_mel_loss_no_spn + self.postnet_mel_loss(
+                    postnet_mel_out_no_spn[i, :min(mel_length[i], postnet_mel_out_no_spn.shape[1]), :],
+                    mel_target[i, :min(mel_length[i], postnet_mel_out_no_spn.shape[1]), :],
                 )
                 dur_loss = dur_loss + self.dur_loss(
                     log_durations[i, : phon_len[i]],
@@ -833,17 +863,21 @@ class Loss(nn.Module):
                     target_energy[i, : mel_length[i]].to(torch.float32),
                 )
         mel_loss = torch.div(mel_loss, len(mel_target))
+        mel_loss_no_spn = torch.div(mel_loss_no_spn, len(mel_target))
         postnet_mel_loss = torch.div(postnet_mel_loss, len(mel_target))
+        postnet_mel_loss_no_spn = torch.div(postnet_mel_loss_no_spn, len(mel_target))
         dur_loss = torch.div(dur_loss, len(mel_target))
         pitch_loss = torch.div(pitch_loss, len(mel_target))
         energy_loss = torch.div(energy_loss, len(mel_target))
 
-        total_loss = mel_loss*self.mel_loss_weight + postnet_mel_loss*self.postnet_mel_loss_weight + dur_loss*self.duration_loss_weight + pitch_loss*self.pitch_loss_weight + energy_loss*self.energy_loss_weight
+        total_loss = mel_loss*self.mel_loss_weight + postnet_mel_loss*self.postnet_mel_loss_weight + mel_loss_no_spn*self.mel_loss_weight + postnet_mel_loss_no_spn*self.postnet_mel_loss_weight + dur_loss*self.duration_loss_weight + pitch_loss*self.pitch_loss_weight + energy_loss*self.energy_loss_weight
 
         loss = {
             "total_loss": total_loss,
             "mel_loss": mel_loss*self.mel_loss_weight,
+            "mel_loss_no_spn": mel_loss_no_spn*self.mel_loss_weight,
             "postnet_mel_loss": postnet_mel_loss*self.postnet_mel_loss_weight,
+            "postnet_mel_loss_no_spn": postnet_mel_loss_no_spn*self.postnet_mel_loss_weight,
             "dur_loss": dur_loss*self.duration_loss_weight,
             "pitch_loss": pitch_loss*self.pitch_loss_weight,
             "energy_loss": energy_loss*self.energy_loss_weight,
