@@ -115,8 +115,8 @@ class FastSpeech2Brain(sb.Brain):
             A one-element tensor used for backpropagating the gradient.
         """
         x, y, metadata = self.batch_to_device(batch, return_metadata=True)
-        self.last_batch = [x[0], y[-1], y[-2], predictions[0], *metadata]
-        self._remember_sample([x[0], *y, *metadata], predictions)
+        self.last_batch = [x[0], x[-1], y[-1], y[-2], predictions[0], *metadata]
+        self._remember_sample([x[0], x[-1], *y, *metadata], predictions)
         loss = self.hparams.criterion(predictions, y)
         self.last_loss_stats[stage] = scalarize(loss)
         return loss["total_loss"]
@@ -133,6 +133,7 @@ class FastSpeech2Brain(sb.Brain):
         """
         (
             tokens,
+            tokens_no_spn,
             spectogram,
             durations,
             pitch,
@@ -222,9 +223,10 @@ class FastSpeech2Brain(sb.Brain):
 
             if output_progress_sample:
                 logger.info("Saving predicted samples")
-                inference_mel, mel_lens = self.run_inference()
+                inference_mel, mel_lens, inf_mel_out_no_spn, inf_mel_lens_no_spn = self.run_inference()
                 self.hparams.progress_sample_logger.save(epoch)
-                self.run_vocoder(inference_mel, mel_lens)
+                self.run_vocoder(inference_mel, mel_lens, sample_type="with_spn")
+                self.run_vocoder(inf_mel_out_no_spn, inf_mel_lens_no_spn, sample_type="no_spn")
             # Save the current checkpoint and delete previous checkpoints.
             # UNCOMMENT THIS
             self.checkpointer.save_and_keep_only(
@@ -243,15 +245,17 @@ class FastSpeech2Brain(sb.Brain):
         """
         if self.last_batch is None:
             return
-        tokens, *_ = self.last_batch
+        tokens, tokens_no_spn, *_ = self.last_batch
 
         _, postnet_mel_out, _, _, _, predict_mel_lens =  self.hparams.model(tokens)
+        _, postnet_mel_out_no_spn, _, _, _, predict_mel_lens_no_spn =  self.hparams.model(tokens_no_spn)
         self.hparams.progress_sample_logger.remember(
             infer_output=self.process_mel(postnet_mel_out, [len(postnet_mel_out[0])])
         )
-        return postnet_mel_out, predict_mel_lens
+        
+        return postnet_mel_out, predict_mel_lens, postnet_mel_out_no_spn, predict_mel_lens_no_spn
 
-    def run_vocoder(self, inference_mel, mel_lens):
+    def run_vocoder(self, inference_mel, mel_lens, sample_type=""):
         """Uses a pretrained vocoder to generate audio from predicted mel
         spectogram. By default, uses speechbrain hifigan.
         Arguments
@@ -288,7 +292,7 @@ class FastSpeech2Brain(sb.Brain):
             path = os.path.join(
                 self.hparams.progress_sample_path,
                 str(self.last_epoch),
-                f"pred_{Path(wavs[idx]).stem}.wav",
+                f"pred_{sample_type}_{Path(wavs[idx]).stem}.wav",
             )
             torchaudio.save(path, wav, self.hparams.sample_rate)
 
