@@ -415,7 +415,12 @@ def prepare_json(
           )
 
           # Gets label phonemes
+          # import pdb; pdb.set_trace()
           label_phoneme = " ".join(phonemes)
+          spn_labels = [0] * len(phonemes)
+          for i in range(1, len(phonemes)):
+            if phonemes[i] == "spn":
+              spn_labels[i - 1] = 1
           if start >= end:
               print(f"Skipping {id}")
               continue
@@ -445,6 +450,7 @@ def prepare_json(
           
           # Updates data for the utterance
           json_dict[id].update({"label_phoneme": label_phoneme})
+          json_dict[id].update({"spn_labels": spn_labels})
           json_dict[id].update({"start": start})
           json_dict[id].update({"end": end})
           json_dict[id].update({"durations": duration_file_path})

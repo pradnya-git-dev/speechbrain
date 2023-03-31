@@ -14,6 +14,7 @@ from Transformer import (
     get_key_padding_mask,
 )
 from speechbrain.nnet.normalization import LayerNorm
+from speechbrain.nnet.losses import bce_loss
 import pickle
 
 
@@ -254,6 +255,78 @@ class DurationPredictor(nn.Module):
 
         return self.linear(x)
 
+
+class SPNPredictor(nn.Module):
+
+  def __init__(
+        self,
+        enc_num_layers,
+        enc_num_head,
+        enc_d_model,
+        enc_ffn_dim,
+        enc_k_dim,
+        enc_v_dim,
+        enc_dropout,
+        normalize_before,
+        ffn_type,
+        ffn_cnn_kernel_size_list,
+        n_char,
+        padding_idx,
+    ):
+      super().__init__()
+      self.enc_num_head = enc_num_head
+      self.padding_idx = padding_idx
+
+      self.encPreNet = EncoderPreNet(
+            n_char, padding_idx, out_channels=enc_d_model
+        )
+
+      self.sinusoidal_positional_embed_encoder = PositionalEmbedding(
+            enc_d_model
+        )
+
+      self.spn_encoder = TransformerEncoder(
+            num_layers=enc_num_layers,
+            nhead=enc_num_head,
+            d_ffn=enc_ffn_dim,
+            d_model=enc_d_model,
+            kdim=enc_k_dim,
+            vdim=enc_v_dim,
+            dropout=enc_dropout,
+            activation=nn.ReLU,
+            normalize_before=normalize_before,
+            ffn_type=ffn_type,
+            ffn_cnn_kernel_size_list=ffn_cnn_kernel_size_list,
+        )
+
+      self.spn_linear = linear.Linear(n_neurons=1, input_size=enc_d_model)
+
+  def forward(self, tokens):
+
+    token_feats = self.encPreNet(tokens)
+
+    srcmask = get_key_padding_mask(tokens, pad_idx=self.padding_idx)
+    srcmask_inverted = (~srcmask).unsqueeze(-1)
+    pos = self.sinusoidal_positional_embed_encoder(
+        token_feats.shape[1], srcmask, token_feats.dtype
+    )
+    token_feats = torch.add(token_feats, pos) * srcmask_inverted
+
+    # import pdb; pdb.set_trace()
+    spn_mask = (
+      torch.triu(torch.ones(token_feats.shape[1], token_feats.shape[1]), diagonal=1)
+      .to(token_feats.device)
+      .bool()
+      .repeat(self.enc_num_head * token_feats.shape[0], 1, 1)
+    )
+
+    spn_token_feats, _ = self.spn_encoder(
+        token_feats, src_mask=spn_mask, src_key_padding_mask=srcmask
+    )
+    spn_decision = self.spn_linear(spn_token_feats).squeeze()
+    return spn_decision
+
+      
 
 class FastSpeech2(nn.Module):
     """The FastSpeech2 text-to-speech model.
@@ -654,16 +727,20 @@ class TextMelCollate:
 
         text_padded = torch.LongTensor(len(batch), max_input_len)
         dur_padded = torch.LongTensor(len(batch), max_input_len)
+        spn_labels_padded = torch.FloatTensor(len(batch), max_input_len)
         text_padded.zero_()
         dur_padded.zero_()
+        spn_labels_padded.zero_()
 
         for i in range(len(ids_sorted_decreasing)):
             text = batch[ids_sorted_decreasing[i]][0]
 
             dur = batch[ids_sorted_decreasing[i]][1]
+            spn_labels = torch.Tensor(batch[ids_sorted_decreasing[i]][-1])
             # print(text, dur)
             dur_padded[i, : dur.size(0)] = dur
             text_padded[i, : text.size(0)] = text
+            spn_labels_padded[i, : spn_labels.size(0)] = spn_labels
             # print(dur_padded, text_padded)
 
         # Right zero-pad mel-spec
@@ -695,6 +772,9 @@ class TextMelCollate:
         len_x = [x[5] for x in batch]
         len_x = torch.Tensor(len_x)
         mel_padded = mel_padded.permute(0, 2, 1)
+
+        # import pdb; pdb.set_trace()
+
         return (
             text_padded,
             dur_padded,
@@ -706,6 +786,7 @@ class TextMelCollate:
             len_x,
             labels,
             wavs,
+            spn_labels_padded
         )
 
 
@@ -734,7 +815,8 @@ class Loss(nn.Module):
         pitch_loss_weight,
         energy_loss_weight,
         mel_loss_weight,
-        postnet_mel_loss_weight
+        postnet_mel_loss_weight,
+        spn_loss_weight=1.0
     ):
         super().__init__()
 
@@ -749,6 +831,7 @@ class Loss(nn.Module):
         self.duration_loss_weight = duration_loss_weight
         self.pitch_loss_weight = pitch_loss_weight
         self.energy_loss_weight = energy_loss_weight
+        self.spn_loss_weight = spn_loss_weight
 
     def forward(self, predictions, targets):
         """Computes the value of the loss function and updates stats
@@ -770,6 +853,7 @@ class Loss(nn.Module):
             target_energy,
             mel_length,
             phon_len,
+            spn_labels
         ) = targets
         assert len(mel_target.shape) == 3
         (
@@ -778,8 +862,10 @@ class Loss(nn.Module):
             log_durations,
             predicted_pitch,
             predicted_energy,
-            mel_lens
+            mel_lens,
+            spn_preds
         ) = predictions
+
         predicted_pitch = predicted_pitch.squeeze()
         predicted_energy = predicted_energy.squeeze()
         target_energy = target_energy.squeeze()
@@ -838,7 +924,10 @@ class Loss(nn.Module):
         pitch_loss = torch.div(pitch_loss, len(mel_target))
         energy_loss = torch.div(energy_loss, len(mel_target))
 
-        total_loss = mel_loss*self.mel_loss_weight + postnet_mel_loss*self.postnet_mel_loss_weight + dur_loss*self.duration_loss_weight + pitch_loss*self.pitch_loss_weight + energy_loss*self.energy_loss_weight
+        # import pdb; pdb.set_trace()
+        spn_loss = bce_loss(spn_preds, spn_labels)
+
+        total_loss = mel_loss*self.mel_loss_weight + postnet_mel_loss*self.postnet_mel_loss_weight + dur_loss*self.duration_loss_weight + pitch_loss*self.pitch_loss_weight + energy_loss*self.energy_loss_weight + spn_loss*self.spn_loss_weight
 
         loss = {
             "total_loss": total_loss,
@@ -847,6 +936,7 @@ class Loss(nn.Module):
             "dur_loss": dur_loss*self.duration_loss_weight,
             "pitch_loss": pitch_loss*self.pitch_loss_weight,
             "energy_loss": energy_loss*self.energy_loss_weight,
+            "spn_loss": spn_loss*self.spn_loss_weight
         }
         return loss
 
