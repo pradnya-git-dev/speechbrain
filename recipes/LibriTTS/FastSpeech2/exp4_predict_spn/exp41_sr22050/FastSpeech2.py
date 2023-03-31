@@ -324,6 +324,12 @@ class SPNPredictor(nn.Module):
         token_feats, src_mask=spn_mask, src_key_padding_mask=srcmask
     )
     spn_decision = self.spn_linear(spn_token_feats).squeeze()
+
+    return spn_decision
+
+  def infer(self, tokens):
+    spn_decision = self.forward(tokens)
+    spn_decision = torch.sigmoid(spn_decision) > 0.5
     return spn_decision
 
       

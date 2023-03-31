@@ -22,6 +22,8 @@ from fs2_pretrained_interfaces import HIFIGAN
 from pathlib import Path
 from hyperpyyaml import load_hyperpyyaml
 from speechbrain.utils.data_utils import scalarize
+from speechbrain.pretrained import GraphemeToPhoneme
+import re
 
 
 logger = logging.getLogger(__name__)
@@ -35,6 +37,8 @@ class FastSpeech2Brain(sb.Brain):
         self.last_epoch = 0
         self.last_batch = None
         self.last_loss_stats = {}
+        self.g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p")
+        self.spn_token_encoded = self.input_encoder.encode_sequence_torch(["spn"]).int().item()
         return super().on_fit_start()
 
     def compute_forward(self, batch, stage):
@@ -210,10 +214,20 @@ class FastSpeech2Brain(sb.Brain):
             )
 
             if output_progress_sample:
+                """
+                sample_epoch_path = os.path.join(
+                    self.hparams.progress_sample_path,
+                    str(self.last_epoch)
+                )
+                if not os.path.exists(sample_epoch_path):
+                  os.makedirs(sample_epoch_path)
+                """
+
                 logger.info("Saving predicted samples")
-                inference_mel, mel_lens = self.run_inference()
+                inference_mel, mel_lens, inf_mel_spn_pred, mel_lens_spn_pred = self.run_inference()
                 self.hparams.progress_sample_logger.save(epoch)
-                self.run_vocoder(inference_mel, mel_lens)
+                self.run_vocoder(inference_mel, mel_lens, sample_type="with_spn")
+                self.run_vocoder(inf_mel_spn_pred, mel_lens_spn_pred, sample_type="no_spn")
             # Save the current checkpoint and delete previous checkpoints.
             # UNCOMMENT THIS
             self.checkpointer.save_and_keep_only(
@@ -232,7 +246,7 @@ class FastSpeech2Brain(sb.Brain):
         """
         if self.last_batch is None:
             return
-        tokens, *_ = self.last_batch
+        tokens, *_, labels, _ = self.last_batch
 
         # Without inserting spn tokens - original token input
         _, postnet_mel_out, _, _, _, predict_mel_lens =  self.hparams.model(tokens)
@@ -240,9 +254,48 @@ class FastSpeech2Brain(sb.Brain):
         self.hparams.progress_sample_logger.remember(
             infer_output=self.process_mel(postnet_mel_out, [len(postnet_mel_out[0])])
         )
-        return postnet_mel_out, predict_mel_lens
 
-    def run_vocoder(self, inference_mel, mel_lens):
+        # import pdb; pdb.set_trace()
+        phoneme_labels = self.g2p(labels)
+        phoneme_labels = [" ".join(phoneme_label) for phoneme_label in phoneme_labels]
+        phoneme_labels = [re.sub(" +", " ", phoneme_label) for phoneme_label in phoneme_labels]
+        
+        all_tokens_with_spn = list()
+        max_seq_len = -1
+        for phoneme_label in phoneme_labels:
+          token_seq = self.input_encoder.encode_sequence_torch(phoneme_label.split()).int().to(self.device)
+          spn_preds = self.hparams.modules["spn_predictor"].infer(token_seq.unsqueeze(0)).int()
+
+          spn_to_add = torch.nonzero(spn_preds).reshape(-1).tolist()
+          print("spn_to_add: ", spn_to_add)
+
+          tokens_with_spn = list()
+
+          for token_idx in range(token_seq.shape[0]):
+            tokens_with_spn.append(token_seq[token_idx].item())
+            if token_idx in spn_to_add:
+              tokens_with_spn.append(self.spn_token_encoded)
+
+          tokens_with_spn = torch.LongTensor(tokens_with_spn).to(self.device)
+          all_tokens_with_spn.append(tokens_with_spn)
+          if max_seq_len < tokens_with_spn.shape[-1]:
+            max_seq_len = tokens_with_spn.shape[-1]
+        # import pdb; pdb.set_trace()
+        
+        tokens_with_spn_tensor = torch.LongTensor(tokens.shape[0], max_seq_len).to(self.device)
+        tokens_with_spn_tensor.zero_()
+
+        for seq_idx, seq in enumerate(all_tokens_with_spn):
+          tokens_with_spn_tensor[seq_idx, :len(seq)] = seq
+
+        _, postnet_mel_out_spn_pred, _, _, _, predict_mel_lens_spn_pred =  self.hparams.model(tokens_with_spn_tensor)
+          
+          
+          # self.run_vocoder(postnet_mel_out_spn_pred, predict_mel_lens_spn_pred, sample_type="pred_spn")
+
+        return postnet_mel_out, predict_mel_lens, postnet_mel_out_spn_pred, predict_mel_lens_spn_pred
+
+    def run_vocoder(self, inference_mel, mel_lens, sample_type=""):
         """Uses a pretrained vocoder to generate audio from predicted mel
         spectogram. By default, uses speechbrain hifigan.
         Arguments
@@ -278,7 +331,7 @@ class FastSpeech2Brain(sb.Brain):
             path = os.path.join(
                 self.hparams.progress_sample_path,
                 str(self.last_epoch),
-                f"pred_{Path(wavs[idx]).stem}.wav",
+                f"pred_{sample_type}_{Path(wavs[idx]).stem}.wav",
             )
             torchaudio.save(path, wav, self.hparams.sample_rate)
 
