@@ -55,10 +55,17 @@ class FastSpeech2Brain(sb.Brain):
         """
         inputs, _ = self.batch_to_device(batch)
 
-        tokens, durations, pitch, energy = inputs
+        tokens, durations, pitch, energy, no_spn_seqs = inputs
 
         # import pdb; pdb.set_trace()
-        spn_preds = self.hparams.modules["spn_predictor"](tokens)
+        spn_preds = self.hparams.modules["spn_predictor"](no_spn_seqs)
+        # spn_preds = torch.ge(spn_preds, 0).int()
+        # spn_preds = torch.nonzero(spn_preds)
+        # .reshape(spn_preds.shape[0], -1)
+        # torch.nonzero(spn_preds).reshape(-1).tolist()
+        # torch.ge(spn_preds[0], 0).int()
+
+        print(spn_preds)
 
         (
           predict_mel_post, 
@@ -67,7 +74,7 @@ class FastSpeech2Brain(sb.Brain):
           predict_pitch, 
           predict_energy, 
           predict_mel_lens
-        ) = self.hparams.model(*inputs)
+        ) = self.hparams.model(tokens, durations, pitch, energy)
 
         return (
           predict_mel_post, 
@@ -266,6 +273,8 @@ class FastSpeech2Brain(sb.Brain):
           token_seq = self.input_encoder.encode_sequence_torch(phoneme_label.split()).int().to(self.device)
           spn_preds = self.hparams.modules["spn_predictor"].infer(token_seq.unsqueeze(0)).int()
 
+          print("Inference spn_preds: ", spn_preds)
+
           spn_to_add = torch.nonzero(spn_preds).reshape(-1).tolist()
           print("spn_to_add: ", spn_to_add)
 
@@ -358,6 +367,7 @@ class FastSpeech2Brain(sb.Brain):
             len_x,
             labels,
             wavs,
+            no_spn_seq_padded,
             spn_labels_padded,
         ) = batch
 
@@ -368,8 +378,9 @@ class FastSpeech2Brain(sb.Brain):
         pitch = pitch_padded.to(self.device, non_blocking=True).float()
         energy = energy_padded.to(self.device, non_blocking=True).float()
         mel_lengths = output_lengths.to(self.device, non_blocking=True).long()
+        no_spn_seqs = no_spn_seq_padded.to(self.device, non_blocking=True).long()
         spn_labels = spn_labels_padded.to(self.device, non_blocking=True).long()
-        x = (phonemes, durations, pitch, energy)
+        x = (phonemes, durations, pitch, energy, no_spn_seqs)
         y = (spectogram, durations, pitch, energy, mel_lengths, input_lengths, spn_labels)
         metadata = (labels, wavs)
         if return_metadata:
@@ -394,9 +405,18 @@ def dataio_prepare(hparams):
 
         durs = np.load(dur)
         durs_seq = torch.from_numpy(durs).int()
+
+        # import pdb; pdb.set_trace()
         label_phoneme = label_phoneme.strip()
-        text_seq = input_encoder.encode_sequence_torch(label_phoneme.split()).int()
+        label_phoneme = label_phoneme.split()
+        text_seq = input_encoder.encode_sequence_torch(label_phoneme).int()
         assert len(text_seq) == len(durs), f'{len(text_seq)}, {len(durs), len(label_phoneme)}, ({label_phoneme})'  # ensure every token has a duration
+        
+        no_spn_label = [phoneme for phoneme in label_phoneme if phoneme != "spn"]
+        no_spn_seq = input_encoder.encode_sequence_torch(no_spn_label).int()
+
+        spn_labels = [spn_labels[i] for i in range(len(label_phoneme)) if label_phoneme[i] != "spn"]
+        
         audio, fs = torchaudio.load(wav)
         
         audio = audio.squeeze()
@@ -410,7 +430,7 @@ def dataio_prepare(hparams):
         pitch = np.load(pitch)
         pitch = torch.from_numpy(pitch)
         pitch = pitch[: mel.shape[-1]]
-        return text_seq, durs_seq, mel, pitch, energy, len(text_seq), spn_labels
+        return text_seq, durs_seq, mel, pitch, energy, len(text_seq), no_spn_seq, spn_labels
 
     # define splits and load it as sb dataset
     datasets = {}
@@ -474,9 +494,9 @@ def main():
     fastspeech2_brain.fit(
         fastspeech2_brain.hparams.epoch_counter,
         datasets["train"],
-        datasets["valid"],
+        datasets["train"],
         train_loader_kwargs=hparams["train_dataloader_opts"],
-        valid_loader_kwargs=hparams["valid_dataloader_opts"],
+        valid_loader_kwargs=hparams["train_dataloader_opts"],
     )
 
 

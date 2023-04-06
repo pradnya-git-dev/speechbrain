@@ -731,21 +731,32 @@ class TextMelCollate:
         )
         max_input_len = input_lengths[0]
 
+        # Get max_no_spn_seq_len
+        no_spn_seq_lengths, no_spn_ids_sorted_decreasing = torch.sort(
+            torch.LongTensor([len(x[-2]) for x in batch]), dim=0, descending=True
+        )
+        max_no_spn_seq_len = no_spn_seq_lengths[0]
+
+
         text_padded = torch.LongTensor(len(batch), max_input_len)
+        no_spn_seq_padded = torch.LongTensor(len(batch), max_no_spn_seq_len)
         dur_padded = torch.LongTensor(len(batch), max_input_len)
-        spn_labels_padded = torch.FloatTensor(len(batch), max_input_len)
+        spn_labels_padded = torch.FloatTensor(len(batch), max_no_spn_seq_len)
         text_padded.zero_()
+        no_spn_seq_padded.zero_()
         dur_padded.zero_()
         spn_labels_padded.zero_()
 
         for i in range(len(ids_sorted_decreasing)):
             text = batch[ids_sorted_decreasing[i]][0]
-
+            no_spn_seq = batch[ids_sorted_decreasing[i]][-2]
             dur = batch[ids_sorted_decreasing[i]][1]
             spn_labels = torch.Tensor(batch[ids_sorted_decreasing[i]][-1])
             # print(text, dur)
-            dur_padded[i, : dur.size(0)] = dur
+
             text_padded[i, : text.size(0)] = text
+            no_spn_seq_padded[i, : no_spn_seq.size(0)] = no_spn_seq
+            dur_padded[i, : dur.size(0)] = dur
             spn_labels_padded[i, : spn_labels.size(0)] = spn_labels
             # print(dur_padded, text_padded)
 
@@ -792,6 +803,7 @@ class TextMelCollate:
             len_x,
             labels,
             wavs,
+            no_spn_seq_padded,
             spn_labels_padded
         )
 
