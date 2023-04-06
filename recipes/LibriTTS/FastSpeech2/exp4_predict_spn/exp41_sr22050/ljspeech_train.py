@@ -57,16 +57,8 @@ class FastSpeech2Brain(sb.Brain):
 
         tokens, durations, pitch, energy, no_spn_seqs = inputs
 
-        # import pdb; pdb.set_trace()
         spn_preds = self.hparams.modules["spn_predictor"](no_spn_seqs)
-        # spn_preds = torch.ge(spn_preds, 0).int()
-        # spn_preds = torch.nonzero(spn_preds)
-        # .reshape(spn_preds.shape[0], -1)
-        # torch.nonzero(spn_preds).reshape(-1).tolist()
-        # torch.ge(spn_preds[0], 0).int()
-
-        print(spn_preds)
-
+        
         (
           predict_mel_post, 
           predict_postnet_output, 
@@ -273,10 +265,10 @@ class FastSpeech2Brain(sb.Brain):
           token_seq = self.input_encoder.encode_sequence_torch(phoneme_label.split()).int().to(self.device)
           spn_preds = self.hparams.modules["spn_predictor"].infer(token_seq.unsqueeze(0)).int()
 
-          print("Inference spn_preds: ", spn_preds)
+          # print("Inference spn_preds: ", spn_preds)
 
           spn_to_add = torch.nonzero(spn_preds).reshape(-1).tolist()
-          print("spn_to_add: ", spn_to_add)
+          # print("spn_to_add: ", spn_to_add)
 
           tokens_with_spn = list()
 
@@ -494,9 +486,9 @@ def main():
     fastspeech2_brain.fit(
         fastspeech2_brain.hparams.epoch_counter,
         datasets["train"],
-        datasets["train"],
+        datasets["valid"],
         train_loader_kwargs=hparams["train_dataloader_opts"],
-        valid_loader_kwargs=hparams["train_dataloader_opts"],
+        valid_loader_kwargs=hparams["valid_dataloader_opts"],
     )
 
 

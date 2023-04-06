@@ -365,7 +365,7 @@ def prepare_json(
     None
     """
 
-    seg_lst = seg_lst[:20]
+    # seg_lst = seg_lst[:20]
 
     logger.info(f"preparing {json_file}.")
     if model_name == "Tacotron2":
