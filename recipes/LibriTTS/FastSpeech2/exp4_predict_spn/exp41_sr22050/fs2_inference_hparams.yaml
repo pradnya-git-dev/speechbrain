@@ -84,6 +84,22 @@ pitch_pred_kernel_size: 3
 energy_pred_kernel_size: 3
 variance_predictor_dropout: 0.5
 
+# SPN predictor
+spn_predictor: !new:FastSpeech2.SPNPredictor
+    enc_num_layers: !ref <enc_num_layers>
+    enc_num_head: !ref <enc_num_head>
+    enc_d_model: !ref <enc_d_model>
+    enc_ffn_dim: !ref <enc_ffn_dim>
+    enc_k_dim: !ref <enc_k_dim>
+    enc_v_dim: !ref <enc_v_dim>
+    enc_dropout: !ref <enc_dropout>
+    normalize_before: !ref <normalize_before>
+    ffn_type: !ref <ffn_type>
+    ffn_cnn_kernel_size_list: !ref <ffn_cnn_kernel_size_list>
+    n_char: !ref <n_symbols>
+    padding_idx: !ref <padding_idx>
+
+
 #model
 model: !new:FastSpeech2.FastSpeech2
     enc_num_layers: !ref <enc_num_layers>
@@ -119,8 +135,10 @@ model: !new:FastSpeech2.FastSpeech2
 input_encoder: !new:speechbrain.dataio.encoder.TextEncoder
 
 modules:
+    spn_predictor: !ref <spn_predictor>
     model: !ref <model>
 
 pretrainer: !new:speechbrain.utils.parameter_transfer.Pretrainer
     loadables:
+        spn_predictor: !ref <spn_predictor>
         model: !ref <model>

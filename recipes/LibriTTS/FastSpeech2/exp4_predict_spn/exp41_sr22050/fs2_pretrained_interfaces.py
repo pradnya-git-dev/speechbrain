@@ -148,7 +148,7 @@ class FastSpeech2(Pretrained):
     >>> waveforms = hifi_gan.decode_batch(mel_output)
     """
 
-    HPARAMS_NEEDED = ["model", "input_encoder"]
+    HPARAMS_NEEDED = ["spn_predictor", "model", "input_encoder"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -158,6 +158,8 @@ class FastSpeech2(Pretrained):
         self.input_encoder.update_from_iterable(lexicon, sequence_input=False)
         # self.input_encoder.add_unk()
         self.g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p")
+
+        self.spn_token_encoded = self.input_encoder.encode_sequence_torch(["spn"]).int().item()
 
     def encode_batch(self, texts, pace=1):
         """Computes mel-spectrogram for a list of texts
@@ -174,37 +176,45 @@ class FastSpeech2(Pretrained):
         tensors of output spectrograms, output lengths and alignments
         """
 
-        # Converts texts to their respective phoneme sequences
-        phoneme_seqs = list()
-        for text in texts:
-          # import pdb; pdb.set_trace()
-          text_segs = re.split("[" + string.punctuation + "]+", text)
-          text_segs = [text_seg.strip() for text_seg in text_segs if text_seg != ""]
-          phoneme_segs = self.g2p(text_segs)
-          phoneme_segs = [" ".join(phoneme_seg) for phoneme_seg in phoneme_segs]
-          phoneme_segs = [re.sub(" +", " ", phoneme_seg) for phoneme_seg in phoneme_segs]
-          input_seq = " spn ".join(phoneme_segs)
-          input_seq = input_seq + " spn"
+        phoneme_labels = self.g2p(texts)
+        phoneme_labels = [" ".join(phoneme_label) for phoneme_label in phoneme_labels]
+        phoneme_labels = [re.sub(" +", " ", phoneme_label) for phoneme_label in phoneme_labels]
 
-          # phoneme_seq = self.g2p(text)
-          # phoneme_seq = " ".join(phoneme_seq)
-          phoneme_seqs.append(input_seq)
+        all_tokens_with_spn = list()
+        max_seq_len = -1
+        for phoneme_label in phoneme_labels:
+          token_seq = self.input_encoder.encode_sequence_torch(phoneme_label.split()).int().to(self.device)
+          spn_preds = self.hparams.spn_predictor.infer(token_seq.unsqueeze(0)).int()
 
-        # Sorts phoneme sequences in descending order of length
-        phoneme_seqs = sorted(phoneme_seqs, key=lambda x: (-len(x), x))
+          # print("Inference spn_preds: ", spn_preds)
+
+          spn_to_add = torch.nonzero(spn_preds).reshape(-1).tolist()
+          print("spn_to_add: ", spn_to_add)
+
+          tokens_with_spn = list()
+
+          for token_idx in range(token_seq.shape[0]):
+            tokens_with_spn.append(token_seq[token_idx].item())
+            if token_idx in spn_to_add:
+              tokens_with_spn.append(self.spn_token_encoded)
+
+          tokens_with_spn = torch.LongTensor(tokens_with_spn).to(self.device)
+          all_tokens_with_spn.append(tokens_with_spn)
+          if max_seq_len < tokens_with_spn.shape[-1]:
+            max_seq_len = tokens_with_spn.shape[-1]
+        # import pdb; pdb.set_trace()
+        
+        tokens_with_spn_tensor = torch.LongTensor(len(texts), max_seq_len).to(self.device)
+        tokens_with_spn_tensor.zero_()
+
+        for seq_idx, seq in enumerate(all_tokens_with_spn):
+          tokens_with_spn_tensor[seq_idx, :len(seq)] = seq
+
 
         with torch.no_grad():
-            inputs = [
-                {
-                    "phoneme_sequences": self.input_encoder.encode_sequence_torch(
-                        item.split()
-                    ).int()
-                }
-                for item in phoneme_seqs
-            ]
-            inputs = speechbrain.dataio.batch.PaddedBatch(inputs).to(self.device)
+
             mel_outputs, _, durations, pitch, energy, _ = self.hparams.model(
-                inputs.phoneme_sequences.data, pace=pace
+                tokens_with_spn_tensor, pace=pace
             )
 
             # Transposes to make in compliant with HiFI GAN expected format
