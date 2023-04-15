@@ -15,6 +15,8 @@ from speechbrain.dataio.dataio import (
     load_pkl,
     save_pkl,
 )
+from speechbrain.pretrained import GraphemeToPhoneme
+import torch
 
 logger = logging.getLogger(__name__)
 OPT_FILE = "opt_ljspeech_prepare.pkl"
@@ -23,6 +25,8 @@ TRAIN_JSON = "train.json"
 VALID_JSON = "valid.json"
 TEST_JSON = "test.json"
 WAVS = "wavs"
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p", run_opts={"device":DEVICE})
 
 
 def prepare_ljspeech(
@@ -32,6 +36,7 @@ def prepare_ljspeech(
     split_ratio=[90, 10],
     seed=1234,
     skip_prep=False,
+    compute_phonemes=True
 ):
     """
     Prepares the csv files for the LJspeech datasets.
@@ -104,14 +109,14 @@ def prepare_ljspeech(
     # Prepare csv
     if "train" in splits:
         prepare_json(
-            data_split["train"], save_json_train, wavs_folder, meta_csv
+            data_split["train"], save_json_train, wavs_folder, meta_csv, compute_phonemes
         )
     if "valid" in splits:
         prepare_json(
-            data_split["valid"], save_json_valid, wavs_folder, meta_csv
+            data_split["valid"], save_json_valid, wavs_folder, meta_csv, compute_phonemes
         )
     if "test" in splits:
-        prepare_json(data_split["test"], save_json_test, wavs_folder, meta_csv)
+        prepare_json(data_split["test"], save_json_test, wavs_folder, meta_csv, compute_phonemes)
 
     save_pkl(conf, save_opt)
 
@@ -221,7 +226,7 @@ def split_sets(data_folder, splits, split_ratio):
     return data_split, meta_csv
 
 
-def prepare_json(seg_lst, json_file, wavs_folder, csv_reader):
+def prepare_json(seg_lst, json_file, wavs_folder, csv_reader, compute_phonemes):
     """
     Creates json file given a list of indexes.
 
@@ -241,15 +246,24 @@ def prepare_json(seg_lst, json_file, wavs_folder, csv_reader):
     None
     """
     json_dict = {}
+    seg_lst = seg_lst[:10]
     for index in seg_lst:
         id = list(csv_reader)[index][0]
         wav = os.path.join(wavs_folder, f"{id}.wav")
         label = list(csv_reader)[index][2]
+
         json_dict[id] = {
+            "uttid": id,
             "wav": wav,
             "label": label,
             "segment": True if "train" in json_file else False,
         }
+
+        if compute_phonemes:
+          label_phoneme_list = g2p(label)
+          label_phoneme = " ".join(label_phoneme_list)
+
+          json_dict[id].update({"label_phoneme": label_phoneme})
 
     # Writing the dictionary to the json file
     with open(json_file, mode="w") as json_f:
