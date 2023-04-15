@@ -17,7 +17,7 @@ save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
 epochs: 500
 keep_checkpoint_interval: 50
-use_tensorboard: True
+use_tensorboard: False
 device: cuda:0
 
 ###################################
