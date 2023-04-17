@@ -31,7 +31,7 @@ tb_writer = SummaryWriter(TB_LOG_DIR)
 g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p", run_opts={"device":DEVICE})
 
 # Load TTS model
-tacotron2_ms = MSTacotron2.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/TTS/exp7_loss_variations/exp74_spk_emb_loss/exp742_triplet_loss/exp7421_tacotron2_ecapa/exp7421_tacotron2_ecapa_libritts_e32",
+tacotron2_ms = MSTacotron2.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/TTS/exp7_loss_variations/exp74_spk_emb_loss/exp742_triplet_loss/exp7421_tacotron2_ecapa/exp7421_tacotron2_ecapa_libritts_e54",
                                         hparams_file="/content/speechbrain/recipes/LibriTTS/TTS/exp10_controllable_factors/exp102_pca/tacotron2_inf_hparams.yaml",
                                         run_opts={"device": DEVICE})
 
@@ -103,19 +103,56 @@ plt.show()
 
 fig.savefig('pca.png')
 
-print("pca.explained_variance_ratio_: ", pca.explained_variance_ratio_)
+# import pdb; pdb.set_trace()
+pca_vectors = pca.components_
+pca_eigenvalues = pca.singular_values_
 
-print("pca.components_: ",abs(pca.components_))
+# Effects for PC1
+pc_vector_1 = pca_vectors[0]
 
-import pdb; pdb.set_trace()
-pca_components = torch.from_numpy(abs(pca.components_))
-pca_components_idx = torch.argsort(pca_components, dim=1, descending=True)
+spk_ids = ["5895", "8297"]
+spk_emb_1 = random.sample(spk_embs_dict[spk_ids[0]], k=1)[0]
+spk_emb_2 = random.sample(spk_embs_dict[spk_ids[1]], k=1)[0]
 
+steps = 10
 
-print("Feature importance for PC1: ", pca_components[0])
-print("Indices for feature importance of PC1: ", pca_components_idx[0])
-print("Important features sorted by indices: ", pca_components[0][pca_components_idx[0]])
+gradual_spk_embs = list()
+gradual_spk_embs_labels = list()
 
+gradual_spk_embs.append(spk_emb_1)
+gradual_spk_embs_labels.append(spk_ids[0])
 
+for i in range(steps):
+  pc_change = pca_vectors[1] + (i)
+  spk_emb_grad = spk_emb_1 + pc_change
+  gradual_spk_embs.append(spk_emb_grad)
+
+  gradual_spk_embs_labels.append(spk_ids[0] + f"_step_{i}")
+
+gradual_spk_embs = torch.stack(gradual_spk_embs)
+
+PHRASE = "Mary had a little lamb"
+common_phrase_phoneme_list = g2p(PHRASE)
+common_phrase = " ".join(common_phrase_phoneme_list)
+common_phrase = "{" + common_phrase + "}"
+print(common_phrase)
+
+phoneme_seqs = [common_phrase for i in range(gradual_spk_embs.shape[0])]
+mel_output_ms, mel_length_ms, alignment_ms = tacotron2_ms.encode_batch(phoneme_seqs, gradual_spk_embs)
+waveform_cp = hifi_gan.decode_batch(mel_output_ms)
+
+for (a, waveform) in enumerate(waveform_cp):
+
+  tb_writer.add_audio(
+      f"{gradual_spk_embs_labels[a]}.wav",
+      waveform.squeeze(1),
+      sample_rate=16000
+    )
+
+tb_writer.add_embedding(
+  gradual_spk_embs,
+  metadata=gradual_spk_embs_labels,
+  tag="gradual_spk_embs"
+)
 
 print("DONE!")
