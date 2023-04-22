@@ -20,7 +20,7 @@ import torch
 
 logger = logging.getLogger(__name__)
 OPT_FILE = "opt_ljspeech_prepare.pkl"
-METADATA_CSV = "metadata.csv"
+METADATA_CSV = "metadata_phoneme.csv"
 TRAIN_JSON = "train.json"
 VALID_JSON = "valid.json"
 TEST_JSON = "test.json"
@@ -246,11 +246,11 @@ def prepare_json(seg_lst, json_file, wavs_folder, csv_reader, compute_phonemes):
     None
     """
     json_dict = {}
-    # seg_lst = seg_lst[:65]
+    seg_lst = seg_lst[:65]
     for index in seg_lst:
         id = list(csv_reader)[index][0]
         wav = os.path.join(wavs_folder, f"{id}.wav")
-        label = list(csv_reader)[index][2]
+        label = list(csv_reader)[index][-2]
 
         json_dict[id] = {
             "uttid": id,
@@ -260,8 +260,7 @@ def prepare_json(seg_lst, json_file, wavs_folder, csv_reader, compute_phonemes):
         }
 
         if compute_phonemes:
-          label_phoneme_list = g2p(label)
-          label_phoneme = " ".join(label_phoneme_list)
+          label_phoneme = list(csv_reader)[index][-1]
 
           json_dict[id].update({"label_phoneme": label_phoneme})
 

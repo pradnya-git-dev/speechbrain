@@ -111,10 +111,10 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # CC: /home/pradnya/projects/def-ravanelm/pradnya/saved_models/ecapa_tdnn_mel_spec_80_voxceleb12
-    # Drive: /content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80
+    DRIVE_ECAPA =  "/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80"
 
     spk_emb_encoder = MelSpectrogramEncoder.from_hparams(
-          source="/home/pradnya/projects/def-ravanelm/pradnya/saved_models/ecapa_tdnn_mel_spec_80_voxceleb12",
+          source=DRIVE_ECAPA,
           run_opts={"device": device}
         )
 
