@@ -414,7 +414,7 @@ class Prenet(nn.Module):
     torch.Size([862, 2, 256])
     """
 
-    def __init__(self, in_dim=80, sizes=[256, 256], dropout=0.5):
+    def __init__(self, spk_emb_size, in_dim=80, sizes=[256, 256], dropout=0.5):
         super().__init__()
         in_sizes = [in_dim] + sizes[:-1]
         self.layers = nn.ModuleList(
@@ -425,7 +425,9 @@ class Prenet(nn.Module):
         )
         self.dropout = dropout
 
-    def forward(self, x):
+        self.film_prenet = FiLM(spk_emb_size, sizes[-1])
+
+    def forward(self, x, spk_embs):
         """Computes the forward pass for the prenet
 
         Arguments
@@ -440,6 +442,9 @@ class Prenet(nn.Module):
         """
         for linear in self.layers:
             x = F.dropout(F.relu(linear(x)), p=self.dropout, training=True)
+
+        x = self.film_prenet(x.transpose(0, 1), spk_embs)
+        x = x.transpose(0, 1)
         return x
 
 
@@ -793,7 +798,7 @@ class Decoder(nn.Module):
         self.early_stopping = early_stopping
 
         self.prenet = Prenet(
-            n_mel_channels * n_frames_per_step, [prenet_dim, prenet_dim]
+            spk_emb_size, n_mel_channels * n_frames_per_step, [prenet_dim, prenet_dim]
         )
 
         self.attention_rnn = nn.LSTMCell(
@@ -822,11 +827,6 @@ class Decoder(nn.Module):
             1,
             bias=True,
             w_init_gain="sigmoid",
-        )
-
-        self.film_decoder = FiLM(
-          spk_emb_size,
-          attention_rnn_dim + encoder_embedding_dim
         )
 
     def get_go_frame(self, memory):
@@ -995,7 +995,6 @@ class Decoder(nn.Module):
         memory,
         processed_memory,
         mask,
-        spk_embs,
     ):
         """Decoder step using stored states, attention and memory
         Arguments
@@ -1060,8 +1059,6 @@ class Decoder(nn.Module):
         attention_weights_cum += attention_weights
         decoder_input = torch.cat((attention_hidden, attention_context), -1)
 
-        decoder_input = self.film_decoder(decoder_input, spk_embs)
-
         decoder_hidden, decoder_cell = self.decoder_rnn(
             decoder_input, (decoder_hidden, decoder_cell)
         )
@@ -1114,9 +1111,14 @@ class Decoder(nn.Module):
         """
 
         decoder_input = self.get_go_frame(memory).unsqueeze(0)
+        # decoder_input.shape = [1, 64, 80]
+        # decoder_inputs.shape [64, 80, 839]
         decoder_inputs = self.parse_decoder_inputs(decoder_inputs)
+        # decoder_inputs.shape = [839, 64, 80]
         decoder_inputs = torch.cat((decoder_input, decoder_inputs), dim=0)
-        decoder_inputs = self.prenet(decoder_inputs)
+        # decoder_inputs.shape = [840, 64, 80]
+        decoder_inputs = self.prenet(decoder_inputs, spk_embs)
+        # decoder_inputs.shape = [840, 64, 256]
 
         
 
@@ -1157,7 +1159,6 @@ class Decoder(nn.Module):
                 memory,
                 processed_memory,
                 mask,
-                spk_embs,
             )
 
             mel_outputs += [mel_output.squeeze(1)]
@@ -1220,7 +1221,8 @@ class Decoder(nn.Module):
         )
         first_iter = True
         while True:
-            decoder_input = self.prenet(decoder_input)
+            decoder_input = self.prenet(decoder_input.unsqueeze(0), spk_embs)
+            decoder_input = decoder_input.squeeze(0)
             (
                 mel_output,
                 gate_output,
@@ -1243,7 +1245,6 @@ class Decoder(nn.Module):
                 memory,
                 processed_memory,
                 mask,
-                spk_embs,
             )
 
             if first_iter:
