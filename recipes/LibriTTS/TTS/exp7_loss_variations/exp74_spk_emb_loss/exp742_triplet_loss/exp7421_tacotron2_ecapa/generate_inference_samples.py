@@ -97,14 +97,14 @@ def mel_spectogram_exp(
 
 g2p = GraphemeToPhoneme.from_hparams("speechbrain/soundchoice-g2p", run_opts={"device":DEVICE})
 
-spk_emb_encoder = MelSpectrogramEncoder.from_hparams(source="/content/drive/MyDrive/ecapa_tdnn/mel_spec_input",
+spk_emb_encoder = MelSpectrogramEncoder.from_hparams(source="/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80",
                                                  run_opts={"device": DEVICE})
                                                  
 spk_emb_resampler = Resample(orig_freq=ORIGINAL_AUDIO_SR, new_freq=SPK_EMB_SR)
 mel_spec_resampler = Resample(orig_freq=ORIGINAL_AUDIO_SR, new_freq=EXP_AUDIO_SR)
 
 # Intialize TTS (tacotron2) and Vocoder (HiFIGAN)
-tacotron2_ms = MSTacotron2.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/TTS/exp7_loss_variations/exp74_spk_emb_loss/exp742_triplet_loss/exp7421_tacotron2_ecapa/libritts_dev_clean/epoch100",
+tacotron2_ms = MSTacotron2.from_hparams(source="/content/drive/MyDrive/mstts_saved_models/TTS/exp7_loss_variations/exp74_spk_emb_loss/exp742_triplet_loss/exp7421_tacotron2_ecapa/exp7421_tacotron2_ecapa_libritts_e73",
                                         hparams_file="/content/speechbrain/recipes/LibriTTS/TTS/exp7_loss_variations/exp74_spk_emb_loss/exp742_triplet_loss/exp7421_tacotron2_ecapa/tacotron2_inf_hparams.yaml",
                                         run_opts={"device": DEVICE})
 
