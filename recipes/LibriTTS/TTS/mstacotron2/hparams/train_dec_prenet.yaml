@@ -19,6 +19,12 @@ epochs: 200
 keep_checkpoint_interval: 50
 use_tensorboard: False
 
+log_audio_samples: False
+vocoder: !PLACEHOLDER
+vocoder_savedir: !PLACEHOLDER
+
+spk_emb_mel_spec_encoder: !PLACEHOLDER
+
 ###################################
 # Progress Samples                #
 ###################################
@@ -63,7 +69,7 @@ text_cleaners: ['english_cleaners']
 ################################
 # Audio Parameters             #
 ################################
-sample_rate: 16000
+sample_rate: !PLACEHOLDER
 hop_length: 256
 win_length: 1024
 n_mel_channels: 80
@@ -81,20 +87,22 @@ dynamic_range_compression: True
 ################################
 
 spk_emb_size: 192
-spk_emb_sample_rate: 16000
+spk_emb_sample_rate: !PLACEHOLDER
 
 ################################
 # Optimization Hyperparameters #
 ################################
 learning_rate: 0.0001
 weight_decay: 0.000006
-batch_size: 4 #minimum 2
+batch_size: 64 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 75.0
 guided_attention_weight_half_life: 10.
 guided_attention_hard_stop: 50
 gate_loss_weight: 1.0
+compute_spk_emb_loss: False
+spk_emb_loss_weight: 1.0
 
 train_dataloader_opts:
   batch_size: !ref <batch_size>
@@ -250,7 +258,7 @@ progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
     raw_batch: raw
 
 
-tacotron2_model_path: /content/drive/MyDrive/mstts_saved_models/mstacotron2/sr_16000/dec_prenet/epoch500
+tacotron2_model_path: !PLACEHOLDER
 pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
   collect_in: !ref <save_folder>
   loadables:

@@ -147,7 +147,7 @@ def create_json(wav_list, split_spk_ids, json_file, sample_rate):
         The sample rate to be used for the dataset
     """
 
-    wav_list = wav_list[:5]
+    # wav_list = wav_list[:5]
     json_dict = {}
     # Creates a resampler object with orig_freq set to LibriTTS sample rate (24KHz) and  new_freq set to SAMPLERATE
     resampler = Resample(orig_freq=24000, new_freq=sample_rate)

@@ -1639,20 +1639,17 @@ def infer(model, text_sequences, input_lengths):
 
 
 LossStats = namedtuple(
-    "TacotronLoss", "loss mel_loss gate_loss attn_loss attn_weight"
+    "TacotronLoss", "loss mel_loss spk_emb_loss gate_loss attn_loss attn_weight"
 )
 
 
 class Loss(nn.Module):
     """The Tacotron loss implementation
-
     The loss consists of an MSE loss on the spectrogram, a BCE gate loss
     and a guided attention loss (if enabled) that attempts to make the
     attention matrix diagonal
-
     The output of the moduel is a LossStats tuple, which includes both the
     total loss
-
     Arguments
     ---------
     guided_attention_sigma: float
@@ -1667,7 +1664,6 @@ class Loss(nn.Module):
     guided_attention_hard_stop: int
         The number of epochs after which guided attention will be compeltely
         turned off
-
     Example:
     >>> import torch
     >>> _ = torch.manual_seed(42)
@@ -1691,6 +1687,8 @@ class Loss(nn.Module):
         self,
         guided_attention_sigma=None,
         gate_loss_weight=1.0,
+        mel_loss_weight=1.0,
+        spk_emb_loss_weight=1.0,
         guided_attention_weight=1.0,
         guided_attention_scheduler=None,
         guided_attention_hard_stop=None,
@@ -1699,21 +1697,27 @@ class Loss(nn.Module):
         if guided_attention_weight == 0:
             guided_attention_weight = None
         self.guided_attention_weight = guided_attention_weight
+        self.gate_loss_weight = gate_loss_weight
+        self.mel_loss_weight = mel_loss_weight
+        self.spk_emb_loss_weight = spk_emb_loss_weight
+
+
         self.mse_loss = nn.MSELoss()
         self.bce_loss = nn.BCEWithLogitsLoss()
         self.guided_attention_loss = GuidedAttentionLoss(
             sigma=guided_attention_sigma
         )
-        self.gate_loss_weight = gate_loss_weight
-        self.guided_attention_weight = guided_attention_weight
+        self.triplet_loss = torch.nn.TripletMarginWithDistanceLoss(
+          distance_function=lambda x, y: 1.0 - F.cosine_similarity(x, y)
+        )
+        
         self.guided_attention_scheduler = guided_attention_scheduler
         self.guided_attention_hard_stop = guided_attention_hard_stop
 
     def forward(
-        self, model_output, targets, input_lengths, target_lengths, epoch
+        self, model_output, targets, input_lengths, target_lengths, spk_emb_triplets, epoch
     ):
         """Computes the loss
-
         Arguments
         ---------
         model_output: tuple
@@ -1728,12 +1732,10 @@ class Loss(nn.Module):
         epoch: int
             the current epoch number (used for the scheduling of the guided attention
             loss) A StepScheduler is typically used
-
         Returns
         -------
         result: LossStats
             the total loss - and individual losses (mel and gate)
-
         """
         mel_target, gate_target = targets[0], targets[1]
         mel_target.requires_grad = False
@@ -1741,25 +1743,35 @@ class Loss(nn.Module):
         gate_target = gate_target.view(-1, 1)
 
         mel_out, mel_out_postnet, gate_out, alignments = model_output
+        anchor_spk_embs, pos_spk_embs, neg_spk_embs = spk_emb_triplets
 
         gate_out = gate_out.view(-1, 1)
         mel_loss = self.mse_loss(mel_out, mel_target) + self.mse_loss(
             mel_out_postnet, mel_target
         )
+
+        mel_loss = self.mel_loss_weight * mel_loss
+
         gate_loss = self.gate_loss_weight * self.bce_loss(gate_out, gate_target)
         attn_loss, attn_weight = self.get_attention_loss(
             alignments, input_lengths, target_lengths, epoch
         )
-        total_loss = mel_loss + gate_loss + attn_loss
+
+        if anchor_spk_embs != None:
+          spk_emb_loss = self.triplet_loss(anchor_spk_embs, pos_spk_embs, neg_spk_embs)
+          spk_emb_loss = self.spk_emb_loss_weight * spk_emb_loss
+        else:
+          spk_emb_loss = torch.Tensor([0]).to(mel_loss.device)
+
+        total_loss = mel_loss + spk_emb_loss + gate_loss + attn_loss
         return LossStats(
-            total_loss, mel_loss, gate_loss, attn_loss, attn_weight
+            total_loss, mel_loss, spk_emb_loss, gate_loss, attn_loss, attn_weight
         )
 
     def get_attention_loss(
         self, alignments, input_lengths, target_lengths, epoch
     ):
         """Computes the attention loss
-
         Arguments
         ---------
         alignments: torch.Tensor
@@ -1771,7 +1783,6 @@ class Loss(nn.Module):
         epoch: int
             the current epoch number (used for the scheduling of the guided attention
             loss) A StepScheduler is typically used
-
         Returns
         -------
         attn_loss: torch.Tensor
@@ -1803,12 +1814,10 @@ class Loss(nn.Module):
 
 class TextMelCollate:
     """ Zero-pads model inputs and targets based on number of frames per step
-
     Arguments
     ---------
     n_frames_per_step: int
         the number of output frames per step
-
     Returns
     -------
     result: tuple
@@ -1873,7 +1882,7 @@ class TextMelCollate:
         gate_padded = torch.FloatTensor(len(batch), max_target_len)
         gate_padded.zero_()
         output_lengths = torch.LongTensor(len(batch))
-        labels, wavs, spk_embs_list = [], [], []
+        labels, wavs, spk_embs_list, spk_ids = [], [], [], []
         with open(self.speaker_embeddings_pickle, "rb") as speaker_embeddings_file:
             speaker_embeddings = pickle.load(speaker_embeddings_file)
 
@@ -1889,6 +1898,8 @@ class TextMelCollate:
             spk_emb = speaker_embeddings[raw_batch[idx]["uttid"]]
             spk_embs_list.append(spk_emb)
 
+            spk_ids.append(raw_batch[idx]["uttid"].split("_")[0])
+
         spk_embs = torch.stack(spk_embs_list)
 
         # count number of items - characters in text
@@ -1903,8 +1914,10 @@ class TextMelCollate:
             len_x,
             labels,
             wavs,
-            spk_embs
+            spk_embs,
+            spk_ids
         )
+
 
 
 def dynamic_range_compression(x, C=1, clip_val=1e-5):
