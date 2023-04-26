@@ -7,17 +7,17 @@ import random
 import logging
 import torchaudio
 import torch
-from speechbrain.pretrained import GraphemeToPhoneme
+# from speechbrain.pretrained import GraphemeToPhoneme
 
 logger = logging.getLogger(__name__)
 # Change the entries in the following "LIBRITTS_SUBSETS" to modify the downloaded subsets for LibriTTS
 # Used subsets ["dev-clean", "train-clean-100", "train-clean-360"]
 LIBRITTS_SUBSETS = ["dev-clean"]
 LIBRITTS_URL_PREFIX = "https://www.openslr.org/resources/60/"
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-g2p = GraphemeToPhoneme.from_hparams(
-    "speechbrain/soundchoice-g2p", run_opts={"device": DEVICE}
-)
+# DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# g2p = GraphemeToPhoneme.from_hparams(
+#     "speechbrain/soundchoice-g2p", run_opts={"device": DEVICE}
+# )
 
 
 def prepare_libritts_dev(
@@ -183,8 +183,17 @@ def create_json(wav_list, split_spk_ids, json_file, sample_rate):
             if normalized_text.__contains__("}"):
                 normalized_text = normalized_text.replace("}", "")
 
-        label_phoneme_list = g2p(normalized_text)
-        label_phoneme = " ".join(label_phoneme_list)
+        phoneme_text_path = os.path.join(
+            "/", *path_parts[:-1], uttid + ".normalized_phoneme.txt"
+        )
+
+        if not os.path.exists(phoneme_text_path):
+          print(f"No phoneme seqence found for {wav_file}. Skipping.")
+          continue
+        else:
+          with open(phoneme_text_path) as ph_f:
+            label_phoneme = ph_f.read()
+            
 
         # Resamples the audio file if required
         if sig_sr != sample_rate:
