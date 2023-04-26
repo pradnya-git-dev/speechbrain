@@ -663,6 +663,7 @@ if __name__ == "__main__":
                 hparams["valid_speaker_embeddings_pickle"],
             ],
             "data_folder": hparams["data_folder"],
+            "spk_emb_encoder_path": hparams["spk_emb_mel_spec_encoder"],
             "audio_sr": hparams["sample_rate"],
             "spk_emb_sr": hparams["spk_emb_sample_rate"],
             "mel_spec_params": {

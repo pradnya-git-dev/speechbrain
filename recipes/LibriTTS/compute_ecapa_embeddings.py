@@ -87,7 +87,7 @@ def mel_spectogram(
     return mel
 
 
-def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, audio_sr, spk_emb_sr, mel_spec_params):
+def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, spk_emb_encoder_path, audio_sr, spk_emb_sr, mel_spec_params):
     """This function processes a JSON file to compute the speaker embeddings.
     Arguments
     ---------
@@ -111,7 +111,7 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # CC: /home/pradnya/projects/def-ravanelm/pradnya/saved_models/ecapa_tdnn_mel_spec_80_voxceleb12
-    DRIVE_ECAPA =  "/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80"
+    DRIVE_ECAPA =  spk_emb_encoder_path
 
     spk_emb_encoder = MelSpectrogramEncoder.from_hparams(
           source=DRIVE_ECAPA,
