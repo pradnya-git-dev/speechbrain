@@ -666,7 +666,7 @@ if __name__ == "__main__":
             "audio_sr": hparams["sample_rate"],
             "spk_emb_sr": hparams["spk_emb_sample_rate"],
             "mel_spec_params": {
-              "sample_rate": hparams["sample_rate"],
+              "sample_rate": hparams["spk_emb_sample_rate"],
               "hop_length": hparams["hop_length"],
               "win_length": hparams["win_length"],
               "n_mel_channels": hparams["n_mel_channels"],
