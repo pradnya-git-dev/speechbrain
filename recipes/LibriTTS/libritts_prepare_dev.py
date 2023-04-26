@@ -172,6 +172,9 @@ def create_json(wav_list, split_spk_ids, json_file, sample_rate):
         # Gets the speaker-id from the utterance-id
         spk_id = uttid.split("_")[0]
 
+        if spk_id not in split_spk_ids:
+          continue
+
         # Gets the path for the  text files and extracts the input text
         normalized_text_path = os.path.join(
             "/", *path_parts[:-1], uttid + ".normalized.txt"
