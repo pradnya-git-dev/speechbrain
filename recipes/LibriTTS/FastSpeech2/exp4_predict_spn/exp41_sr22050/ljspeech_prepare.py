@@ -365,7 +365,7 @@ def prepare_json(
     None
     """
 
-    # seg_lst = seg_lst[:20]
+    seg_lst = seg_lst[:20]
 
     logger.info(f"preparing {json_file}.")
     if model_name == "Tacotron2":
@@ -408,10 +408,16 @@ def prepare_json(
               phoneme_alignments_folder, f"{id}.TextGrid"
           )
           textgrid = tgt.io.read_textgrid(textgrid_path, include_empty_intervals=True)
-          phonemes, duration, start, end = get_alignment(
+
+          last_phoneme_flags = get_last_phoneme_info(
+            textgrid.get_tier_by_name("words"),
+            textgrid.get_tier_by_name("phones")
+          )
+          phonemes, duration, start, end, trimmed_last_phoneme_flags = get_alignment(
               textgrid.get_tier_by_name("phones"),
               fs,
-              pitch_hop_length
+              pitch_hop_length,
+              last_phoneme_flags
           )
 
           # Gets label phonemes
@@ -455,6 +461,7 @@ def prepare_json(
           json_dict[id].update({"end": end})
           json_dict[id].update({"durations": duration_file_path})
           json_dict[id].update({"pitch": pitch_file})
+          json_dict[id].update({"last_phoneme_flags": trimmed_last_phoneme_flags})
 
     # Writing the dictionary to the json file
     with open(json_file, mode="w") as json_f:
@@ -462,7 +469,7 @@ def prepare_json(
 
     logger.info(f"{json_file} successfully created!")
 
-def get_alignment(tier, sampling_rate, hop_length):
+def get_alignment(tier, sampling_rate, hop_length, last_phoneme_flags):
   """
   Returns phonemes, phoneme durations (in frames), start time (in seconds), end time (in seconds).
   This function is adopted from https://github.com/ming024/FastSpeech2/blob/master/preprocessor/preprocessor.py
@@ -475,6 +482,8 @@ def get_alignment(tier, sampling_rate, hop_length):
       Sample rate if audio signal
   hop_length : int
       Hop length for duration computation
+  last_phoneme_flags : list
+      List of (phoneme, flag) tuples with flag=1 if the phoneme is the last phoneme else flag=0
 
 
   Returns
@@ -490,9 +499,13 @@ def get_alignment(tier, sampling_rate, hop_length):
   start_time = 0
   end_time = 0
   end_idx = 0
+  trimmed_last_phoneme_flags = []
+
+  flag_iter = iter(last_phoneme_flags)
 
   for t in tier._objects:
       s, e, p = t.start_time, t.end_time, t.text
+      current_flag = next(flag_iter)
 
       # Trims leading silences
       if phonemes == []:
@@ -508,11 +521,13 @@ def get_alignment(tier, sampling_rate, hop_length):
             phonemes.append(p[:-1])
           else:
             phonemes.append(p)
+          trimmed_last_phoneme_flags.append(current_flag[1])
           end_time = e
           end_idx = len(phonemes)
       else:
           # Uses a unique token for all silent phones
           phonemes.append("spn")
+          trimmed_last_phoneme_flags.append(current_flag[1])
 
       durations.append(
           int(
@@ -525,7 +540,42 @@ def get_alignment(tier, sampling_rate, hop_length):
   phonemes = phonemes[:end_idx]
   durations = durations[:end_idx]
 
-  return phonemes, durations, start_time, end_time
+  return phonemes, durations, start_time, end_time, trimmed_last_phoneme_flags
+
+
+def get_last_phoneme_info(words_seq, phones_seq):
+
+  """This function takes word and phoneme tiers from a TextGrid file as input 
+  and provides a list of tuples for the phoneme sequence indicating whether 
+  each of the phonemes is the last phoneme of a word or not.
+  
+  Each tuple of the returned list has this format: (phoneme, flag)"""
+
+  # Gets all phoneme objects for the entire sequence
+  phoneme_objects = phones_seq._objects
+  phoneme_iter = iter(phoneme_objects)
+
+  # Stores flags to show if an element (phoneme) is a the last phoneme of a word
+  last_phoneme_flags = list()
+
+  # Matches the end times of the phoneme and word objects to get the last phoneme information
+  for word_obj in words_seq._objects:
+    word_start_time = word_obj.start_time
+    word_end_time = word_obj.end_time
+    word = word_obj.text
+
+    current_phoneme = next(phoneme_iter, None)
+    while current_phoneme:
+      phoneme_end_time = current_phoneme.end_time
+      if phoneme_end_time == word_end_time:
+        last_phoneme_flags.append((current_phoneme.text, 1))
+        break
+      else:
+        last_phoneme_flags.append((current_phoneme.text, 0))
+      current_phoneme = next(phoneme_iter, None)
+
+  return last_phoneme_flags
+
 
 def custom_clean(text):
     """

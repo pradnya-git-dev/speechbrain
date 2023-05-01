@@ -391,9 +391,9 @@ def dataio_prepare(hparams):
     input_encoder.update_from_iterable(lexicon, sequence_input=False)
     
     # load audio, text and durations on the fly; encode audio and text.
-    @sb.utils.data_pipeline.takes("wav", "label_phoneme", "durations", "pitch", "start", "end", "spn_labels")
+    @sb.utils.data_pipeline.takes("wav", "label_phoneme", "durations", "pitch", "start", "end", "spn_labels", "last_phoneme_flags")
     @sb.utils.data_pipeline.provides("mel_text_pair")
-    def audio_pipeline(wav, label_phoneme, dur, pitch, start, end, spn_labels):
+    def audio_pipeline(wav, label_phoneme, dur, pitch, start, end, spn_labels, last_phoneme_flags):
 
         durs = np.load(dur)
         durs_seq = torch.from_numpy(durs).int()
@@ -404,7 +404,15 @@ def dataio_prepare(hparams):
         text_seq = input_encoder.encode_sequence_torch(label_phoneme).int()
         assert len(text_seq) == len(durs), f'{len(text_seq)}, {len(durs), len(label_phoneme)}, ({label_phoneme})'  # ensure every token has a duration
         
-        no_spn_label = [phoneme for phoneme in label_phoneme if phoneme != "spn"]
+        no_spn_label, last_phonemes = list(), list()
+        for i in range(len(label_phoneme)):
+          if label_phoneme[i] != "spn":
+            no_spn_label.append(label_phoneme[i])
+            last_phonemes.append(last_phoneme_flags[i])
+
+        # import pdb; pdb.set_trace()
+
+        # [phoneme for phoneme in label_phoneme if phoneme != "spn"]
         no_spn_seq = input_encoder.encode_sequence_torch(no_spn_label).int()
 
         spn_labels = [spn_labels[i] for i in range(len(label_phoneme)) if label_phoneme[i] != "spn"]
