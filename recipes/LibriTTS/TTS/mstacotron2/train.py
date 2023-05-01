@@ -54,14 +54,6 @@ class Tacotron2Brain(sb.Brain):
               run_opts={"device": self.device},
               freeze_params=True
           )
-
-        if self.hparams.compute_spk_emb_loss:
-          self.spk_emb_mel_spec_encoder = MelSpectrogramEncoder.from_hparams(
-            source=self.hparams.spk_emb_mel_spec_encoder,
-            run_opts={"device": self.device},
-            freeze_params=True
-          )
-
         
         self.last_loss_stats = {}
         return super().on_fit_start()
@@ -156,33 +148,39 @@ class Tacotron2Brain(sb.Brain):
         spk_emb_triplets = (None, None, None)
 
         if self.hparams.compute_spk_emb_loss:
+          
+          with torch.no_grad():
+            self.modules.mean_var_norm.eval()
+            self.modules.spk_embedding_model.eval()
 
-          self.spk_emb_mel_spec_encoder.eval()
+            target_mels = targets[0].detach().clone()
+            pred_mels_postnet = predictions[1].detach().clone()
 
-          target_mels = targets[0].detach().clone()
-          pred_mels_postnet = predictions[1].detach().clone()
+            target_mels = torch.transpose(target_mels, 1, 2)
+            target_feats = self.modules.mean_var_norm(target_mels, torch.ones(target_mels.shape[0], device=self.device))
+            target_spk_embs = self.modules.spk_embedding_model(target_feats)
+            target_spk_embs = target_spk_embs.squeeze()
+            target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
 
-          target_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(target_mels)
-          target_spk_embs = target_spk_embs.squeeze()
-          target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
+            pred_mels_postnet = torch.transpose(pred_mels_postnet, 1, 2)
+            pred_mels_postnet_feats = self.modules.mean_var_norm(pred_mels_postnet, torch.ones(pred_mels_postnet.shape[0], device=self.device))
+            preds_spk_embs = self.modules.spk_embedding_model(pred_mels_postnet_feats)
+            preds_spk_embs = preds_spk_embs.squeeze()
+            preds_spk_embs = preds_spk_embs.to(self.device, non_blocking=True).float()
 
-          preds_spk_embs = self.spk_emb_mel_spec_encoder.encode_batch(pred_mels_postnet)
-          preds_spk_embs = preds_spk_embs.squeeze()
-          preds_spk_embs = preds_spk_embs.to(self.device, non_blocking=True).float()
+            anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
 
-          anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
+            if anchor_se_idx.shape[0] != 0:
 
-          if anchor_se_idx.shape[0] != 0:
+              anchor_se_idx = anchor_se_idx.to(self.device, non_blocking=True).long()
+              pos_se_idx = pos_se_idx.to(self.device, non_blocking=True).long()
+              neg_se_idx = neg_se_idx.to(self.device, non_blocking=True).long()
+              
+              anchor_spk_embs = target_spk_embs[anchor_se_idx]
+              pos_spk_embs = preds_spk_embs[pos_se_idx]
+              neg_spk_embs = preds_spk_embs[neg_se_idx]
 
-            anchor_se_idx = anchor_se_idx.to(self.device, non_blocking=True).long()
-            pos_se_idx = pos_se_idx.to(self.device, non_blocking=True).long()
-            neg_se_idx = neg_se_idx.to(self.device, non_blocking=True).long()
-            
-            anchor_spk_embs = target_spk_embs[anchor_se_idx]
-            pos_spk_embs = preds_spk_embs[pos_se_idx]
-            neg_spk_embs = preds_spk_embs[neg_se_idx]
-
-            spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
+              spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
 
         
         loss_stats = self.hparams.criterion(
