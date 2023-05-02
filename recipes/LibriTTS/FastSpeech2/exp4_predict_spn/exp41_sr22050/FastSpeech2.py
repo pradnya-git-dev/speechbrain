@@ -301,10 +301,13 @@ class SPNPredictor(nn.Module):
 
       self.spn_linear = linear.Linear(n_neurons=1, input_size=enc_d_model)
 
-  def forward(self, tokens):
+  def forward(self, tokens, last_phonemes):
 
     token_feats = self.encPreNet(tokens)
+    last_phonemes = torch.unsqueeze(last_phonemes, 2).repeat(1, 1, token_feats.shape[2])
 
+    token_feats = token_feats + last_phonemes
+    
     srcmask = get_key_padding_mask(tokens, pad_idx=self.padding_idx)
     srcmask_inverted = (~srcmask).unsqueeze(-1)
     pos = self.sinusoidal_positional_embed_encoder(
@@ -327,8 +330,8 @@ class SPNPredictor(nn.Module):
 
     return spn_decision
 
-  def infer(self, tokens):
-    spn_decision = self.forward(tokens)
+  def infer(self, tokens, last_phonemes):
+    spn_decision = self.forward(tokens, last_phonemes)
     spn_decision = torch.sigmoid(spn_decision) > 0.5
     return spn_decision
 
@@ -740,22 +743,27 @@ class TextMelCollate:
 
         text_padded = torch.LongTensor(len(batch), max_input_len)
         no_spn_seq_padded = torch.LongTensor(len(batch), max_no_spn_seq_len)
+        last_phonemes_padded = torch.LongTensor(len(batch), max_no_spn_seq_len)
         dur_padded = torch.LongTensor(len(batch), max_input_len)
         spn_labels_padded = torch.FloatTensor(len(batch), max_no_spn_seq_len)
         text_padded.zero_()
         no_spn_seq_padded.zero_()
+        last_phonemes_padded.zero_()
         dur_padded.zero_()
         spn_labels_padded.zero_()
 
+        
         for i in range(len(ids_sorted_decreasing)):
             text = batch[ids_sorted_decreasing[i]][0]
             no_spn_seq = batch[ids_sorted_decreasing[i]][-2]
+            last_phonemes = torch.LongTensor(batch[ids_sorted_decreasing[i]][-3])
             dur = batch[ids_sorted_decreasing[i]][1]
-            spn_labels = torch.Tensor(batch[ids_sorted_decreasing[i]][-1])
+            spn_labels = torch.LongTensor(batch[ids_sorted_decreasing[i]][-1])
             # print(text, dur)
 
             text_padded[i, : text.size(0)] = text
             no_spn_seq_padded[i, : no_spn_seq.size(0)] = no_spn_seq
+            last_phonemes_padded[i, : last_phonemes.size(0)] = last_phonemes
             dur_padded[i, : dur.size(0)] = dur
             spn_labels_padded[i, : spn_labels.size(0)] = spn_labels
             # print(dur_padded, text_padded)
@@ -804,7 +812,8 @@ class TextMelCollate:
             labels,
             wavs,
             no_spn_seq_padded,
-            spn_labels_padded
+            spn_labels_padded,
+            last_phonemes_padded
         )
 
 
