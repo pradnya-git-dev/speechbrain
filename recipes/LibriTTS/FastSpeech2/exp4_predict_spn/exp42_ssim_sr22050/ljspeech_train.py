@@ -269,33 +269,41 @@ class FastSpeech2Brain(sb.Brain):
           last_phonemes = list()
 
           words = label.split()
+          words = [word.strip() for word in words]
           words_phonemes = self.g2p(words)
 
           for words_phonemes_seq in words_phonemes:
             for phoneme in words_phonemes_seq:
-              phoneme_label.append(phoneme)
-              last_phonemes.append(0)
+              if not phoneme.isspace():
+                phoneme_label.append(phoneme)
+                last_phonemes.append(0)
             last_phonemes[-1] = 1
-          phoneme_labels.append(" ".join(phoneme_label))
+
+          phoneme_labels.append(phoneme_label)
           last_phonemes_combined.append(last_phonemes)
+
+        # import pdb; pdb.set_trace()
 
         # phoneme_labels = self.g2p(labels)
         # phoneme_labels = [" ".join(phoneme_label) for phoneme_label in phoneme_labels]
-        phoneme_labels = [re.sub(" +", " ", phoneme_label) for phoneme_label in phoneme_labels]
+        # phoneme_labels = [re.sub(" +", " ", phoneme_label) for phoneme_label in phoneme_labels]
         
         all_tokens_with_spn = list()
         max_seq_len = -1
         for i in range(len(phoneme_labels)):
           phoneme_label = phoneme_labels[i]
-          token_seq = self.input_encoder.encode_sequence_torch(phoneme_label.split()).int().to(self.device)
+          token_seq = self.input_encoder.encode_sequence_torch(phoneme_label).int().to(self.device)
           last_phonemes = torch.LongTensor(last_phonemes_combined[i]).to(self.device)
 
+          if token_seq.shape[-1] != last_phonemes.shape[-1]:
+            import pdb; pdb.set_trace()
+          
           spn_preds = self.hparams.modules["spn_predictor"].infer(token_seq.unsqueeze(0), last_phonemes.unsqueeze(0)).int()
 
           # print("Inference spn_preds: ", spn_preds)
 
           spn_to_add = torch.nonzero(spn_preds).reshape(-1).tolist()
-          # print("spn_to_add: ", spn_to_add)
+          print("spn_to_add: ", spn_to_add)
 
           tokens_with_spn = list()
 
