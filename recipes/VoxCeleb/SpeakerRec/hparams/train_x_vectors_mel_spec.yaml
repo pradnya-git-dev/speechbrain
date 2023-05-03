@@ -36,7 +36,7 @@ batch_size: 64
 lr: 0.001
 lr_final: 0.0001
 
-sample_rate: 16000
+sample_rate: !PLACEHOLDER
 sentence_len: 3.0 # seconds
 shuffle: True
 random_chunk: True
@@ -48,14 +48,14 @@ n_mel_channels: 80
 n_fft: 1024
 mel_fmin: 0.0
 mel_fmax: 8000.0
-mel_normalized: null
+mel_normalized: False
 power: 1
 norm: "slaney"
 mel_scale: "slaney"
 dynamic_range_compression: True
 
 # Number of speakers
-out_n_neurons: 1211 #1211 for vox1  # 5994 for vox2, 7205 for vox1+vox2
+out_n_neurons: 7205 #1211 for vox1  # 5994 for vox2, 7205 for vox1+vox2
 
 dataloader_options:
     batch_size: !ref <batch_size>
@@ -99,6 +99,9 @@ add_rev: !new:speechbrain.lobes.augment.EnvCorrupt
     noise_snr_low: 0
     noise_snr_high: 15
     rir_scale_factor: 1.0
+    reverb_sample_rate: !ref <sample_rate>
+    noise_sample_rate: !ref <sample_rate>
+    clean_sample_rate: !ref <sample_rate>
 
 add_noise: !new:speechbrain.lobes.augment.EnvCorrupt
     openrir_folder: !ref <rir_folder>
@@ -108,6 +111,9 @@ add_noise: !new:speechbrain.lobes.augment.EnvCorrupt
     noise_snr_low: 0
     noise_snr_high: 15
     rir_scale_factor: 1.0
+    reverb_sample_rate: !ref <sample_rate>
+    noise_sample_rate: !ref <sample_rate>
+    clean_sample_rate: !ref <sample_rate>
 
 add_rev_noise: !new:speechbrain.lobes.augment.EnvCorrupt
     openrir_folder: !ref <rir_folder>
@@ -117,6 +123,9 @@ add_rev_noise: !new:speechbrain.lobes.augment.EnvCorrupt
     noise_snr_low: 0
     noise_snr_high: 15
     rir_scale_factor: 1.0
+    reverb_sample_rate: !ref <sample_rate>
+    noise_sample_rate: !ref <sample_rate>
+    clean_sample_rate: !ref <sample_rate>
 
 
 # Definition of the augmentation pipeline.

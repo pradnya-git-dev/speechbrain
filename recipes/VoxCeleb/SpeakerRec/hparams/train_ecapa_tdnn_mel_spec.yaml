@@ -37,7 +37,7 @@ lr: 0.001
 base_lr: 0.00000001
 max_lr: !ref <lr>
 step_size: 65000
-sample_rate: 16000
+sample_rate: !PLACEHOLDER
 sentence_len: 3.0 # seconds
 shuffle: True
 random_chunk: True
@@ -49,7 +49,7 @@ n_mel_channels: 80
 n_fft: 1024
 mel_fmin: 0.0
 mel_fmax: 8000.0
-mel_normalized: null
+mel_normalized: False
 power: 1
 norm: "slaney"
 mel_scale: "slaney"
@@ -97,6 +97,9 @@ add_rev: !new:speechbrain.lobes.augment.EnvCorrupt
     noise_snr_low: 0
     noise_snr_high: 15
     rir_scale_factor: 1.0
+    reverb_sample_rate: !ref <sample_rate>
+    noise_sample_rate: !ref <sample_rate>
+    clean_sample_rate: !ref <sample_rate>
 
 add_noise: !new:speechbrain.lobes.augment.EnvCorrupt
     openrir_folder: !ref <rir_folder>
@@ -106,6 +109,9 @@ add_noise: !new:speechbrain.lobes.augment.EnvCorrupt
     noise_snr_low: 0
     noise_snr_high: 15
     rir_scale_factor: 1.0
+    reverb_sample_rate: !ref <sample_rate>
+    noise_sample_rate: !ref <sample_rate>
+    clean_sample_rate: !ref <sample_rate>
 
 add_rev_noise: !new:speechbrain.lobes.augment.EnvCorrupt
     openrir_folder: !ref <rir_folder>
@@ -115,6 +121,9 @@ add_rev_noise: !new:speechbrain.lobes.augment.EnvCorrupt
     noise_snr_low: 0
     noise_snr_high: 15
     rir_scale_factor: 1.0
+    reverb_sample_rate: !ref <sample_rate>
+    noise_sample_rate: !ref <sample_rate>
+    clean_sample_rate: !ref <sample_rate>
 
 
 # Definition of the augmentation pipeline.
