@@ -26,7 +26,7 @@ TRAIN_CSV = "train.csv"
 DEV_CSV = "dev.csv"
 TEST_CSV = "test.csv"
 ENROL_CSV = "enrol.csv"
-SAMPLERATE = 16000
+SAMPLERATE = 22050
 
 
 DEV_WAV = "vox1_dev_wav.zip"
