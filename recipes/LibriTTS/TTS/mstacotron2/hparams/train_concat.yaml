@@ -57,8 +57,12 @@ train_speaker_embeddings_pickle: !ref <save_folder>/train_speaker_embeddings.pic
 valid_speaker_embeddings_pickle: !ref <save_folder>/valid_speaker_embeddings.pickle
 test_speaker_embeddings_pickle: !ref <save_folder>/test_speaker_embeddings.pickle
 
-splits: ["train", "valid"]
-split_ratio: [90, 10]
+splits: ["train", "valid", "test"]
+# split_ratio: [80, 10, 10]
+
+train_splits: ["train-clean-100", "train-clean-360"]
+valid_splits: ["dev-clean"]
+test_splits: ["test-clean"]
 
 skip_prep: False
 
