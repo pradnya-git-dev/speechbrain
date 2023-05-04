@@ -1,5 +1,4 @@
 from speechbrain.utils.data_utils import get_all_files, download_file
-from speechbrain.processing.speech_augmentation import Resample
 import json
 import os
 import shutil
@@ -7,6 +6,7 @@ import random
 import logging
 import torchaudio
 import torch
+from tqdm import tqdm
 # from speechbrain.pretrained import GraphemeToPhoneme
 
 logger = logging.getLogger(__name__)
@@ -127,10 +127,9 @@ def create_json(wav_list, json_file, sample_rate):
 
     json_dict = {}
     # Creates a resampler object with orig_freq set to LibriTTS sample rate (24KHz) and  new_freq set to SAMPLERATE
-    resampler = Resample(orig_freq=24000, new_freq=sample_rate)
 
     # Processes all the wav files in the list
-    for wav_file in wav_list:
+    for wav_file in tqdm(wav_list):
 
         # Reads the signal
         signal, sig_sr = torchaudio.load(wav_file)
@@ -164,7 +163,7 @@ def create_json(wav_list, json_file, sample_rate):
 
         # Resamples the audio file if required
         if sig_sr != sample_rate:
-            resampled_signal = resampler(signal)
+            resampled_signal = torchaudio.functional.resample(signal, sig_sr, sample_rate)
             os.unlink(wav_file)
             torchaudio.save(wav_file, resampled_signal, sample_rate=sample_rate)
 
