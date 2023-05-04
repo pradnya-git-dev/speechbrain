@@ -1,12 +1,12 @@
 import json
 from speechbrain.pretrained import EncoderClassifier
-from speechbrain.processing.speech_augmentation import Resample
 import torchaudio
 import pickle
 import torch
 import logging
 import os
 from interfaces.pretrained import MelSpectrogramEncoder
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -118,26 +118,18 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
           run_opts={"device": device}
         )
 
-    resampler = None
-    resample_audio = False
-    if audio_sr != spk_emb_sr:
-        resampler = Resample(orig_freq=audio_sr, new_freq=spk_emb_sr)
-        resample_audio = True
-        logger.info(
-            f"Audio file sample rate is {audio_sr} and speaker embedding sample rate is {spk_emb_sr}.\nResampling audio files to match the sample rate required for speaker embeddings.")
-
     for i in range(len(input_filepaths)):
         logger.info(f"Creating {output_file_paths[i]}.")
         speaker_embeddings = dict()
         json_file = open(input_filepaths[i])
         json_data = json.load(json_file)
 
-        for utt_id, utt_data in json_data.items():
+        for utt_id, utt_data in tqdm(json_data.items()):
             utt_wav_path = utt_data["wav"]
             utt_wav_path = utt_wav_path.replace("{data_root}", data_folder)
             signal, sig_sr = torchaudio.load(utt_wav_path)
-            if resample_audio:
-                signal = resampler(signal)
+            if sig_sr != spk_emb_sr:
+                signal = torchaudio.functional.resample(signal, sig_sr, spk_emb_sr)
             signal = signal.to(device)
 
             mel_spec = mel_spectogram(

@@ -658,10 +658,11 @@ if __name__ == "__main__":
     sb.utils.distributed.run_on_main(
         compute_speaker_embeddings,
         kwargs={
-            "input_filepaths": [hparams["train_json"], hparams["valid_json"]],
+            "input_filepaths": [hparams["train_json"], hparams["valid_json"], hparams["test_json"]],
             "output_file_paths": [
                 hparams["train_speaker_embeddings_pickle"],
                 hparams["valid_speaker_embeddings_pickle"],
+                hparams["test_speaker_embeddings_pickle"],
             ],
             "data_folder": hparams["data_folder"],
             "spk_emb_encoder_path": hparams["spk_emb_mel_spec_encoder"],
