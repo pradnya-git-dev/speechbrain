@@ -653,7 +653,7 @@ if __name__ == "__main__":
     )
     """
 
-    from compute_ecapa_embeddings import compute_speaker_embeddings
+    from compute_speaker_embeddings import compute_speaker_embeddings
 
     sb.utils.distributed.run_on_main(
         compute_speaker_embeddings,
