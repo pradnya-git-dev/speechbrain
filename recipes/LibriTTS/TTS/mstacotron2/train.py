@@ -615,6 +615,11 @@ if __name__ == "__main__":
         hyperparams_to_save=hparams_file,
         overrides=overrides,
     )
+
+    # Load pretrained model if pretrained_separator is present in the yaml
+    if "pretrained_separator" in hparams:
+        sb.utils.distributed.run_on_main(hparams["pretrained_separator"].collect_files)
+        hparams["pretrained_separator"].load_collected(device=run_opts["device"])
     
     sys.path.append("../../")
     from libritts_prepare import prepare_libritts
@@ -686,13 +691,6 @@ if __name__ == "__main__":
     )
 
     datasets = dataio_prepare(hparams)
-
-    
-    # Load pretrained model if pretrained_separator is present in the yaml
-    if "pretrained_separator" in hparams:
-        sb.utils.distributed.run_on_main(hparams["pretrained_separator"].collect_files)
-        hparams["pretrained_separator"].load_collected(device=run_opts["device"])
-    
 
     # Brain class initialization
     tacotron2_brain = Tacotron2Brain(
