@@ -54,6 +54,12 @@ class Tacotron2Brain(sb.Brain):
               run_opts={"device": self.device},
               freeze_params=True
           )
+
+        for param in self.modules.mean_var_norm.parameters():
+          param.requires_grad = False
+
+        for param in self.modules.spk_embedding_model.parameters():
+          param.requires_grad = False
         
         self.last_loss_stats = {}
         return super().on_fit_start()
@@ -614,7 +620,7 @@ if __name__ == "__main__":
         sb.utils.distributed.run_on_main(hparams["pretrained_separator"].collect_files)
         hparams["pretrained_separator"].load_collected(device=run_opts["device"])
 
-    """
+    
     sys.path.append("../../")
     from libritts_prepare import prepare_libritts
 
@@ -632,8 +638,9 @@ if __name__ == "__main__":
             "seed": hparams["seed"],
         },
     )
-    """
+    
 
+    """
     sys.path.append("../../")
     from libritts_prepare_dev import prepare_libritts_dev
 
@@ -649,6 +656,7 @@ if __name__ == "__main__":
             "seed": hparams["seed"],
         },
     )
+    """
 
     from compute_ecapa_embeddings import compute_speaker_embeddings
 
