@@ -615,11 +615,6 @@ if __name__ == "__main__":
         hyperparams_to_save=hparams_file,
         overrides=overrides,
     )
-
-    if "pretrained_separator" in hparams:
-        sb.utils.distributed.run_on_main(hparams["pretrained_separator"].collect_files)
-        hparams["pretrained_separator"].load_collected(device=run_opts["device"])
-
     
     sys.path.append("../../")
     from libritts_prepare import prepare_libritts
@@ -694,8 +689,8 @@ if __name__ == "__main__":
     
     # Load pretrained model if pretrained_separator is present in the yaml
     if "pretrained_separator" in hparams:
-        hparams["pretrained_separator"].collect_files()
-        hparams["pretrained_separator"].load_collected()
+        sb.utils.distributed.run_on_main(hparams["pretrained_separator"].collect_files)
+        hparams["pretrained_separator"].load_collected(device=run_opts["device"])
     
 
     # Brain class initialization
@@ -706,12 +701,6 @@ if __name__ == "__main__":
         run_opts=run_opts,
         checkpointer=hparams["checkpointer"],
     )
-
-    
-    # re-initialize the parameters if we don't use a pretrained model
-    if "pretrained_separator" not in hparams:
-        for module in tacotron2_brain.modules.values():
-            tacotron2_brain.reset_layer_recursively(module)
     
     
     if hparams["use_tensorboard"]:
