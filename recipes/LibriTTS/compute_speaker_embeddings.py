@@ -7,6 +7,7 @@ import logging
 import os
 from interfaces.pretrained import MelSpectrogramEncoder
 from tqdm import tqdm
+import gc
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +88,15 @@ def mel_spectogram(
     return mel
 
 
-def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, spk_emb_encoder_path, audio_sr, spk_emb_sr, mel_spec_params):
+def compute_speaker_embeddings(
+    input_filepaths, 
+    output_file_paths, 
+    data_folder, 
+    spk_emb_encoder_path, 
+    spk_emb_sr, 
+    mel_spec_params,
+    device,
+  ):
     """This function processes a JSON file to compute the speaker embeddings.
     Arguments
     ---------
@@ -107,8 +116,6 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
     if skip(output_file_paths):
         logger.info("Preparation completed in previous run, skipping.")
         return
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     ENCODER_PATH =  spk_emb_encoder_path
 
@@ -157,6 +164,10 @@ def compute_speaker_embeddings(input_filepaths, output_file_paths, data_folder, 
             pickle.dump(speaker_embeddings, output_file, protocol=pickle.HIGHEST_PROTOCOL)
 
         logger.info(f"Created {output_file_paths[i]}.")
+
+    spk_emb_encoder = None
+    gc.collect()
+    torch.cuda.empty_cache()
 
 
 def skip(filepaths):

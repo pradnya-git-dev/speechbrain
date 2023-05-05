@@ -671,7 +671,6 @@ if __name__ == "__main__":
             ],
             "data_folder": hparams["data_folder"],
             "spk_emb_encoder_path": hparams["spk_emb_mel_spec_encoder"],
-            "audio_sr": hparams["sample_rate"],
             "spk_emb_sr": hparams["spk_emb_sample_rate"],
             "mel_spec_params": {
               "sample_rate": hparams["spk_emb_sample_rate"],
@@ -686,7 +685,8 @@ if __name__ == "__main__":
               "norm": hparams["norm"],
               "mel_scale": hparams["mel_scale"],
               "dynamic_range_compression": hparams["dynamic_range_compression"]
-            }
+            },
+            "device": run_opts["device"],
         },
     )
 
