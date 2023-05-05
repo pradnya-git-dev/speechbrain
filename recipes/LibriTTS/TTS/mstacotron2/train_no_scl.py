@@ -54,12 +54,6 @@ class Tacotron2Brain(sb.Brain):
               run_opts={"device": self.device},
               freeze_params=True
           )
-
-        for param in self.modules.mean_var_norm.parameters():
-          param.requires_grad = False
-
-        for param in self.modules.spk_embedding_model.parameters():
-          param.requires_grad = False
         
         self.last_loss_stats = {}
         return super().on_fit_start()
@@ -152,42 +146,6 @@ class Tacotron2Brain(sb.Brain):
         text_padded, input_lengths, _, max_len, output_lengths = inputs
 
         spk_emb_triplets = (None, None, None)
-
-        if self.hparams.compute_spk_emb_loss:
-          
-          with torch.no_grad():
-            self.modules.mean_var_norm.eval()
-            self.modules.spk_embedding_model.eval()
-
-            target_mels = targets[0].detach().clone()
-            pred_mels_postnet = predictions[1].detach().clone()
-
-            target_mels = torch.transpose(target_mels, 1, 2)
-            target_feats = self.modules.mean_var_norm(target_mels, torch.ones(target_mels.shape[0], device=self.device))
-            target_spk_embs = self.modules.spk_embedding_model(target_feats)
-            target_spk_embs = target_spk_embs.squeeze()
-            target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
-
-            pred_mels_postnet = torch.transpose(pred_mels_postnet, 1, 2)
-            pred_mels_postnet_feats = self.modules.mean_var_norm(pred_mels_postnet, torch.ones(pred_mels_postnet.shape[0], device=self.device))
-            preds_spk_embs = self.modules.spk_embedding_model(pred_mels_postnet_feats)
-            preds_spk_embs = preds_spk_embs.squeeze()
-            preds_spk_embs = preds_spk_embs.to(self.device, non_blocking=True).float()
-
-            anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
-
-            if anchor_se_idx.shape[0] != 0:
-
-              anchor_se_idx = anchor_se_idx.to(self.device, non_blocking=True).long()
-              pos_se_idx = pos_se_idx.to(self.device, non_blocking=True).long()
-              neg_se_idx = neg_se_idx.to(self.device, non_blocking=True).long()
-              
-              anchor_spk_embs = target_spk_embs[anchor_se_idx]
-              pos_spk_embs = preds_spk_embs[pos_se_idx]
-              neg_spk_embs = preds_spk_embs[neg_se_idx]
-
-              spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
-
         
         loss_stats = self.hparams.criterion(
             predictions, targets, input_lengths, output_lengths, spk_emb_triplets, self.last_epoch
@@ -537,21 +495,6 @@ class Tacotron2Brain(sb.Brain):
                   pass
 
 
-    def get_triplets(self, spk_ids):  
-      anchor_se_idx, pos_se_idx, neg_se_idx = None, None, None
-      spk_idx_pairs = list()
-      for i in range(len(spk_ids)):
-        for j in range(i, len(spk_ids)):
-          if spk_ids[i] != spk_ids[j]:
-            spk_idx_pairs.append((i, j))
-      
-      anchor_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
-      pos_se_idx = torch.LongTensor([i for (i, j) in spk_idx_pairs])
-      neg_se_idx = torch.LongTensor([j for (i, j) in spk_idx_pairs])
-
-      return (anchor_se_idx, pos_se_idx, neg_se_idx)
-
-
 def dataio_prepare(hparams):
     # Define audio pipeline:
 
@@ -695,12 +638,12 @@ if __name__ == "__main__":
         run_opts=run_opts,
         checkpointer=hparams["checkpointer"],
     )
-
+    
     # Load pretrained model if pretrained_separator is present in the yaml
     if "pretrained_separator" in hparams:
         sb.utils.distributed.run_on_main(hparams["pretrained_separator"].collect_files)
         hparams["pretrained_separator"].load_collected(device=run_opts["device"])
-    
+
     
     if hparams["use_tensorboard"]:
         tacotron2_brain.tensorboard_logger = sb.utils.train_logger.TensorboardLogger(
