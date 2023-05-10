@@ -653,6 +653,24 @@ if __name__ == "__main__":
     )
     """
 
+    if hparams["use_vctk_data"]:
+      from vctk_prepare import prepare_vctk
+      sb.utils.distributed.run_on_main(
+          prepare_vctk,
+          kwargs={
+              "data_folder": hparams["vctk_data_folder"],
+              "save_json_train": hparams["train_json"],
+              "save_json_valid": hparams["valid_json"],
+              "save_json_test": hparams["test_json"],
+              "sample_rate": hparams["sample_rate"],
+              "vctk_valid_spk_ids": hparams["vctk_valid_spk_ids"],
+              "vctk_test_spk_ids": hparams["vctk_test_spk_ids"],
+              "seed": hparams["seed"],
+              "append_data": hparams["use_vctk_data"]
+          },
+      )
+      
+
     from compute_speaker_embeddings import compute_speaker_embeddings
 
     sb.utils.distributed.run_on_main(
