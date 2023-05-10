@@ -50,7 +50,7 @@ progress_batch_sample_size: 3
 data_folder: !PLACEHOLDER # e.g, /localscratch/ljspeech
 
 use_vctk_data: False
-vctk_data_folder: !PLACEHOLDER
+vctk_data_folder: <data_folder>/vctk_sr22050
 vctk_valid_spk_ids: []
 vctk_test_spk_ids: ["p261", "p225", "p294", "p347", "p238", "p234", "p248", "p335", "p245", "p326", "p302"]
 
