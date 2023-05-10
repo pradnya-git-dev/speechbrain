@@ -7,6 +7,7 @@ import random
 import logging
 import torchaudio
 import torch
+from tqdm import tqdm
 # from speechbrain.pretrained import GraphemeToPhoneme
 
 logger = logging.getLogger(__name__)
@@ -119,7 +120,7 @@ def create_json(wav_list, json_file, vctk_valid_spk_ids, vctk_test_spk_ids, samp
         json_dict = json.load(json_f)
     
     # Processes all the wav files in the list
-    for wav_file in wav_list:
+    for wav_file in tqdm(wav_list):
 
       try:
 
