@@ -54,7 +54,7 @@ def prepare_vctk(
     random.seed(seed)
 
     # Checks if this phase is already done (if so, skips it)
-    if skip(save_json_train, save_json_valid, save_json_test) and not append_data:
+    if files_exist(save_json_train, save_json_valid, save_json_test) and not append_data:
         logger.info("Preparation completed in previous run, skipping.")
         return
     else:
@@ -70,7 +70,6 @@ def prepare_vctk(
 
     # Creating json files
     
-    # train_spk_ids = ["5895", "8297"]
     create_json(
       wav_list,
       save_json_train, 
@@ -80,23 +79,25 @@ def prepare_vctk(
       append_data
     )
 
-    create_json(
-      wav_list,
-      save_json_valid, 
-      vctk_valid_spk_ids,
-      vctk_test_spk_ids, 
-      sample_rate,
-      append_data
-    )
-
-    create_json(
-      wav_list,
-      save_json_test, 
-      vctk_valid_spk_ids,
-      vctk_test_spk_ids, 
-      sample_rate,
-      append_data
-    )
+    if len(vctk_valid_spk_ids) != 0:
+      create_json(
+        wav_list,
+        save_json_valid, 
+        vctk_valid_spk_ids,
+        vctk_test_spk_ids, 
+        sample_rate,
+        append_data
+      )
+    
+    if len(vctk_test_spk_ids) != 0:
+      create_json(
+        wav_list,
+        save_json_test, 
+        vctk_valid_spk_ids,
+        vctk_test_spk_ids, 
+        sample_rate,
+        append_data
+      )
 
 
 def create_json(wav_list, json_file, vctk_valid_spk_ids, vctk_test_spk_ids, sample_rate, append_data):
@@ -112,13 +113,24 @@ def create_json(wav_list, json_file, vctk_valid_spk_ids, vctk_test_spk_ids, samp
         The sample rate to be used for the dataset
     """
 
-    # wav_list = wav_list[:5]
     json_dict = {}
 
+    skip_prep = False
     if append_data:
       with open(json_file) as json_f:
         json_dict = json.load(json_f)
-    
+
+        # Checks if VCTK speakers are already added in the manifest files
+        # Speaker IDs for VCTK speakers start with "p" or "s"
+        # Speaker IDs for LibriTTS contain numbers only
+        for spk_id in json_dict.keys():
+          if spk_id.startswith("p") or spk_id.startswith("s"):
+            skip_prep = True
+            break
+    if skip_prep:
+      logger.info(f"VCTK speakers are already added in the manifest file, {json_file}. Skipping.")
+      return
+
     # Processes all the wav files in the list
     for wav_file in tqdm(wav_list):
 
@@ -201,7 +213,7 @@ def create_json(wav_list, json_file, vctk_valid_spk_ids, vctk_test_spk_ids, samp
     logger.info(f"{json_file} successfully created!")
 
 
-def skip(*filenames):
+def files_exist(*filenames):
     """
     Detects if the data preparation has been already done.
     If the preparation has been done, we can skip it.
