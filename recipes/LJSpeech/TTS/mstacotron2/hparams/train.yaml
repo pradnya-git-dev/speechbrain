@@ -18,7 +18,12 @@ train_log: !ref <output_folder>/train_log.txt
 epochs: 500
 keep_checkpoint_interval: 50
 use_tensorboard: False
-device: cuda:0
+
+log_audio_samples: False
+vocoder: !PLACEHOLDER
+vocoder_savedir: !PLACEHOLDER
+
+spk_emb_mel_spec_encoder: !PLACEHOLDER
 
 ###################################
 # Progress Samples                #
@@ -64,7 +69,7 @@ text_cleaners: ['english_cleaners']
 ################################
 # Audio Parameters             #
 ################################
-sample_rate: 22050
+sample_rate: !PLACEHOLDER
 hop_length: 256
 win_length: 1024
 n_mel_channels: 80
@@ -81,8 +86,8 @@ dynamic_range_compression: True
 # Speaker Embedding Parameters #
 ################################
 
-spk_emb_size: 192
-spk_emb_sample_rate: 16000
+spk_emb_size: !PLACEHOLDER
+spk_emb_sample_rate: !PLACEHOLDER
 
 ################################
 # Optimization Hyperparameters #

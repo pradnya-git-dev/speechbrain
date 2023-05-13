@@ -45,8 +45,8 @@ class Tacotron2Brain(sb.Brain):
         self.last_batch = None
         self.last_preds = None
         self.vocoder = HIFIGAN.from_hparams(
-            source="speechbrain/tts-hifigan-libritts-16kHz",
-            savedir="tmpdir_vocoder",
+            source=self.hparams.vocoder,
+            savedir=self.hparams.vocoder_savedir,
             run_opts={"device": self.device},
         )
         self.last_loss_stats = {}
@@ -547,7 +547,7 @@ if __name__ == "__main__":
         },
     )
 
-    from compute_ecapa_embeddings import compute_speaker_embeddings
+    from compute_speaker_embeddings import compute_speaker_embeddings
 
     sb.utils.distributed.run_on_main(
         compute_speaker_embeddings,
@@ -558,7 +558,7 @@ if __name__ == "__main__":
                 hparams["valid_speaker_embeddings_pickle"],
             ],
             "data_folder": hparams["data_folder"],
-            "audio_sr": hparams["sample_rate"],
+            "spk_emb_encoder_path": hparams["spk_emb_mel_spec_encoder"],
             "spk_emb_sr": hparams["spk_emb_sample_rate"],
             "mel_spec_params": {
               "sample_rate": hparams["spk_emb_sample_rate"],
@@ -573,7 +573,8 @@ if __name__ == "__main__":
               "norm": hparams["norm"],
               "mel_scale": hparams["mel_scale"],
               "dynamic_range_compression": hparams["dynamic_range_compression"]
-            }
+            },
+            "device": run_opts["device"],
         },
     )
 
