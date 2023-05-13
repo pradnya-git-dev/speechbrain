@@ -18,8 +18,8 @@ AUDIO_EXTENSION = ".wav"
 # Load the required models
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 SPK_EMB_ENCODER_PATH = "/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80"
-MSTTS_MODEL_PATH = "/content/drive/MyDrive/2023/concordia/mstts_experiments/paper/saved_models/exp2_spk_emb_injection_methods/ltc_sub/exp2_concat_mstacotron2_ltc_sub"
-MSTTS_HPARAMS_PATH = "/content/speechbrain/recipes/LibriTTS/TTS/mstacotron2/hparams/exp2_spk_emb_injection_methods/inf_concat.yaml"
+MSTTS_MODEL_PATH = "/content/drive/MyDrive/2023/concordia/mstts_experiments/paper/saved_models/exp2_spk_emb_injection_methods/ltc_sub/exp2_film_mstacotron2_ltc_sub"
+MSTTS_HPARAMS_PATH = "/content/speechbrain/recipes/LibriTTS/TTS/mstacotron2/hparams/exp2_spk_emb_injection_methods/inf_film.yaml"
 
 # Loads speaker embedding model
 SPK_EMB_SAMPLE_RATE = 16000
@@ -143,7 +143,7 @@ def compute_mel_spectrogram(
       norm=norm,
       mel_scale=mel_scale,
       compression=compression,
-      audio=ref_signal
+      audio=audio
     )
   
   return mel_spec
@@ -256,8 +256,6 @@ for spk_dir in tqdm(glob.glob(f"{DATA_DIR}/*/*/*", recursive=True)):
       synthesized_emb = spk_emb_encoder.encode_mel_spectrogram(mel_output_ms).squeeze(0)
 
       # 2.4 Compute cosine similarity score w.r.t reference embedding
-      if not torch.equal(tts_gt_spk_emb, ref_spk_emb):
-        print(tts_gt_spk_emb == ref_spk_emb)
       cs_ref_spk_emb = cos_sim_score(ref_spk_emb, synthesized_emb).item()
       cs_ground_truth = cos_sim_score(tts_gt_spk_emb, synthesized_emb).item()
 
