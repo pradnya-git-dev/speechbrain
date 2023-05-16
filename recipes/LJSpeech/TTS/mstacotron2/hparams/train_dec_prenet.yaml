@@ -18,7 +18,12 @@ train_log: !ref <output_folder>/train_log.txt
 epochs: 500
 keep_checkpoint_interval: 50
 use_tensorboard: False
-device: cuda:0
+
+log_audio_samples: False
+vocoder: !PLACEHOLDER
+vocoder_savedir: !PLACEHOLDER
+
+spk_emb_mel_spec_encoder: !PLACEHOLDER
 
 ###################################
 # Progress Samples                #
