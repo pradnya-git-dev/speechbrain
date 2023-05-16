@@ -1466,6 +1466,11 @@ class Tacotron2(nn.Module):
           encoder_embedding_dim
         )
 
+        self.film_symbol_embs = FiLM(
+          spk_emb_size,
+          symbols_embedding_dim
+        )
+
 
     def parse_output(self, outputs, output_lengths, alignments_dim=None):
         """
@@ -1533,7 +1538,10 @@ class Tacotron2(nn.Module):
         inputs, input_lengths, targets, max_len, output_lengths = inputs
         input_lengths, output_lengths = input_lengths.data, output_lengths.data
 
-        embedded_inputs = self.embedding(inputs).transpose(1, 2)
+        embedded_inputs = self.embedding(inputs)
+        embedded_inputs = self.film(embedded_inputs, spk_embs)
+        embedded_inputs = embedded_inputs.transpose(1, 2)
+
         encoder_outputs = self.encoder(embedded_inputs, input_lengths)
 
         encoder_outputs = self.film(encoder_outputs, spk_embs)
@@ -1574,7 +1582,10 @@ class Tacotron2(nn.Module):
             sequence of attention weights
         """
 
-        embedded_inputs = self.embedding(inputs).transpose(1, 2)
+        embedded_inputs = self.embedding(inputs)
+        embedded_inputs = self.film(embedded_inputs, spk_embs)
+        embedded_inputs = embedded_inputs.transpose(1, 2)
+
         encoder_outputs = self.encoder.infer(embedded_inputs, input_lengths)
 
         encoder_outputs = self.film(encoder_outputs, spk_embs)
