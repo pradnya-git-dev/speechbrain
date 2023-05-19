@@ -117,21 +117,21 @@ train_dataloader_opts:
   batch_size: !ref <batch_size>
   drop_last: True  #True #False
   num_workers: 8
-  collate_fn: !new:models.MSTacotron2DecPrenet.TextMelCollate
+  collate_fn: !new:models.MSTacotron2EncDec.TextMelCollate
     speaker_embeddings_pickle: !ref <train_speaker_embeddings_pickle>
 
 valid_dataloader_opts:
   batch_size: !ref <batch_size>
   drop_last: True
   num_workers: 8
-  collate_fn: !new:models.MSTacotron2DecPrenet.TextMelCollate
+  collate_fn: !new:models.MSTacotron2EncDec.TextMelCollate
     speaker_embeddings_pickle: !ref <valid_speaker_embeddings_pickle>
 
 test_dataloader_opts:
   batch_size: !ref <batch_size>
   drop_last: True
   num_workers: 8
-  collate_fn: !new:models.MSTacotron2DecPrenet.TextMelCollate
+  collate_fn: !new:models.MSTacotron2EncDec.TextMelCollate
     speaker_embeddings_pickle: !ref <test_speaker_embeddings_pickle>
 
 ################################
@@ -169,7 +169,7 @@ postnet_embedding_dim: 512
 postnet_kernel_size: 5
 postnet_n_convolutions: 5
 
-mel_spectogram: !name:models.MSTacotron2DecPrenet.mel_spectogram
+mel_spectogram: !name:models.MSTacotron2EncDec.mel_spectogram
   sample_rate: !ref <sample_rate>
   hop_length: !ref <hop_length>
   win_length: !ref <win_length>
@@ -184,7 +184,7 @@ mel_spectogram: !name:models.MSTacotron2DecPrenet.mel_spectogram
   compression: !ref <dynamic_range_compression>
 
 #model
-model: !new:models.MSTacotron2DecPrenet.Tacotron2
+model: !new:models.MSTacotron2EncDec.Tacotron2
   mask_padding: !ref <mask_padding>
   n_mel_channels: !ref <n_mel_channels>
   # symbols
@@ -220,7 +220,7 @@ guided_attention_scheduler: !new:speechbrain.nnet.schedulers.StepScheduler
   initial_value: !ref <guided_attention_weight>
   half_life: !ref <guided_attention_weight_half_life>
 
-criterion: !new:models.MSTacotron2DecPrenet.Loss
+criterion: !new:models.MSTacotron2EncDec.Loss
   gate_loss_weight: !ref <gate_loss_weight>
   guided_attention_weight: !ref <guided_attention_weight>
   guided_attention_sigma: !ref <guided_attention_sigma>

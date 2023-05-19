@@ -2,7 +2,7 @@
 # Model: Tacotron2
 # Tokens: Raw characters (English text)
 # losses: Transducer
-# Training: LibriTTS train-clean fine-tune
+# Training: LJSpeech
 # Authors: Georges Abous-Rjeili, Artem Ploujnikov, Yingzhi Wang
 # ############################################################################
 
@@ -15,7 +15,7 @@ __set_seed: !apply:torch.manual_seed [!ref <seed>]
 output_folder: !ref ./results/tacotron2/<seed>
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
-epochs: 150
+epochs: 200
 keep_checkpoint_interval: 50
 use_tensorboard: False
 
@@ -110,6 +110,8 @@ guided_attention_weight: 75.0
 guided_attention_weight_half_life: 10.
 guided_attention_hard_stop: 50
 gate_loss_weight: 1.0
+compute_spk_emb_loss: False
+spk_emb_loss_weight: 1.0
 
 train_dataloader_opts:
   batch_size: !ref <batch_size>
@@ -224,6 +226,7 @@ criterion: !new:models.MSTacotron2.Loss
   guided_attention_sigma: !ref <guided_attention_sigma>
   guided_attention_scheduler: !ref <guided_attention_scheduler>
   guided_attention_hard_stop: !ref <guided_attention_hard_stop>
+  spk_emb_loss_weight: !ref <spk_emb_loss_weight>
 
 modules:
   model: !ref <model>
@@ -263,6 +266,7 @@ progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
   batch_sample_size: !ref <progress_batch_sample_size>
   formats:
     raw_batch: raw
+
 
 tacotron2_model_path: !PLACEHOLDER
 pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
