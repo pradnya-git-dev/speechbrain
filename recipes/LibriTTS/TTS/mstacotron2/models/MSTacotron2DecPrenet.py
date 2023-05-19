@@ -425,7 +425,7 @@ class Prenet(nn.Module):
         )
         self.dropout = dropout
 
-        self.film_prenet = FiLM(spk_emb_size, sizes[-1])
+        self.film_prenet = FiLM(spk_emb_size, in_dim)
 
     def forward(self, x, spk_embs):
         """Computes the forward pass for the prenet
@@ -440,11 +440,12 @@ class Prenet(nn.Module):
         output: torch.Tensor
             the output
         """
+        x = self.film_prenet(x.transpose(0, 1), spk_embs)
+        x = x.transpose(0, 1)
+
         for linear in self.layers:
             x = F.dropout(F.relu(linear(x)), p=self.dropout, training=True)
 
-        x = self.film_prenet(x.transpose(0, 1), spk_embs)
-        x = x.transpose(0, 1)
         return x
 
 
