@@ -17,13 +17,17 @@ AUDIO_EXTENSION = ".wav"
 
 # Load the required models
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-SPK_EMB_ENCODER_PATH = "/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80"
-MSTTS_MODEL_PATH = "/content/drive/MyDrive/2023/concordia/mstts_experiments/paper/saved_models/exp2_spk_emb_injection_methods/ltc_sub/exp2_film_mstacotron2_ltc_sub"
-MSTTS_HPARAMS_PATH = "/content/speechbrain/recipes/LibriTTS/TTS/mstacotron2/hparams/exp2_spk_emb_injection_methods/inf_film.yaml"
+JUDGE_SPK_EMB_ENCODER_PATH = "/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80"
+EXP_SPK_EMB_ENCODER_PATH = "/content/drive/MyDrive/xvector/vc12_mel_spec_80"
+MSTTS_MODEL_PATH = "/content/drive/MyDrive/2023/concordia/mstts_experiments/paper/saved_models/exp3_spk_emb_models/ltc_sub/exp3_2_xvector"
+MSTTS_HPARAMS_PATH = "/content/speechbrain/recipes/LibriTTS/TTS/mstacotron2/hparams/exp3_spk_emb_models/inf_film.yaml"
 
 # Loads speaker embedding model
 SPK_EMB_SAMPLE_RATE = 16000
-spk_emb_encoder = MelSpectrogramEncoder.from_hparams(source=SPK_EMB_ENCODER_PATH,
+spk_emb_encoder = MelSpectrogramEncoder.from_hparams(source=EXP_SPK_EMB_ENCODER_PATH,
+                                                 run_opts={"device": DEVICE})
+
+judge_spk_emb_encoder = MelSpectrogramEncoder.from_hparams(source=JUDGE_SPK_EMB_ENCODER_PATH,
                                                  run_opts={"device": DEVICE})
 
 # Loads TTS model
@@ -184,6 +188,9 @@ for spk_dir in tqdm(glob.glob(f"{DATA_DIR}/*/*/*", recursive=True)):
     ref_spk_emb = spk_emb_encoder.encode_batch(ref_mel_spec)
     # ref_spk_emb.shape [1, 1, 192] => ref_spk_emb.shape [1, 192]
     ref_spk_emb = ref_spk_emb.squeeze(0)
+    # Computing reference speaker embedding with the judge speaker embedding model
+    # To be used when calculating SECS
+    ref_spk_emb_for_secs = judge_spk_emb_encoder.encode_batch(ref_mel_spec).squeeze(0)
 
 
     # Manipulates path to get relative path and uttid
@@ -227,7 +234,7 @@ for spk_dir in tqdm(glob.glob(f"{DATA_DIR}/*/*/*", recursive=True)):
 
       # 1.3. Compute the speaker embedding
       # Using encode batch because - tts_gt_mel_spec.shape:  torch.Size([1, 80, x])
-      tts_gt_spk_emb = spk_emb_encoder.encode_batch(tts_gt_mel_spec)
+      tts_gt_spk_emb = judge_spk_emb_encoder.encode_batch(tts_gt_mel_spec)
       tts_gt_spk_emb = tts_gt_spk_emb.squeeze(0)
 
       # 2 Map text-to-speech - text for GT audio, spk emb for reference audio
@@ -253,10 +260,10 @@ for spk_dir in tqdm(glob.glob(f"{DATA_DIR}/*/*/*", recursive=True)):
       torchaudio.save(synthesized_audio_path, waveform_ms.squeeze(1).cpu(), TTS_SAMPLE_RATE)
 
       # 2.3 Compute speaker embedding for synthesized audio
-      synthesized_emb = spk_emb_encoder.encode_mel_spectrogram(mel_output_ms).squeeze(0)
+      synthesized_emb = judge_spk_emb_encoder.encode_mel_spectrogram(mel_output_ms).squeeze(0)
 
       # 2.4 Compute cosine similarity score w.r.t reference embedding
-      cs_ref_spk_emb = cos_sim_score(ref_spk_emb, synthesized_emb).item()
+      cs_ref_spk_emb = cos_sim_score(ref_spk_emb_for_secs, synthesized_emb).item()
       cs_ground_truth = cos_sim_score(tts_gt_spk_emb, synthesized_emb).item()
 
       SECS[spk_id]["secs"][gt_uttid] = {
