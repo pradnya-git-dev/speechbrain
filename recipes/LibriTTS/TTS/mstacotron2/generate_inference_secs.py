@@ -12,15 +12,15 @@ import json
 from tqdm import tqdm
 
 # Load the evaluation dataset
-DATA_DIR = "mstts_evaluation_dataset"
+DATA_DIR = "mstts_evaluation_dataset_50m50f"
 AUDIO_EXTENSION = ".wav"
 
 # Load the required models
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 JUDGE_SPK_EMB_ENCODER_PATH = "/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80"
-EXP_SPK_EMB_ENCODER_PATH = "/content/drive/MyDrive/xvector/vc12_mel_spec_80"
-MSTTS_MODEL_PATH = "/content/drive/MyDrive/2023/concordia/mstts_experiments/paper/saved_models/exp3_spk_emb_models/ltc_sub/exp3_2_xvector"
-MSTTS_HPARAMS_PATH = "/content/speechbrain/recipes/LibriTTS/TTS/mstacotron2/hparams/exp3_spk_emb_models/inf_film.yaml"
+EXP_SPK_EMB_ENCODER_PATH = "/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80"
+MSTTS_MODEL_PATH = "/content/drive/MyDrive/2023/concordia/mstts_experiments/paper/saved_models/exp1_baseline/ltc_sub/exp1_baseline_mstacotron2_ltc_sub"
+MSTTS_HPARAMS_PATH = "/content/speechbrain/recipes/LibriTTS/TTS/mstacotron2/hparams/exp1_baseline/inf_add.yaml"
 
 # Loads speaker embedding model
 SPK_EMB_SAMPLE_RATE = 16000
@@ -306,7 +306,7 @@ organized_SECS = {
     "female_speakers": {
       "121": None, 
       "237": None, 
-      "1284": None, 
+      "2961": None, 
       "1580": None, 
       "1995": None
     }
