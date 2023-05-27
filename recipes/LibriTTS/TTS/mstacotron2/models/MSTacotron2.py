@@ -1454,7 +1454,7 @@ class Tacotron2(nn.Module):
                 alignments, (0, alignments_dim - alignments.size(-1))
             )
 
-        return mel_outputs, mel_outputs_postnet, gate_outputs, alignments
+        return mel_outputs, mel_outputs_postnet, gate_outputs, alignments, output_lengths
 
     def forward(self, inputs, spk_embs, alignments_dim=None):
         """Decoder forward pass for training
@@ -1681,6 +1681,7 @@ class Loss(nn.Module):
         self.triplet_loss = torch.nn.TripletMarginWithDistanceLoss(
           distance_function=lambda x, y: 1.0 - F.cosine_similarity(x, y)
         )
+        self.cos_emb_loss = nn.CosineEmbeddingLoss()
         
         self.guided_attention_scheduler = guided_attention_scheduler
         self.guided_attention_hard_stop = guided_attention_hard_stop
@@ -1713,7 +1714,7 @@ class Loss(nn.Module):
         gate_target.requires_grad = False
         gate_target = gate_target.view(-1, 1)
 
-        mel_out, mel_out_postnet, gate_out, alignments = model_output
+        mel_out, mel_out_postnet, gate_out, alignments, pred_mel_lens = model_output
 
         gate_out = gate_out.view(-1, 1)
         mel_loss = self.mse_loss(mel_out, mel_target) + self.mse_loss(
@@ -1734,6 +1735,14 @@ class Loss(nn.Module):
 
           cos_sim_scores = self.cos_sim(preds_spk_embs, target_spk_embs)
           spk_emb_loss = - torch.div(torch.sum(cos_sim_scores), len(cos_sim_scores))
+
+        if self.spk_emb_loss_type == "cos_emb_loss":
+          target_spk_embs, preds_spk_embs = spk_embs
+          spk_emb_loss = self.cos_emb_loss(
+            target_spk_embs,
+            preds_spk_embs,
+            torch.ones(len(target_spk_embs)).to(target_spk_embs.device)
+          )
 
         if self.spk_emb_loss_type == "triplet_loss":
           anchor_spk_embs, pos_spk_embs, neg_spk_embs = spk_embs

@@ -163,19 +163,25 @@ class Tacotron2Brain(sb.Brain):
             pred_mels_postnet = predictions[1].detach().clone()
 
             target_mels = torch.transpose(target_mels, 1, 2)
+            max_target_mel_lens = output_lengths.max().item()
+            target_mel_lens = output_lengths/max_target_mel_lens
+
             target_feats = self.modules.mean_var_norm(target_mels, torch.ones(target_mels.shape[0], device=self.device))
             target_spk_embs = self.modules.spk_embedding_model(target_feats)
             target_spk_embs = target_spk_embs.squeeze()
             target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
 
             pred_mels_postnet = torch.transpose(pred_mels_postnet, 1, 2)
+            max_pred_mel_lens = predictions[-1].max().item()
+            pred_mel_lens = predictions[-1]/max_pred_mel_lens
+
             pred_mels_postnet_feats = self.modules.mean_var_norm(pred_mels_postnet, torch.ones(pred_mels_postnet.shape[0], device=self.device))
             preds_spk_embs = self.modules.spk_embedding_model(pred_mels_postnet_feats)
             preds_spk_embs = preds_spk_embs.squeeze()
             preds_spk_embs = preds_spk_embs.to(self.device, non_blocking=True).float()
 
 
-            if self.hparams.spk_emb_loss_type == "scl_loss":
+            if (self.hparams.spk_emb_loss_type == "scl_loss") or (self.hparams.spk_emb_loss_type == "cos_emb_loss"):
               spk_embs_input = (target_spk_embs, preds_spk_embs)
 
             if self.hparams.spk_emb_loss_type == "triplet_loss":
@@ -214,7 +220,7 @@ class Tacotron2Brain(sb.Brain):
         inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         mel_target, _ = targets
-        mel_out, mel_out_postnet, gate_out, alignments = predictions
+        mel_out, mel_out_postnet, gate_out, alignments, pred_mel_lengths = predictions
         alignments_max = (
             alignments[0]
             .max(dim=-1)
@@ -357,7 +363,7 @@ class Tacotron2Brain(sb.Brain):
                 self.hparams.sample_rate,
             )
 
-            _, mel_out_postnet, _, _ = self.last_preds
+            _, mel_out_postnet, _, _, pred_mel_lengths = self.last_preds
 
             if self.hparams.log_audio_samples:
               waveform_ss = self.vocoder.decode_batch(mel_out_postnet[0])
