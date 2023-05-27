@@ -151,7 +151,7 @@ class Tacotron2Brain(sb.Brain):
         inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
 
-        spk_emb_triplets = (None, None, None)
+        spk_embs_input = None
 
         if self.hparams.compute_spk_emb_loss:
           
@@ -174,23 +174,29 @@ class Tacotron2Brain(sb.Brain):
             preds_spk_embs = preds_spk_embs.squeeze()
             preds_spk_embs = preds_spk_embs.to(self.device, non_blocking=True).float()
 
-            anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
 
-            if anchor_se_idx.shape[0] != 0:
+            if self.hparams.spk_emb_loss_type == "scl_loss":
+              spk_embs_input = (target_spk_embs, preds_spk_embs)
 
-              anchor_se_idx = anchor_se_idx.to(self.device, non_blocking=True).long()
-              pos_se_idx = pos_se_idx.to(self.device, non_blocking=True).long()
-              neg_se_idx = neg_se_idx.to(self.device, non_blocking=True).long()
-              
-              anchor_spk_embs = target_spk_embs[anchor_se_idx]
-              pos_spk_embs = preds_spk_embs[pos_se_idx]
-              neg_spk_embs = preds_spk_embs[neg_se_idx]
+            if self.hparams.spk_emb_loss_type == "triplet_loss":
+              spk_embs_input = (None, None, None)
+              anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
 
-              spk_emb_triplets = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
+              if anchor_se_idx.shape[0] != 0:
+
+                anchor_se_idx = anchor_se_idx.to(self.device, non_blocking=True).long()
+                pos_se_idx = pos_se_idx.to(self.device, non_blocking=True).long()
+                neg_se_idx = neg_se_idx.to(self.device, non_blocking=True).long()
+                
+                anchor_spk_embs = target_spk_embs[anchor_se_idx]
+                pos_spk_embs = preds_spk_embs[pos_se_idx]
+                neg_spk_embs = preds_spk_embs[neg_se_idx]
+
+                spk_embs_input = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
 
         
         loss_stats = self.hparams.criterion(
-            predictions, targets, input_lengths, output_lengths, spk_emb_triplets, self.last_epoch
+            predictions, targets, input_lengths, output_lengths, spk_embs_input, self.last_epoch
         )
         self.last_loss_stats[stage] = scalarize(loss_stats)
         return loss_stats.loss
@@ -617,7 +623,7 @@ if __name__ == "__main__":
     )
     
     sys.path.append("../../")
-    from libritts_prepare import prepare_libritts
+    from libritts_prepare_subset import prepare_libritts
 
     sb.utils.distributed.run_on_main(
         prepare_libritts,
@@ -634,24 +640,6 @@ if __name__ == "__main__":
         },
     )
     
-
-    """
-    sys.path.append("../../")
-    from libritts_prepare_dev import prepare_libritts_dev
-
-    sb.utils.distributed.run_on_main(
-        prepare_libritts_dev,
-        kwargs={
-            "data_folder": hparams["data_folder"],
-            "save_json_train": hparams["train_json"],
-            "save_json_valid": hparams["valid_json"],
-            "save_json_test": hparams["test_json"],
-            "sample_rate": hparams["sample_rate"],
-            "split_ratio": hparams["split_ratio"],
-            "seed": hparams["seed"],
-        },
-    )
-    """
 
     if hparams["use_vctk_data"]:
       from vctk_prepare import prepare_vctk

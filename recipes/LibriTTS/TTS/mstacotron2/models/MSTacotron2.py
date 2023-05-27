@@ -1657,6 +1657,7 @@ class Loss(nn.Module):
         gate_loss_weight=1.0,
         mel_loss_weight=1.0,
         spk_emb_loss_weight=1.0,
+        spk_emb_loss_type=None,
         guided_attention_weight=1.0,
         guided_attention_scheduler=None,
         guided_attention_hard_stop=None,
@@ -1668,6 +1669,7 @@ class Loss(nn.Module):
         self.gate_loss_weight = gate_loss_weight
         self.mel_loss_weight = mel_loss_weight
         self.spk_emb_loss_weight = spk_emb_loss_weight
+        self.spk_emb_loss_type = spk_emb_loss_type
 
 
         self.mse_loss = nn.MSELoss()
@@ -1675,6 +1677,7 @@ class Loss(nn.Module):
         self.guided_attention_loss = GuidedAttentionLoss(
             sigma=guided_attention_sigma
         )
+        self.cos_sim = nn.CosineSimilarity()
         self.triplet_loss = torch.nn.TripletMarginWithDistanceLoss(
           distance_function=lambda x, y: 1.0 - F.cosine_similarity(x, y)
         )
@@ -1683,7 +1686,7 @@ class Loss(nn.Module):
         self.guided_attention_hard_stop = guided_attention_hard_stop
 
     def forward(
-        self, model_output, targets, input_lengths, target_lengths, spk_emb_triplets, epoch
+        self, model_output, targets, input_lengths, target_lengths, spk_embs, epoch
     ):
         """Computes the loss
         Arguments
@@ -1711,7 +1714,6 @@ class Loss(nn.Module):
         gate_target = gate_target.view(-1, 1)
 
         mel_out, mel_out_postnet, gate_out, alignments = model_output
-        anchor_spk_embs, pos_spk_embs, neg_spk_embs = spk_emb_triplets
 
         gate_out = gate_out.view(-1, 1)
         mel_loss = self.mse_loss(mel_out, mel_target) + self.mse_loss(
@@ -1725,11 +1727,20 @@ class Loss(nn.Module):
             alignments, input_lengths, target_lengths, epoch
         )
 
-        if anchor_spk_embs != None:
-          spk_emb_loss = self.triplet_loss(anchor_spk_embs, pos_spk_embs, neg_spk_embs)
-          spk_emb_loss = self.spk_emb_loss_weight * spk_emb_loss
-        else:
-          spk_emb_loss = torch.Tensor([0]).to(mel_loss.device)
+        spk_emb_loss = torch.Tensor([0]).to(mel_loss.device)
+
+        if self.spk_emb_loss_type == "scl_loss":
+          target_spk_embs, preds_spk_embs = spk_embs
+
+          cos_sim_scores = self.cos_sim(preds_spk_embs, target_spk_embs)
+          spk_emb_loss = - torch.div(torch.sum(cos_sim_scores), len(cos_sim_scores))
+
+        if self.spk_emb_loss_type == "triplet_loss":
+          anchor_spk_embs, pos_spk_embs, neg_spk_embs = spk_embs
+          if anchor_spk_embs != None:
+            spk_emb_loss = self.triplet_loss(anchor_spk_embs, pos_spk_embs, neg_spk_embs)
+
+        spk_emb_loss = self.spk_emb_loss_weight * spk_emb_loss
 
         total_loss = mel_loss + spk_emb_loss + gate_loss + attn_loss
         return LossStats(
