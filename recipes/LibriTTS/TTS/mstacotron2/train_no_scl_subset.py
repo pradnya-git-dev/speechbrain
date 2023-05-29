@@ -166,7 +166,7 @@ class Tacotron2Brain(sb.Brain):
         inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
         mel_target, _ = targets
-        mel_out, mel_out_postnet, gate_out, alignments = predictions
+        mel_out, mel_out_postnet, gate_out, alignments, pred_mel_lengths = predictions
         alignments_max = (
             alignments[0]
             .max(dim=-1)
@@ -309,7 +309,7 @@ class Tacotron2Brain(sb.Brain):
                 self.hparams.sample_rate,
             )
 
-            _, mel_out_postnet, _, _ = self.last_preds
+            _, mel_out_postnet, _, _, pred_mel_lengths = self.last_preds
 
             if self.hparams.log_audio_samples:
               waveform_ss = self.vocoder.decode_batch(mel_out_postnet[0])
