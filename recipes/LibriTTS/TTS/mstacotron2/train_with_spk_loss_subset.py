@@ -158,20 +158,18 @@ class Tacotron2Brain(sb.Brain):
           target_mels = targets[0]
           pred_mels_postnet = predictions[1]
 
-          target_mels = torch.transpose(target_mels, 1, 2)
           max_target_mel_lens = output_lengths.max().item()
           target_mel_lens = output_lengths/max_target_mel_lens
 
-          target_feats = self.modules.mean_var_norm(target_mels, target_mel_lens)
+          target_feats = self.modules.mean_var_norm(torch.transpose(target_mels, 1, 2), target_mel_lens)
           target_spk_embs = self.modules.spk_embedding_model(target_feats)
           target_spk_embs = target_spk_embs.squeeze()
           target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
 
-          pred_mels_postnet = torch.transpose(pred_mels_postnet, 1, 2)
           max_pred_mel_lens = predictions[-1].max().item()
           pred_mel_lens = predictions[-1]/max_pred_mel_lens
 
-          pred_mels_postnet_feats = self.modules.mean_var_norm(pred_mels_postnet, pred_mel_lens)
+          pred_mels_postnet_feats = self.modules.mean_var_norm(torch.transpose(pred_mels_postnet, 1, 2), pred_mel_lens)
           preds_spk_embs = self.modules.spk_embedding_model(pred_mels_postnet_feats)
           preds_spk_embs = preds_spk_embs.squeeze()
           preds_spk_embs = preds_spk_embs.to(self.device, non_blocking=True).float()
