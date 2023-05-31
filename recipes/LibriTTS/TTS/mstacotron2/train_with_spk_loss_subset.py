@@ -149,8 +149,8 @@ class Tacotron2Brain(sb.Brain):
 
         if self.hparams.compute_spk_emb_loss:
           
-          self.modules.mean_var_norm.eval()
-          self.modules.spk_embedding_model.eval()
+          # self.modules.mean_var_norm.eval()
+          # self.modules.spk_embedding_model.eval()
 
           # target_mels = targets[0].detach().clone()
           # pred_mels_postnet = predictions[1].detach().clone()
