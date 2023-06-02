@@ -576,28 +576,9 @@ if __name__ == "__main__":
             "seed": hparams["seed"],
         },
     )
-    
-
-    """
-    sys.path.append("../../")
-    from libritts_prepare_dev import prepare_libritts_dev
-
-    sb.utils.distributed.run_on_main(
-        prepare_libritts_dev,
-        kwargs={
-            "data_folder": hparams["data_folder"],
-            "save_json_train": hparams["train_json"],
-            "save_json_valid": hparams["valid_json"],
-            "save_json_test": hparams["test_json"],
-            "sample_rate": hparams["sample_rate"],
-            "split_ratio": hparams["split_ratio"],
-            "seed": hparams["seed"],
-        },
-    )
-    """
 
     if hparams["use_vctk_data"]:
-      from vctk_prepare import prepare_vctk
+      from vctk_prepare_yourtts_split import prepare_vctk
       sb.utils.distributed.run_on_main(
           prepare_vctk,
           kwargs={
@@ -606,7 +587,7 @@ if __name__ == "__main__":
               "save_json_valid": hparams["valid_json"],
               "save_json_test": hparams["test_json"],
               "sample_rate": hparams["sample_rate"],
-              "vctk_valid_spk_ids": hparams["vctk_valid_spk_ids"],
+              "vctk_valid_uttids": hparams["vctk_valid_uttids"],
               "vctk_test_spk_ids": hparams["vctk_test_spk_ids"],
               "seed": hparams["seed"],
               "append_data": hparams["use_vctk_data"]

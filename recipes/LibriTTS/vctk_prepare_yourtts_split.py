@@ -139,6 +139,11 @@ def create_json(wav_list, json_file, vctk_valid_uttids, vctk_test_spk_ids, sampl
         # Reads the signal
         signal, sig_sr = torchaudio.load(wav_file)
 
+        # Skipping all signals with duration greater than 10 seconds to stay aligned
+        duration = signal.shape[1] / sig_sr
+        if duration > 10:
+            continue
+
         # Manipulates path to get relative path and uttid
         path_parts = wav_file.split(os.path.sep)
         uttid, _ = os.path.splitext(path_parts[-1])

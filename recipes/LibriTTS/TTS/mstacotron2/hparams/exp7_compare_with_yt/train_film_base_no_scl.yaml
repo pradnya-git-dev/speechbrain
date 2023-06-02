@@ -358,7 +358,7 @@ spk_emb_sample_rate: !PLACEHOLDER
 ################################
 learning_rate: 0.0001
 weight_decay: 0.000006
-batch_size: 64 #minimum 2
+batch_size: 32 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 75.0
