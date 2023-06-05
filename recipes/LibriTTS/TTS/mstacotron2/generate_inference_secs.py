@@ -19,9 +19,9 @@ AUDIO_EXTENSION = ".wav"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 JUDGE_SPK_EMB_ENCODER_PATH = "/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80"
 EXP_SPK_EMB_ENCODER_PATH = "/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80"
-MSTTS_MODEL_PATH = "/content/drive/MyDrive/2023/concordia/mstts_experiments/paper/saved_models/exp4_spk_emb_inject_locations/1_mstacotron2/2_dec_prenet/ltc_sub"
+MSTTS_MODEL_PATH = "/content/drive/MyDrive/2023/concordia/mstts_experiments/paper/saved_models/exp5_spk_emb_loss/exp5_3_spk_based_regularization/3_cos_emb_loss/1_weight_1"
 
-MSTTS_HPARAMS_PATH = "/content/speechbrain/recipes/LibriTTS/TTS/mstacotron2/hparams/exp4_spk_emb_inject_locations/2_dec_prenet/inf_dec_prenet.yaml"
+MSTTS_HPARAMS_PATH = "/content/speechbrain/recipes/LibriTTS/TTS/mstacotron2/hparams/exp5_spk_emb_loss/exp5_3_spk_based_regularization/inf_film_base_spk_reg_fine_tune.yaml"
 
 
 # Loads speaker embedding model
