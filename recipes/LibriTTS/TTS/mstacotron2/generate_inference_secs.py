@@ -12,16 +12,18 @@ import json
 from tqdm import tqdm
 
 # Load the evaluation dataset
-DATA_DIR = "mstts_evaluation_dataset_5m5f"
+DATA_DIR = "mstts_evaluation_dataset_50m50f"
 AUDIO_EXTENSION = ".wav"
 
 # Load the required models
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 JUDGE_SPK_EMB_ENCODER_PATH = "/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80"
 EXP_SPK_EMB_ENCODER_PATH = "/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80"
-MSTTS_MODEL_PATH = "/content/drive/MyDrive/2023/concordia/mstts_experiments/paper/saved_models/exp5_spk_emb_loss/exp5_3_spk_based_regularization/3_cos_emb_loss/1_weight_1"
+MSTTS_MODEL_PATH = "/content/drive/MyDrive/2023/concordia/mstts_experiments/paper/saved_models/exp2_spk_emb_injection_methods/ltc_sub/exp2_concat_mstacotron2_ltc_sub"
 
-MSTTS_HPARAMS_PATH = "/content/speechbrain/recipes/LibriTTS/TTS/mstacotron2/hparams/exp5_spk_emb_loss/exp5_3_spk_based_regularization/inf_film_base_spk_reg_fine_tune.yaml"
+
+MSTTS_HPARAMS_PATH = "/content/speechbrain/recipes/LibriTTS/TTS/mstacotron2/hparams/exp2_spk_emb_injection_methods/inf_concat.yaml"
+
 
 
 # Loads speaker embedding model
@@ -262,7 +264,29 @@ for spk_dir in tqdm(glob.glob(f"{DATA_DIR}/*/*/*", recursive=True)):
       torchaudio.save(synthesized_audio_path, waveform_ms.squeeze(1).cpu(), TTS_SAMPLE_RATE)
 
       # 2.3 Compute speaker embedding for synthesized audio
-      synthesized_emb = judge_spk_emb_encoder.encode_mel_spectrogram(mel_output_ms).squeeze(0)
+      # synthesized_emb = judge_spk_emb_encoder.encode_mel_spectrogram(mel_output_ms).squeeze(0)
+
+      # 2.3.0. Load the audio 
+      synthesized_signal, synthesized_signal_sr = torchaudio.load(synthesized_audio_path)
+      # 2.3.1. Resample the signal if required:
+      if synthesized_signal_sr != SPK_EMB_SAMPLE_RATE:
+        print("Resampling synthesized signal for the judge model.")
+        synthesized_signal = torchaudio.functional.resample(synthesized_signal, synthesized_signal_sr, SPK_EMB_SAMPLE_RATE)
+      synthesized_signal = synthesized_signal.to(DEVICE)
+
+      # 2.3.2. Convert audio to mel-spectrogram
+      synthesized_mel_spec = compute_mel_spectrogram(
+        sample_rate=SPK_EMB_SAMPLE_RATE,
+        audio=synthesized_signal
+      )
+
+      # 2.3.3. Compute the speaker embedding
+      # Using encode batch because - ref_mel_spec.shape:  torch.Size([1, 80, x])
+      # After squeeze(0) ref_spk_emb.shape [1, 1, 192] => ref_spk_emb.shape [1, 192]
+      # Computing embedding with the judge speaker embedding model
+      # To be used when calculating SECS
+      synthesized_emb = judge_spk_emb_encoder.encode_batch(synthesized_mel_spec).squeeze(0)
+
 
       # 2.4 Compute cosine similarity score w.r.t reference embedding
       cs_ref_spk_emb = cos_sim_score(ref_spk_emb_for_secs, synthesized_emb).item()
@@ -308,7 +332,7 @@ organized_SECS = {
     "female_speakers": {
       "121": None, 
       "237": None, 
-      "3570": None, 
+      "2961": None, 
       "1580": None, 
       "1995": None
     }
