@@ -302,7 +302,7 @@ dynamic_range_compression: True
 ################################
 # Optimization Hyperparameters #
 ################################
-learning_rate: 0.0002
+learning_rate: 0.00002
 weight_decay: 0.9999
 adam_b1: 0.8
 adam_b2: 0.99
@@ -443,3 +443,14 @@ checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
     generator: !ref <generator>
     discriminator: !ref <discriminator>
     counter: !ref <epoch_counter>
+
+
+hifigan_model_path: !PLACEHOLDER
+pretrained_separator: !new:speechbrain.utils.parameter_transfer.Pretrainer
+  collect_in: !ref <save_folder>
+  loadables:
+    generator: !ref <generator>
+    discriminator: !ref <discriminator>
+  paths:
+    generator: !ref <hifigan_model_path>/generator.ckpt
+    discriminator: !ref <hifigan_model_path>/discriminator.ckpt

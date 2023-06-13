@@ -397,6 +397,12 @@ if __name__ == "__main__":
         checkpointer=hparams["checkpointer"],
     )
 
+    # Load pretrained model if pretrained_separator is present in the yaml
+    if "pretrained_separator" in hparams:
+        sb.utils.distributed.run_on_main(hparams["pretrained_separator"].collect_files)
+        hparams["pretrained_separator"].load_collected(device=run_opts["device"])
+
+
     if hparams["use_tensorboard"]:
         hifi_gan_brain.tensorboard_logger = sb.utils.train_logger.TensorboardLogger(
             save_dir=hparams["output_folder"] + "/tensorboard"

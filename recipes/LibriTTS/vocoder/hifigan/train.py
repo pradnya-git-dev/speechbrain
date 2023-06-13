@@ -374,10 +374,30 @@ if __name__ == "__main__":
             "save_json_valid": hparams["valid_json"],
             "save_json_test": hparams["test_json"],
             "sample_rate": hparams["sample_rate"],
-            "split_ratio": hparams["split_ratio"],
-            "libritts_subsets": hparams["libritts_subsets"],
+            "train_splits": hparams["train_splits"],
+            "valid_splits": hparams["valid_splits"],
+            "test_splits": hparams["test_splits"],
+            "seed": hparams["seed"],
         },
     )
+    
+
+    if hparams["use_vctk_data"]:
+      from vctk_prepare import prepare_vctk
+      sb.utils.distributed.run_on_main(
+          prepare_vctk,
+          kwargs={
+              "data_folder": hparams["vctk_data_folder"],
+              "save_json_train": hparams["train_json"],
+              "save_json_valid": hparams["valid_json"],
+              "save_json_test": hparams["test_json"],
+              "sample_rate": hparams["sample_rate"],
+              "vctk_valid_spk_ids": hparams["vctk_valid_spk_ids"],
+              "vctk_test_spk_ids": hparams["vctk_test_spk_ids"],
+              "seed": hparams["seed"],
+              "append_data": hparams["use_vctk_data"]
+          },
+      )
 
     datasets = dataio_prepare(hparams)
 
@@ -394,6 +414,12 @@ if __name__ == "__main__":
         run_opts=run_opts,
         checkpointer=hparams["checkpointer"],
     )
+
+    # Load pretrained model if pretrained_separator is present in the yaml
+    if "pretrained_separator" in hparams:
+        sb.utils.distributed.run_on_main(hparams["pretrained_separator"].collect_files)
+        hparams["pretrained_separator"].load_collected(device=run_opts["device"])
+
 
     if hparams["use_tensorboard"]:
         hifi_gan_brain.tensorboard_logger = sb.utils.train_logger.TensorboardLogger(
