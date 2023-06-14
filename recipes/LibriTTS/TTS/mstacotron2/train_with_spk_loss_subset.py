@@ -98,6 +98,7 @@ class Tacotron2Brain(sb.Brain):
         """
         result = super().fit_batch(batch)
         self.hparams.lr_annealing(self.optimizer)
+        self.hparams.ecapa_tdnn_lr_annealing(self.ecapa_tdnn_optimizer)
         return result
 
     def compute_objectives(self, predictions, batch, stage):
@@ -148,12 +149,6 @@ class Tacotron2Brain(sb.Brain):
         spk_embs_input = None
 
         if self.hparams.compute_spk_emb_loss:
-          
-          # self.modules.mean_var_norm.eval()
-          # self.modules.spk_embedding_model.eval()
-
-          # target_mels = targets[0].detach().clone()
-          # pred_mels_postnet = predictions[1].detach().clone()
 
           target_mels = targets[0]
           pred_mels_postnet = predictions[1]
@@ -541,6 +536,35 @@ class Tacotron2Brain(sb.Brain):
                   )
                 except Exception as ex:
                   pass
+
+
+    def init_optimizers(self):
+        "Initializes the speaker embedding model optimizer and the model optimizer"
+
+        print("INITIALIZING OPTIMIZERS!")
+
+        ecapa_tdnn_params = list(self.modules.mean_var_norm.parameters()) + \
+                            list(self.modules.spk_embedding_model.parameters())
+
+        self.ecapa_tdnn_optimizer = self.hparams.ecapa_tdnn_opt_class(
+            ecapa_tdnn_params
+        )
+        if self.checkpointer is not None:
+            self.checkpointer.add_recoverable(
+                "ecapa_tdnn_opt", self.ecapa_tdnn_optimizer
+            )
+
+        self.optimizer = self.hparams.opt_class(
+            self.modules.model.parameters()
+        )
+
+        if self.checkpointer is not None:
+            self.checkpointer.add_recoverable("model_opt", self.optimizer)
+
+    
+    def zero_grad(self, set_to_none=False):
+        self.ecapa_tdnn_optimizer.zero_grad(set_to_none)
+        self.optimizer.zero_grad(set_to_none)
 
 
     def get_triplets(self, spk_ids):  
