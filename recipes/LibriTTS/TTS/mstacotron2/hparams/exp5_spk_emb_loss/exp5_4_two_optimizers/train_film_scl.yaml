@@ -255,6 +255,7 @@ criterion: !new:models.MSTacotron2.Loss
   guided_attention_scheduler: !ref <guided_attention_scheduler>
   guided_attention_hard_stop: !ref <guided_attention_hard_stop>
   spk_emb_loss_weight: !ref <spk_emb_loss_weight>
+  spk_emb_loss_type: !ref <spk_emb_loss_type>
 
 modules:
   mean_var_norm: !ref <mean_var_norm>
