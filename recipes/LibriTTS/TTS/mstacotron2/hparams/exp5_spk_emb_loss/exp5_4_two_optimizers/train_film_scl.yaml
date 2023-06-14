@@ -18,6 +18,8 @@ train_log: !ref <output_folder>/train_log.txt
 epochs: 200
 keep_checkpoint_interval: 50
 use_tensorboard: False
+auto_mix_prec: False
+bfloat16_mix_prec: False
 
 log_audio_samples: False
 vocoder: !PLACEHOLDER
@@ -260,11 +262,11 @@ modules:
   model: !ref <model>
 
 #optimizer
-opt_class: !name:torch.optim.Adam
+opt_class_tts_model: !name:torch.optim.Adam
   lr: !ref <learning_rate>
   weight_decay: !ref <weight_decay>
 
-ecapa_tdnn_opt_class: !name:torch.optim.Adam
+opt_class_spk_encoder: !name:torch.optim.Adam
     lr: !ref <ecapa_tdnn_lr>
     weight_decay: 0.000002
 
@@ -276,7 +278,7 @@ train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
   save_file: !ref <train_log>
 
 #annealing_function
-lr_annealing: !new:speechbrain.nnet.schedulers.IntervalScheduler
+lr_annealing_tts_model: !new:speechbrain.nnet.schedulers.IntervalScheduler
   intervals:
     - steps: 6000
       lr: 0.00005
@@ -285,7 +287,7 @@ lr_annealing: !new:speechbrain.nnet.schedulers.IntervalScheduler
     - steps: 10000
       lr: 0.00001
 
-ecapa_tdnn_lr_annealing: !new:speechbrain.nnet.schedulers.CyclicLRScheduler
+lr_annealing_spk_encoder: !new:speechbrain.nnet.schedulers.CyclicLRScheduler
     base_lr: !ref <ecapa_tdnn_base_lr>
     max_lr: !ref <ecapa_tdnn_max_lr>
     step_size: !ref <ecapa_tdnn_step_size>
@@ -298,8 +300,8 @@ checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
     mean_var_norm: !ref <mean_var_norm>
     spk_embedding_model: !ref <spk_embedding_model>
     counter: !ref <epoch_counter>
-    scheduler_model: !ref <lr_annealing>
-    scheduler_ecapa_tdnn: !ref <ecapa_tdnn_lr_annealing>
+    scheduler_tts_model: !ref <lr_annealing_tts_model>
+    scheduler_spk_encoder: !ref <lr_annealing_spk_encoder>
 
 progress_sample_logger: !new:speechbrain.utils.train_logger.ProgressSampleLogger
   output_path: !ref <progress_sample_path>

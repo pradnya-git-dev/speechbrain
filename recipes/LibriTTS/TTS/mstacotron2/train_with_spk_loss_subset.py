@@ -96,10 +96,20 @@ class Tacotron2Brain(sb.Brain):
         loss: torch.Tensor
             detached loss
         """
-        result = super().fit_batch(batch)
-        self.hparams.lr_annealing(self.optimizer)
-        self.hparams.ecapa_tdnn_lr_annealing(self.ecapa_tdnn_optimizer)
-        return result
+        
+        outputs = self.compute_forward(batch, sb.Stage.TRAIN)
+        loss = self.compute_objectives(outputs, batch, sb.Stage.TRAIN)
+        loss.backward()
+
+        if self.check_gradients(loss):
+          self.optimizer_tts_model.step()
+          self.optimizer_spk_encoder.step()
+
+        self.optimizer_tts_model.zero_grad()
+        self.optimizer_spk_encoder.zero_grad()
+
+        return loss.detach().cpu()
+        
 
     def compute_objectives(self, predictions, batch, stage):
         """Computes the loss given the predicted and targeted outputs.
@@ -126,6 +136,13 @@ class Tacotron2Brain(sb.Brain):
         self._remember_sample(effective_batch, predictions)
         # Compute the loss
         loss = self._compute_loss(predictions, effective_batch, stage)
+
+        # Following the VoxCeleb recipe for ECAPA-TDNN
+        if stage == sb.Stage.TRAIN and hasattr(
+            self.hparams.lr_annealing_spk_encoder, "on_batch_end"
+        ):
+            self.hparams.lr_annealing_spk_encoder.on_batch_end(self.optimizer_spk_encoder)
+
         return loss
 
     def _compute_loss(self, predictions, batch, stage):
@@ -394,12 +411,21 @@ class Tacotron2Brain(sb.Brain):
         # At the end of validation, we can write
         if stage == sb.Stage.VALID:
             # Update learning rate
-            lr = self.optimizer.param_groups[-1]["lr"]
+            old_lr_tts_model, new_lr_tts_model = self.hparams.lr_annealing_tts_model(self.optimizer_tts_model)
+            old_lr_spk_encoder, new_lr_spk_encoder = self.hparams.lr_annealing_spk_encoder(epoch)
+            
+            logger.info("Updating learning rate for the TTS model.")
+            sb.nnet.schedulers.update_learning_rate(self.optimizer_tts_model, new_lr_tts_model)
+            logger.info("Updating learning rate for the speaker encoder.")
+            sb.nnet.schedulers.update_learning_rate(self.optimizer_spk_encoder, new_lr_spk_encoder)
+                
+            # lr = self.optimizer.param_groups[-1]["lr"]
+            lr = old_lr_tts_model
             self.last_epoch = epoch
 
             # The train_logger writes a summary to stdout and to the logfile.
             self.hparams.train_logger.log_stats(  # 1#2#
-                stats_meta={"Epoch": epoch, "lr": lr},
+                stats_meta={"Epoch": epoch, "lr_tts_model": lr, "lr_spk_encoder": old_lr_spk_encoder},
                 train_stats=self.last_loss_stats[sb.Stage.TRAIN],
                 valid_stats=self.last_loss_stats[sb.Stage.VALID],
             )
@@ -407,7 +433,7 @@ class Tacotron2Brain(sb.Brain):
             # The tensorboard_logger writes a summary to stdout and to the logfile.
             if self.hparams.use_tensorboard:
                 self.tensorboard_logger.log_stats(
-                    stats_meta={"Epoch": epoch, "lr": lr},
+                    stats_meta={"Epoch": epoch, "lr_tts_model": lr, "lr_spk_encoder": old_lr_spk_encoder},
                     train_stats=self.last_loss_stats[sb.Stage.TRAIN],
                     valid_stats=self.last_loss_stats[sb.Stage.VALID],
                 )
@@ -539,32 +565,34 @@ class Tacotron2Brain(sb.Brain):
 
 
     def init_optimizers(self):
-        "Initializes the speaker embedding model optimizer and the model optimizer"
+        """Initializes the optimizers for the training.
+        This recipe uses two optimizers.
+        One for the TTS model and one for the speaker encoder.
+        """
 
-        print("INITIALIZING OPTIMIZERS!")
 
-        ecapa_tdnn_params = list(self.modules.mean_var_norm.parameters()) + \
+        params_spk_encoder = list(self.modules.mean_var_norm.parameters()) + \
                             list(self.modules.spk_embedding_model.parameters())
 
-        self.ecapa_tdnn_optimizer = self.hparams.ecapa_tdnn_opt_class(
-            ecapa_tdnn_params
+        self.optimizer_spk_encoder = self.hparams.opt_class_spk_encoder(
+            params_spk_encoder
         )
         if self.checkpointer is not None:
             self.checkpointer.add_recoverable(
-                "ecapa_tdnn_opt", self.ecapa_tdnn_optimizer
+                "opt_spk_encoder", self.optimizer_spk_encoder
             )
 
-        self.optimizer = self.hparams.opt_class(
+        self.optimizer_tts_model = self.hparams.opt_class_tts_model(
             self.modules.model.parameters()
         )
 
         if self.checkpointer is not None:
-            self.checkpointer.add_recoverable("model_opt", self.optimizer)
+            self.checkpointer.add_recoverable("opt_tts_model", self.optimizer_tts_model)
 
     
     def zero_grad(self, set_to_none=False):
-        self.ecapa_tdnn_optimizer.zero_grad(set_to_none)
-        self.optimizer.zero_grad(set_to_none)
+        self.optimizer_spk_encoder.zero_grad(set_to_none)
+        self.optimizer_tts_model.zero_grad(set_to_none)
 
 
     def get_triplets(self, spk_ids):  
@@ -720,7 +748,6 @@ if __name__ == "__main__":
     # Brain class initialization
     tacotron2_brain = Tacotron2Brain(
         modules=hparams["modules"],
-        opt_class=hparams["opt_class"],
         hparams=hparams,
         run_opts=run_opts,
         checkpointer=hparams["checkpointer"],
