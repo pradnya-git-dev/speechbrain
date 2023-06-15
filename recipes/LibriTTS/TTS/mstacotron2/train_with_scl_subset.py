@@ -96,23 +96,9 @@ class Tacotron2Brain(sb.Brain):
         loss: torch.Tensor
             detached loss
         """
-        
-        
-        outputs = self.compute_forward(batch, sb.Stage.TRAIN)
-        loss = self.compute_objectives(outputs, batch, sb.Stage.TRAIN)
-        loss.backward()
-
-        if self.check_gradients(loss):
-          self.optimizer_tts_model.step()
-          self.optimizer_spk_encoder.step()
-
-        self.optimizer_tts_model.zero_grad()
-        self.optimizer_spk_encoder.zero_grad()
-
-        return loss.detach().cpu()
-
-
-        
+        result = super().fit_batch(batch)
+        self.hparams.lr_annealing(self.optimizer)
+        return result
 
     def compute_objectives(self, predictions, batch, stage):
         """Computes the loss given the predicted and targeted outputs.
@@ -139,13 +125,6 @@ class Tacotron2Brain(sb.Brain):
         self._remember_sample(effective_batch, predictions)
         # Compute the loss
         loss = self._compute_loss(predictions, effective_batch, stage)
-
-        # Following the VoxCeleb recipe for ECAPA-TDNN
-        if stage == sb.Stage.TRAIN and hasattr(
-            self.hparams.lr_annealing_spk_encoder, "on_batch_end"
-        ):
-            self.hparams.lr_annealing_spk_encoder.on_batch_end(self.optimizer_spk_encoder)
-
         return loss
 
     def _compute_loss(self, predictions, batch, stage):
@@ -165,9 +144,59 @@ class Tacotron2Brain(sb.Brain):
         """
         inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
+
+        spk_embs_input = None
+
+        if self.hparams.compute_spk_emb_loss:
+          
+          # self.modules.mean_var_norm.eval()
+          # self.modules.spk_embedding_model.eval()
+
+          # target_mels = targets[0].detach().clone()
+          # pred_mels_postnet = predictions[1].detach().clone()
+
+          target_mels = targets[0]
+          pred_mels_postnet = predictions[1]
+
+          max_target_mel_lens = output_lengths.max().item()
+          target_mel_lens = output_lengths/max_target_mel_lens
+
+          target_feats = self.modules.mean_var_norm(torch.transpose(target_mels, 1, 2), target_mel_lens)
+          target_spk_embs = self.modules.spk_embedding_model(target_feats)
+          target_spk_embs = target_spk_embs.squeeze()
+          target_spk_embs = target_spk_embs.to(self.device, non_blocking=True).float()
+
+          max_pred_mel_lens = predictions[-1].max().item()
+          pred_mel_lens = predictions[-1]/max_pred_mel_lens
+
+          pred_mels_postnet_feats = self.modules.mean_var_norm(torch.transpose(pred_mels_postnet, 1, 2), pred_mel_lens)
+          preds_spk_embs = self.modules.spk_embedding_model(pred_mels_postnet_feats)
+          preds_spk_embs = preds_spk_embs.squeeze()
+          preds_spk_embs = preds_spk_embs.to(self.device, non_blocking=True).float()
+
+
+          if (self.hparams.spk_emb_loss_type == "scl_loss") or (self.hparams.spk_emb_loss_type == "cos_emb_loss"):
+            spk_embs_input = (target_spk_embs, preds_spk_embs)
+
+          if self.hparams.spk_emb_loss_type == "triplet_loss":
+            spk_embs_input = (None, None, None)
+            anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
+
+            if anchor_se_idx.shape[0] != 0:
+
+              anchor_se_idx = anchor_se_idx.to(self.device, non_blocking=True).long()
+              pos_se_idx = pos_se_idx.to(self.device, non_blocking=True).long()
+              neg_se_idx = neg_se_idx.to(self.device, non_blocking=True).long()
+              
+              anchor_spk_embs = target_spk_embs[anchor_se_idx]
+              pos_spk_embs = preds_spk_embs[pos_se_idx]
+              neg_spk_embs = preds_spk_embs[neg_se_idx]
+
+              spk_embs_input = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
+
         
         loss_stats = self.hparams.criterion(
-            predictions, targets, input_lengths, output_lengths, self.last_epoch
+            predictions, targets, input_lengths, output_lengths, spk_embs_input, self.last_epoch
         )
         self.last_loss_stats[stage] = scalarize(loss_stats)
         return loss_stats.loss
@@ -370,21 +399,12 @@ class Tacotron2Brain(sb.Brain):
         # At the end of validation, we can write
         if stage == sb.Stage.VALID:
             # Update learning rate
-            old_lr_tts_model, new_lr_tts_model = self.hparams.lr_annealing_tts_model(self.optimizer_tts_model)
-            old_lr_spk_encoder, new_lr_spk_encoder = self.hparams.lr_annealing_spk_encoder(epoch)
-            
-            logger.info("Updating learning rate for the TTS model.")
-            sb.nnet.schedulers.update_learning_rate(self.optimizer_tts_model, new_lr_tts_model)
-            logger.info("Updating learning rate for the speaker encoder.")
-            sb.nnet.schedulers.update_learning_rate(self.optimizer_spk_encoder, new_lr_spk_encoder)
-                
-            # lr = self.optimizer.param_groups[-1]["lr"]
-            lr = old_lr_tts_model
+            lr = self.optimizer.param_groups[-1]["lr"]
             self.last_epoch = epoch
 
             # The train_logger writes a summary to stdout and to the logfile.
             self.hparams.train_logger.log_stats(  # 1#2#
-                stats_meta={"Epoch": epoch, "lr_tts_model": lr, "lr_spk_encoder": old_lr_spk_encoder},
+                stats_meta={"Epoch": epoch, "lr": lr},
                 train_stats=self.last_loss_stats[sb.Stage.TRAIN],
                 valid_stats=self.last_loss_stats[sb.Stage.VALID],
             )
@@ -392,7 +412,7 @@ class Tacotron2Brain(sb.Brain):
             # The tensorboard_logger writes a summary to stdout and to the logfile.
             if self.hparams.use_tensorboard:
                 self.tensorboard_logger.log_stats(
-                    stats_meta={"Epoch": epoch, "lr_tts_model": lr, "lr_spk_encoder": old_lr_spk_encoder},
+                    stats_meta={"Epoch": epoch, "lr": lr},
                     train_stats=self.last_loss_stats[sb.Stage.TRAIN],
                     valid_stats=self.last_loss_stats[sb.Stage.VALID],
                 )
@@ -521,37 +541,6 @@ class Tacotron2Brain(sb.Brain):
                   )
                 except Exception as ex:
                   pass
-
-
-    def init_optimizers(self):
-        """Initializes the optimizers for the training.
-        This recipe uses two optimizers.
-        One for the TTS model and one for the speaker encoder.
-        """
-
-
-        params_spk_encoder = list(self.modules.mean_var_norm.parameters()) + \
-                            list(self.modules.spk_embedding_model.parameters())
-
-        self.optimizer_spk_encoder = self.hparams.opt_class_spk_encoder(
-            params_spk_encoder
-        )
-        if self.checkpointer is not None:
-            self.checkpointer.add_recoverable(
-                "opt_spk_encoder", self.optimizer_spk_encoder
-            )
-
-        self.optimizer_tts_model = self.hparams.opt_class_tts_model(
-            self.modules.model.parameters()
-        )
-
-        if self.checkpointer is not None:
-            self.checkpointer.add_recoverable("opt_tts_model", self.optimizer_tts_model)
-
-    
-    def zero_grad(self, set_to_none=False):
-        self.optimizer_spk_encoder.zero_grad(set_to_none)
-        self.optimizer_tts_model.zero_grad(set_to_none)
 
 
     def get_triplets(self, spk_ids):  
@@ -707,6 +696,7 @@ if __name__ == "__main__":
     # Brain class initialization
     tacotron2_brain = Tacotron2Brain(
         modules=hparams["modules"],
+        opt_class=hparams["opt_class"],
         hparams=hparams,
         run_opts=run_opts,
         checkpointer=hparams["checkpointer"],
