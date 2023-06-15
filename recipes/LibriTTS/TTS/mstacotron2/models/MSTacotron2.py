@@ -1607,7 +1607,7 @@ def infer(model, text_sequences, input_lengths):
 
 
 LossStats = namedtuple(
-    "TacotronLoss", "loss mel_loss gate_loss attn_loss attn_weight"
+    "TacotronLoss", "loss mel_loss spk_emb_loss gate_loss attn_loss attn_weight"
 )
 
 
@@ -1656,6 +1656,8 @@ class Loss(nn.Module):
         guided_attention_sigma=None,
         gate_loss_weight=1.0,
         mel_loss_weight=1.0,
+        spk_emb_loss_weight=1.0,
+        spk_emb_loss_type=None,
         guided_attention_weight=1.0,
         guided_attention_scheduler=None,
         guided_attention_hard_stop=None,
@@ -1666,6 +1668,8 @@ class Loss(nn.Module):
         self.guided_attention_weight = guided_attention_weight
         self.gate_loss_weight = gate_loss_weight
         self.mel_loss_weight = mel_loss_weight
+        self.spk_emb_loss_weight = spk_emb_loss_weight
+        self.spk_emb_loss_type = spk_emb_loss_type
 
 
         self.mse_loss = nn.MSELoss()
@@ -1673,12 +1677,17 @@ class Loss(nn.Module):
         self.guided_attention_loss = GuidedAttentionLoss(
             sigma=guided_attention_sigma
         )
+        self.cos_sim = nn.CosineSimilarity()
+        self.triplet_loss = torch.nn.TripletMarginWithDistanceLoss(
+          distance_function=lambda x, y: 1.0 - F.cosine_similarity(x, y)
+        )
+        self.cos_emb_loss = nn.CosineEmbeddingLoss()
         
         self.guided_attention_scheduler = guided_attention_scheduler
         self.guided_attention_hard_stop = guided_attention_hard_stop
 
     def forward(
-        self, model_output, targets, input_lengths, target_lengths, epoch
+        self, model_output, targets, input_lengths, target_lengths, spk_embs, epoch
     ):
         """Computes the loss
         Arguments
@@ -1719,9 +1728,32 @@ class Loss(nn.Module):
             alignments, input_lengths, target_lengths, epoch
         )
 
-        total_loss = mel_loss + gate_loss + attn_loss
+        spk_emb_loss = torch.Tensor([0]).to(mel_loss.device)
+
+        if self.spk_emb_loss_type == "scl_loss":
+          target_spk_embs, preds_spk_embs = spk_embs
+
+          cos_sim_scores = self.cos_sim(preds_spk_embs, target_spk_embs)
+          spk_emb_loss = - torch.div(torch.sum(cos_sim_scores), len(cos_sim_scores))
+
+        if self.spk_emb_loss_type == "cos_emb_loss":
+          target_spk_embs, preds_spk_embs = spk_embs
+          spk_emb_loss = self.cos_emb_loss(
+            target_spk_embs,
+            preds_spk_embs,
+            torch.ones(len(target_spk_embs)).to(target_spk_embs.device)
+          )
+
+        if self.spk_emb_loss_type == "triplet_loss":
+          anchor_spk_embs, pos_spk_embs, neg_spk_embs = spk_embs
+          if anchor_spk_embs != None:
+            spk_emb_loss = self.triplet_loss(anchor_spk_embs, pos_spk_embs, neg_spk_embs)
+
+        spk_emb_loss = self.spk_emb_loss_weight * spk_emb_loss
+
+        total_loss = mel_loss + spk_emb_loss + gate_loss + attn_loss
         return LossStats(
-            total_loss, mel_loss, gate_loss, attn_loss, attn_weight
+            total_loss, mel_loss, spk_emb_loss, gate_loss, attn_loss, attn_weight
         )
 
     def get_attention_loss(
@@ -1766,53 +1798,6 @@ class Loss(nn.Module):
                 alignments, input_lengths, target_lengths
             )
         return attn_loss, attn_weight
-
-
-class SpeakerConsistencyLoss(nn.Module):
-
-  def __init__(
-        self,
-        spk_emb_loss_weight=1.0,
-        spk_emb_loss_type=None,
-    ):
-        super().__init__()
-
-        self.spk_emb_loss_weight = spk_emb_loss_weight
-        self.spk_emb_loss_type = spk_emb_loss_type
-
-        self.cos_sim = nn.CosineSimilarity()
-        self.triplet_loss = torch.nn.TripletMarginWithDistanceLoss(
-          distance_function=lambda x, y: 1.0 - F.cosine_similarity(x, y)
-        )
-        self.cos_emb_loss = nn.CosineEmbeddingLoss()
-
-  def forward(self, spk_embs):
-
-    spk_emb_loss = None
-
-    if self.spk_emb_loss_type == "scl_loss":
-      target_spk_embs, preds_spk_embs = spk_embs
-
-      cos_sim_scores = self.cos_sim(preds_spk_embs, target_spk_embs)
-      spk_emb_loss = - torch.div(torch.sum(cos_sim_scores), len(cos_sim_scores))
-
-    if self.spk_emb_loss_type == "cos_emb_loss":
-      target_spk_embs, preds_spk_embs = spk_embs
-      spk_emb_loss = self.cos_emb_loss(
-        target_spk_embs,
-        preds_spk_embs,
-        torch.ones(len(target_spk_embs)).to(target_spk_embs.device)
-      )
-
-    if self.spk_emb_loss_type == "triplet_loss":
-      anchor_spk_embs, pos_spk_embs, neg_spk_embs = spk_embs
-      if anchor_spk_embs != None:
-        spk_emb_loss = self.triplet_loss(anchor_spk_embs, pos_spk_embs, neg_spk_embs)
-
-    spk_emb_loss = self.spk_emb_loss_weight * spk_emb_loss
-
-    return spk_emb_loss
-
 
 
 class TextMelCollate:
