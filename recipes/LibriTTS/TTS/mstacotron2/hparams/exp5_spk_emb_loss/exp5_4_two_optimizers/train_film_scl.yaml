@@ -119,7 +119,7 @@ spk_emb_loss_type: triplet_loss
 spk_emb_loss_weight: 1.0
 
 # Speaker embedding model optimization yperparameters
-ecapa_tdnn_lr: 0.0001
+ecapa_tdnn_lr: 0.00000001
 ecapa_tdnn_base_lr: 0.000000001
 ecapa_tdnn_max_lr: !ref <ecapa_tdnn_lr>
 ecapa_tdnn_step_size: 9800 # (number of iterations in each epoch) * 5
