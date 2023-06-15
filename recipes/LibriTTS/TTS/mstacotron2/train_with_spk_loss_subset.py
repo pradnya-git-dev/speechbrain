@@ -97,7 +97,7 @@ class Tacotron2Brain(sb.Brain):
             detached loss
         """
         
-        """
+        
         outputs = self.compute_forward(batch, sb.Stage.TRAIN)
         loss = self.compute_objectives(outputs, batch, sb.Stage.TRAIN)
         loss.backward()
@@ -108,121 +108,6 @@ class Tacotron2Brain(sb.Brain):
 
         self.optimizer_tts_model.zero_grad()
         self.optimizer_spk_encoder.zero_grad()
-
-        return loss.detach().cpu()
-        """
-
-        # optim1.zero_grad()
-        self.optimizer_tts_model.zero_grad()
-        # temp = A1(input)
-        outputs = self.compute_forward(batch, sb.Stage.TRAIN)
-        # temp_d = temp.detach() => outputs_d = outputs.detach()
-        # temp_d.requires_grad = True => outputs_d.requires_grad = True
-        mel_out, mel_out_postnet, gate_out, alignments, pred_mel_lengths = outputs
-        mel_out_d = mel_out.detach()
-        mel_out_postnet_d = mel_out_postnet.detach()
-        gate_out_d = gate_out.detach()
-        alignments_d = alignments.detach()
-        pred_mel_lengths_d = pred_mel_lengths.detach()
-
-
-        mel_out_d.requires_grad = True
-        mel_out_postnet_d.requires_grad = True
-        gate_out_d.requires_grad = True
-        alignments_d.requires_grad = True
-        # pred_mel_lengths_d.requires_grad = True
-
-
-        outputs_d = (mel_out_d, mel_out_postnet_d, gate_out_d, alignments_d, pred_mel_lengths_d)
-        
-
-        # res1 = B1(temp_d) # we don't have this step
-        # loss1 = critertion(res1, target)
-        tts_loss = self.compute_objectives(outputs_d, batch, sb.Stage.TRAIN)
-        # temp.backward(autograd.grad(loss1, temp_d, only_input=False)[0], retain_graph=True)
-        # outputs.backward(torch.autograd.grad(tts_loss, outputs_d, only_input=False)[0], retain_graph=True)
-        
-        torch.autograd.backward(tts_loss, retain_graph=True, inputs=(mel_out, mel_out_postnet, gate_out, alignments))
-
-        # optim1.step()
-        if self.check_gradients(tts_loss):
-          self.optimizer_tts_model.step()
-
-
-        if self.hparams.compute_spk_emb_loss:
-
-          # optim2.zero_grad()
-          self.optimizer_spk_encoder.zero_grad()
-
-
-          # res2 = B2(A2(temp))
-          # mel_out, mel_out_postnet, gate_out, alignments, pred_mel_lengths = outputs
-
-          effective_batch = self.batch_to_device(batch)
-          inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = effective_batch
-          text_padded, input_lengths, _, max_len, output_lengths = inputs
-
-          target_mels = targets[0]
-          pred_mels_postnet = mel_out_postnet
-
-          max_target_mel_lens = output_lengths.max().item()
-          target_mel_lens = output_lengths/max_target_mel_lens
-
-          target_feats = self.modules.mean_var_norm(torch.transpose(target_mels, 1, 2), target_mel_lens)
-          target_spk_embs = self.modules.spk_embedding_model(target_feats)
-          target_spk_embs = target_spk_embs.squeeze()
-
-          max_pred_mel_lens = pred_mel_lengths.max().item()
-          pred_mel_lens = pred_mel_lengths/max_pred_mel_lens
-
-          pred_mels_postnet_feats = self.modules.mean_var_norm(torch.transpose(pred_mels_postnet, 1, 2), pred_mel_lens)
-          preds_spk_embs = self.modules.spk_embedding_model(pred_mels_postnet_feats)
-          preds_spk_embs = preds_spk_embs.squeeze()
-
-
-          if (self.hparams.spk_emb_loss_type == "scl_loss") or (self.hparams.spk_emb_loss_type == "cos_emb_loss"):
-            spk_embs_input = (target_spk_embs, preds_spk_embs)
-
-
-
-          if self.hparams.spk_emb_loss_type == "triplet_loss":
-            spk_embs_input = (None, None, None)
-            anchor_se_idx, pos_se_idx, neg_se_idx = self.get_triplets(spk_ids)
-
-            if anchor_se_idx.shape[0] != 0:
-              
-              anchor_spk_embs = target_spk_embs[anchor_se_idx]
-              pos_spk_embs = preds_spk_embs[pos_se_idx]
-              neg_spk_embs = preds_spk_embs[neg_se_idx]
-
-              spk_embs_input = (anchor_spk_embs, pos_spk_embs, neg_spk_embs)
-
-
-        # loss2 = critertion(res2, target)
-        if self.hparams.spk_emb_loss_type == "cos_emb_loss":
-          self.cos_emb_loss = torch.nn.CosineEmbeddingLoss()
-
-
-          target_spk_embs, preds_spk_embs = spk_embs_input
-          spk_emb_loss = self.cos_emb_loss(
-            target_spk_embs,
-            preds_spk_embs,
-            torch.ones(len(target_spk_embs)).to(target_spk_embs.device)
-          )
-
-
-        # loss2.backward()
-        spk_emb_loss.backward()
-
-        # optim2.step()
-        if self.check_gradients(spk_emb_loss):
-          self.optimizer_spk_encoder.step()
-
-
-        print(f"tts_loss: {tts_loss.item()}, spk_emb_loss: {spk_emb_loss.item()}")
-
-        loss = tts_loss + spk_emb_loss
-
 
         return loss.detach().cpu()
 
@@ -280,11 +165,9 @@ class Tacotron2Brain(sb.Brain):
         """
         inputs, targets, num_items, labels, wavs, spk_embs, spk_ids = batch
         text_padded, input_lengths, _, max_len, output_lengths = inputs
-
-        spk_embs_input = None
         
         loss_stats = self.hparams.criterion(
-            predictions, targets, input_lengths, output_lengths, spk_embs_input, self.last_epoch
+            predictions, targets, input_lengths, output_lengths, self.last_epoch
         )
         self.last_loss_stats[stage] = scalarize(loss_stats)
         return loss_stats.loss
