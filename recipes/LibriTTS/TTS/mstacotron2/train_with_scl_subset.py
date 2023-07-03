@@ -573,8 +573,11 @@ def dataio_prepare(hparams):
                 text_to_sequence(label_phoneme, hparams["text_cleaners"])
             )
 
-            audio = sb.dataio.dataio.read_audio(wav)
-            mel = hparams["mel_spectogram"](audio=audio)
+            audio, sig_sr = torchaudio.load(wav)
+            if sig_sr != hparams["sample_rate"]:
+              audio = torchaudio.functional.resample(audio, sig_sr, hparams["sample_rate"])
+
+            mel = hparams["mel_spectogram"](audio=audio.squeeze())
 
             len_text = len(text_seq)
 
