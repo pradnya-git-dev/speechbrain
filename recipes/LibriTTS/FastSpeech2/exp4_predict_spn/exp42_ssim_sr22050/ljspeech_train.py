@@ -426,6 +426,7 @@ def dataio_prepare(hparams):
     # add a dummy symbol for idx 0 - used for padding.
     lexicon = ["@@"] + lexicon
     input_encoder.update_from_iterable(lexicon, sequence_input=False)
+    input_encoder.add_unk()
     
     # load audio, text and durations on the fly; encode audio and text.
     @sb.utils.data_pipeline.takes("wav", "label_phoneme", "durations", "pitch", "start", "end", "spn_labels", "last_phoneme_flags")
