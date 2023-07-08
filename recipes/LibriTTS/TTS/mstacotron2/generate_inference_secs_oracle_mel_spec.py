@@ -123,7 +123,7 @@ def compute_mel_spectrogram(
   compression=True
 ):
   mel_spec = mel_spectrogram(
-      sample_rate=SPK_EMB_SAMPLE_RATE,
+      sample_rate=sample_rate,
       hop_length=hop_length,
       win_length=win_length,
       n_fft=n_fft,
@@ -228,10 +228,13 @@ for spk_dir in tqdm(glob.glob(f"{DATA_DIR}/*/*/*", recursive=True)):
       gt_uttid, _ = os.path.splitext(gt_path_parts[-1])
 
       # 2.0 Generate oracle mel-spectrom
+      tts_gt_signal_vocoder, tts_gt_sig_sr_vocoder = torchaudio.load(tts_gt_wav)
       tts_mel_spec_vocoder_sr = compute_mel_spectrogram(
         sample_rate=VOCODER_SAMPLE_RATE,
-        audio=tts_gt_signal
+        audio=tts_gt_signal_vocoder
       )
+
+      # import pdb; pdb.set_trace()
 
       # import pdb; pdb.set_trace()
       waveform_ms = hifi_gan.decode_batch(tts_mel_spec_vocoder_sr)

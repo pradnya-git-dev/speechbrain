@@ -138,7 +138,7 @@ def compute_mel_spectrogram(
   compression=True
 ):
   mel_spec = mel_spectrogram(
-      sample_rate=SPK_EMB_SAMPLE_RATE,
+      sample_rate=sample_rate,
       hop_length=hop_length,
       win_length=win_length,
       n_fft=n_fft,
