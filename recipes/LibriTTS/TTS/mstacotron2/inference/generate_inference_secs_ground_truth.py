@@ -11,21 +11,18 @@ import glob
 import json
 from tqdm import tqdm
 
-
 # Load the evaluation dataset
-DATA_DIR = "vctk_mstts_evaluation_dataset"
+DATA_DIR = "mstts_evaluation_dataset_50m50f"
 AUDIO_EXTENSION = ".wav"
 
 # Load the required models
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 JUDGE_SPK_EMB_ENCODER_PATH = "/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80"
 
-
 # Loads speaker embedding model
 SPK_EMB_SAMPLE_RATE = 16000
 judge_spk_emb_encoder = MelSpectrogramEncoder.from_hparams(source=JUDGE_SPK_EMB_ENCODER_PATH,
                                                  run_opts={"device": DEVICE})
-
 
 ## Helper functions below:
 
@@ -120,7 +117,7 @@ def compute_mel_spectrogram(
   compression=True
 ):
   mel_spec = mel_spectrogram(
-      sample_rate=SPK_EMB_SAMPLE_RATE,
+      sample_rate=sample_rate,
       hop_length=hop_length,
       win_length=win_length,
       n_fft=n_fft,
@@ -140,7 +137,6 @@ def compute_mel_spectrogram(
 
 # Helper functions end here
 
-
 # Defines Cosine similarity
 cos_sim_score = nn.CosineSimilarity()
 
@@ -150,10 +146,30 @@ SECS = dict()
 # Processed the dataset one speaker at a time
 # The following line works because the evaluation dataset is structured that way
 for spk_dir in tqdm(glob.glob(f"{DATA_DIR}/*/*/*", recursive=True)):
-
+    
     # Gets the reference waveforms - Here, we use only one
     spk_emb_ref_dir = os.path.join(spk_dir, "speaker_embedding_references")
     ref_wav_path = get_all_files(spk_emb_ref_dir, match_and=[AUDIO_EXTENSION])[0]
+    
+    # Computes the reference speaker embedding to use when generating speech
+    # 0. Load the audio 
+    ref_signal, signal_sr = torchaudio.load(ref_wav_path)
+    # 1. Resample the signal if required:
+    if signal_sr != SPK_EMB_SAMPLE_RATE:
+      ref_signal = torchaudio.functional.resample(ref_signal, signal_sr, SPK_EMB_SAMPLE_RATE)
+    ref_signal = ref_signal.to(DEVICE)
+
+    # 2. Convert audio to mel-spectrogram
+    ref_mel_spec = compute_mel_spectrogram(
+      sample_rate=SPK_EMB_SAMPLE_RATE,
+      audio=ref_signal
+    )
+
+    # 3. Compute the speaker embedding
+    # Computing reference speaker embedding with the judge speaker embedding model
+    # To be used when calculating SECS
+    ref_spk_emb_for_secs = judge_spk_emb_encoder.encode_batch(ref_mel_spec).squeeze(0)
+
 
     # Manipulates path to get relative path and uttid
     path_parts = ref_wav_path.split(os.path.sep)
@@ -176,10 +192,10 @@ for spk_dir in tqdm(glob.glob(f"{DATA_DIR}/*/*/*", recursive=True)):
     
     for tts_gt_wav in tqdm(tts_gt_wavs):
 
-      if tts_gt_wav.__contains__("-synthesized"):
+      if tts_gt_wav.__contains__("_synthesized"):
         continue
 
-      # 1 Computes the ground truth speaker embedding for SECS calculation
+      # 1 Computes the ground troth speaker embedding for SECS calculation
       # 1.0. Load the audio 
       tts_gt_signal, tts_gt_sig_sr = torchaudio.load(tts_gt_wav)
 
@@ -199,40 +215,41 @@ for spk_dir in tqdm(glob.glob(f"{DATA_DIR}/*/*/*", recursive=True)):
       tts_gt_spk_emb = judge_spk_emb_encoder.encode_batch(tts_gt_mel_spec)
       tts_gt_spk_emb = tts_gt_spk_emb.squeeze(0)
 
-
-      # 2 Computes the synthesized audio speaker embedding for SECS calculation
       # Manipulates path to get the uttid
       gt_path_parts = tts_gt_wav.split(os.path.sep)
       gt_uttid, _ = os.path.splitext(gt_path_parts[-1])
 
-      # 2.0 Load audio
-      synthesized_audio_path = os.path.join(*gt_path_parts[:-1], gt_uttid + "-synthesized.wav")
-      synthesized_signal, synthesized_signal_sr = torchaudio.load(synthesized_audio_path)
+      
+      # 2.3 Compute speaker embedding again for ground truth sanity check
 
-
-      # 2.1 Resample the signal if required:
-      if synthesized_signal_sr != SPK_EMB_SAMPLE_RATE:
+      # 2.3.0. Load the audio 
+      compare_signal, compare_signal_sr = torchaudio.load(tts_gt_wav)
+      # 2.3.1. Resample the signal if required:
+      if compare_signal_sr != SPK_EMB_SAMPLE_RATE:
         print("Resampling synthesized signal for the judge model.")
-        synthesized_signal = torchaudio.functional.resample(synthesized_signal, synthesized_signal_sr, SPK_EMB_SAMPLE_RATE)
-      synthesized_signal = synthesized_signal.to(DEVICE)
+        compare_signal = torchaudio.functional.resample(compare_signal, compare_signal_sr, SPK_EMB_SAMPLE_RATE)
+      compare_signal = compare_signal.to(DEVICE)
 
-      # 2.2 Convert audio to mel-spectrogram
-      synthesized_mel_spec = compute_mel_spectrogram(
+      # 2.3.2. Convert audio to mel-spectrogram
+      compare_mel_spec = compute_mel_spectrogram(
         sample_rate=SPK_EMB_SAMPLE_RATE,
-        audio=synthesized_signal
+        audio=compare_signal
       )
 
-      # 2.3 Compute the speaker embedding
+      # 2.3.3. Compute the speaker embedding
       # Using encode batch because - ref_mel_spec.shape:  torch.Size([1, 80, x])
       # After squeeze(0) ref_spk_emb.shape [1, 1, 192] => ref_spk_emb.shape [1, 192]
       # Computing embedding with the judge speaker embedding model
       # To be used when calculating SECS
-      synthesized_emb = judge_spk_emb_encoder.encode_batch(synthesized_mel_spec).squeeze(0)
+      compare_emb = judge_spk_emb_encoder.encode_batch(compare_mel_spec).squeeze(0)
 
-      cs_ground_truth = cos_sim_score(tts_gt_spk_emb, synthesized_emb).item()
+
+      # 2.4 Compute cosine similarity score w.r.t reference embedding
+      cs_ref_spk_emb = cos_sim_score(ref_spk_emb_for_secs, compare_emb).item()
+      cs_ground_truth = cos_sim_score(tts_gt_spk_emb, compare_emb).item()
 
       SECS[spk_id]["secs"][gt_uttid] = {
-        "secs_ref_spk_emb": 0,
+        "secs_ref_spk_emb": cs_ref_spk_emb,
         "secs_gt": cs_ground_truth
       }
 
@@ -244,19 +261,36 @@ with open("SECS.json", "w") as secs_outfile:
 # import pdb; pdb.set_trace()
 
 organized_SECS = {
+  "seen_speakers": {
+    "male_speakers": {
+      "460": None, 
+      "2952": None, 
+      "8770": None,
+      "60": None,
+      "374": None
+    },
+    "female_speakers": {
+      "8465": None,
+      "2836": None,
+      "6818": None,
+      "5163": None,
+      "8312": None
+    }
+  },
   "unseen_speakers": {
-    "male_female_speakers": {
-      "p225": None,
-      "p234": None, 
-      "p238": None, 
-      "p245": None,
-      "p248": None,  
-      "p261": None,
-      "p294": None,
-      "p302": None,
-      "p326": None,
-      "p335": None,
-      "p347": None,
+    "male_speakers": {
+      "260": None,
+      "908": None, 
+      "1089": None, 
+      "1188": None, 
+      "2300": None
+    },
+    "female_speakers": {
+      "121": None, 
+      "237": None, 
+      "2961": None, 
+      "1580": None, 
+      "1995": None
     }
   }
 }
@@ -268,6 +302,3 @@ for spk_type in organized_SECS:
 
 with open("organized_SECS.json", "w") as secs_outfile:
     json.dump(organized_SECS, secs_outfile, indent=4)
-
-
-

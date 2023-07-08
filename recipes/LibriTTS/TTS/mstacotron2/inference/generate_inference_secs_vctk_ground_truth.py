@@ -4,15 +4,17 @@ from speechbrain.pretrained import HIFIGAN
 from interfaces.pretrained import MSTacotron2, MelSpectrogramEncoder
 from speechbrain.processing.speech_augmentation import Resample
 from speechbrain.utils.data_utils import get_all_files
-import os
+import os, sys
 import torchaudio
 from torch import nn
 import glob
 import json
 from tqdm import tqdm
 
+sys.path.append("../")
+
 # Load the evaluation dataset
-DATA_DIR = "mstts_evaluation_dataset_50m50f"
+DATA_DIR = "vctk_mstts_evaluation_dataset"
 AUDIO_EXTENSION = ".wav"
 
 # Load the required models
@@ -21,8 +23,10 @@ JUDGE_SPK_EMB_ENCODER_PATH = "/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80
 
 # Loads speaker embedding model
 SPK_EMB_SAMPLE_RATE = 16000
+
 judge_spk_emb_encoder = MelSpectrogramEncoder.from_hparams(source=JUDGE_SPK_EMB_ENCODER_PATH,
                                                  run_opts={"device": DEVICE})
+
 
 ## Helper functions below:
 
@@ -195,7 +199,7 @@ for spk_dir in tqdm(glob.glob(f"{DATA_DIR}/*/*/*", recursive=True)):
       if tts_gt_wav.__contains__("_synthesized"):
         continue
 
-      # 1 Computes the ground troth speaker embedding for SECS calculation
+      # 1 Computes the speaker embedding for SECS calculation
       # 1.0. Load the audio 
       tts_gt_signal, tts_gt_sig_sr = torchaudio.load(tts_gt_wav)
 
@@ -215,11 +219,11 @@ for spk_dir in tqdm(glob.glob(f"{DATA_DIR}/*/*/*", recursive=True)):
       tts_gt_spk_emb = judge_spk_emb_encoder.encode_batch(tts_gt_mel_spec)
       tts_gt_spk_emb = tts_gt_spk_emb.squeeze(0)
 
+      # 2 Generate mel-spectrogram with TTS/vocoder sample rate and map it to audio
+
       # Manipulates path to get the uttid
       gt_path_parts = tts_gt_wav.split(os.path.sep)
       gt_uttid, _ = os.path.splitext(gt_path_parts[-1])
-
-      # 2 Generate mel-spectrogram with TTS/vocoder sample rate and map it to audio
 
       # 2.3 Compute speaker embedding again for ground truth sanity check
 
@@ -262,36 +266,19 @@ with open("SECS.json", "w") as secs_outfile:
 # import pdb; pdb.set_trace()
 
 organized_SECS = {
-  "seen_speakers": {
-    "male_speakers": {
-      "460": None, 
-      "2952": None, 
-      "8770": None,
-      "60": None,
-      "374": None
-    },
-    "female_speakers": {
-      "8465": None,
-      "2836": None,
-      "6818": None,
-      "5163": None,
-      "8312": None
-    }
-  },
   "unseen_speakers": {
-    "male_speakers": {
-      "260": None,
-      "908": None, 
-      "1089": None, 
-      "1188": None, 
-      "2300": None
-    },
-    "female_speakers": {
-      "121": None, 
-      "237": None, 
-      "2961": None, 
-      "1580": None, 
-      "1995": None
+    "male_female_speakers": {
+      "p225": None,
+      "p234": None, 
+      "p238": None, 
+      "p245": None,
+      "p248": None,  
+      "p261": None,
+      "p294": None,
+      "p302": None,
+      "p326": None,
+      "p335": None,
+      "p347": None,
     }
   }
 }
