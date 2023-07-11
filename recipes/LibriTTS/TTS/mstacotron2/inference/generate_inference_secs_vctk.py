@@ -19,10 +19,10 @@ AUDIO_EXTENSION = ".wav"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 JUDGE_SPK_EMB_ENCODER_PATH = "/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80"
 EXP_SPK_EMB_ENCODER_PATH = "/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80"
-MSTTS_MODEL_PATH = "/content/drive/MyDrive/2023/concordia/mstts_experiments/paper/saved_models/exp7_compare_with_yt/1_sr16000/2_vctk/exp7_mstacotron2_vctk_yourtts_exp1_sr16000"
+MSTTS_MODEL_PATH = "/content/drive/MyDrive/2023/concordia/mstts_experiments/paper/saved_models/exp7_compare_with_yt/1_sr16000/2_vctk/1_mstacotron2/exp7_mstacotron2_vctk_yourtts_exp1_sr16000/e803"
 
 
-MSTTS_HPARAMS_PATH = "/content/speechbrain/recipes/LibriTTS/TTS/mstacotron2/hparams/exp7_compare_with_yt/inf_film_base_16kHz.yaml"
+# MSTTS_HPARAMS_PATH = "/content/speechbrain/recipes/LibriTTS/TTS/mstacotron2/hparams/exp7_compare_with_yt/inf_film_base_16kHz.yaml"
 
 
 # Loads speaker embedding model
@@ -36,12 +36,12 @@ judge_spk_emb_encoder = MelSpectrogramEncoder.from_hparams(source=JUDGE_SPK_EMB_
 # Loads TTS model
 TTS_SAMPLE_RATE = 16000
 ms_tacotron2 = MSTacotron2.from_hparams(source=MSTTS_MODEL_PATH,
-                                        hparams_file=MSTTS_HPARAMS_PATH,
                                         run_opts={"device": DEVICE})
 
 # Loads Vocoder
 VOCODER_SAMPLE_RATE = 16000
-hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-libritts-16kHz",
+VOCODER_PATH = "/content/drive/MyDrive/2023/concordia/mstts_experiments/paper/saved_models/exp8_vocoder/exp80_hifigan_vctk_sr16000"
+hifi_gan = HIFIGAN.from_hparams(source=VOCODER_PATH,
                                 run_opts={"device": DEVICE})
 
 
