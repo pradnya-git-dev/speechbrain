@@ -160,7 +160,7 @@ ecapa_labels = list()
 
 for spk_dir in tqdm(glob.glob(f"{DATA_DIR}/*/*/*", recursive=True)):
 
-    if spk_dir.split("/")[-3] != "unseen":
+    if spk_dir.split("/")[-3] != "unseen_speakers":
       continue
 
     # Gets the reference waveforms - Here, we use only one
