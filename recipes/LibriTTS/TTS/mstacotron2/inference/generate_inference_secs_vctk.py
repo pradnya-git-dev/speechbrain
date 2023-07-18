@@ -19,8 +19,7 @@ AUDIO_EXTENSION = ".wav"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 JUDGE_SPK_EMB_ENCODER_PATH = "/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80"
 EXP_SPK_EMB_ENCODER_PATH = "/content/drive/MyDrive/ecapa_tdnn/vc12_mel_spec_80"
-MSTTS_MODEL_PATH = "/content/drive/MyDrive/2023/concordia/mstts_experiments/paper/saved_models/exp7_compare_with_yt/1_sr16000/2_vctk/1_mstacotron2/exp7_mstacotron2_vctk_yourtts_exp1_sr16000/e803"
-
+MSTTS_MODEL_PATH = "/content/drive/MyDrive/2023/concordia/mstts_experiments/paper/saved_models/exp7_compare_with_yt/1_sr16000/2_vctk/1_mstacotron2/exp7_mstacotron2_vctk_yourtts_exp1_sr16000/e1349"
 
 # MSTTS_HPARAMS_PATH = "/content/speechbrain/recipes/LibriTTS/TTS/mstacotron2/hparams/exp7_compare_with_yt/inf_film_base_16kHz.yaml"
 
