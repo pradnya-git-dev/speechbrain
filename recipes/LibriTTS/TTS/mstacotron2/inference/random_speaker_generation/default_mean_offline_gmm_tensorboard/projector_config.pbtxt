@@ -1,0 +1,30 @@
+embeddings {
+  tensor_name: "train_spk_emb_custom_means:00000"
+  metadata_path: "00000/train_spk_emb_custom_means/metadata.tsv"
+  tensor_path: "00000/train_spk_emb_custom_means/tensors.tsv"
+}
+embeddings {
+  tensor_name: "train_spk_emb_gmm_clusters:00000"
+  metadata_path: "00000/train_spk_emb_gmm_clusters/metadata.tsv"
+  tensor_path: "00000/train_spk_emb_gmm_clusters/tensors.tsv"
+}
+embeddings {
+  tensor_name: "validation_spk_emb_gmm_clusters:00000"
+  metadata_path: "00000/validation_spk_emb_gmm_clusters/metadata.tsv"
+  tensor_path: "00000/validation_spk_emb_gmm_clusters/tensors.tsv"
+}
+embeddings {
+  tensor_name: "sampled_spk_emb_gmm_clusters:00000"
+  metadata_path: "00000/sampled_spk_emb_gmm_clusters/metadata.tsv"
+  tensor_path: "00000/sampled_spk_emb_gmm_clusters/tensors.tsv"
+}
+embeddings {
+  tensor_name: "combined_train_valid_gmm_clusters:00000"
+  metadata_path: "00000/combined_train_valid_gmm_clusters/metadata.tsv"
+  tensor_path: "00000/combined_train_valid_gmm_clusters/tensors.tsv"
+}
+embeddings {
+  tensor_name: "combined_spk_emb_gmm_clusters:00000"
+  metadata_path: "00000/combined_spk_emb_gmm_clusters/metadata.tsv"
+  tensor_path: "00000/combined_spk_emb_gmm_clusters/tensors.tsv"
+}
