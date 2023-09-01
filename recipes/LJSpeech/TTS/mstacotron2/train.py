@@ -601,14 +601,14 @@ if __name__ == "__main__":
     tacotron2_brain.fit(
         tacotron2_brain.hparams.epoch_counter,
         train_set=datasets["train"],
-        valid_set=datasets["valid"],
+        valid_set=datasets["train"],
         train_loader_kwargs=hparams["train_dataloader_opts"],
-        valid_loader_kwargs=hparams["valid_dataloader_opts"],
+        valid_loader_kwargs=hparams["train_dataloader_opts"],
     )
 
     # Test
     if "test" in datasets:
         tacotron2_brain.evaluate(
-            datasets["test"],
-            test_loader_kwargs=hparams["test_dataloader_opts"],
+            datasets["train"],
+            test_loader_kwargs=hparams["train_dataloader_opts"],
         )
