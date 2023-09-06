@@ -103,7 +103,7 @@ spk_emb_sample_rate: !PLACEHOLDER
 ################################
 learning_rate: 0.001
 weight_decay: 0.000006
-batch_size: 64 #minimum 2
+batch_size: 32 #minimum 2
 mask_padding: True
 guided_attention_sigma: 0.2
 guided_attention_weight: 75.0
@@ -150,7 +150,7 @@ encoder_embedding_dim: 1024
 n_frames_per_step: 1
 decoder_rnn_dim: 2048
 prenet_dim: 512
-max_decoder_steps: 1000
+max_decoder_steps: 1500
 gate_threshold: 0.5
 p_attention_dropout: 0.1
 p_decoder_dropout: 0.1
