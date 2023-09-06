@@ -144,7 +144,6 @@ symbols_embedding_dim: 1024
 encoder_kernel_size: 5
 encoder_n_convolutions: 6
 encoder_embedding_dim: 1024
-num_encoder_lstm_layers: 2
 
 # Decoder parameters
 # The number of frames in the target per encoder step
@@ -195,7 +194,6 @@ model: !new:models.MSTacotron2.Tacotron2
   encoder_kernel_size: !ref <encoder_kernel_size>
   encoder_n_convolutions: !ref <encoder_n_convolutions>
   encoder_embedding_dim: !ref <encoder_embedding_dim>
-  num_encoder_lstm_layers: !ref <num_encoder_lstm_layers>
   # attention
   attention_rnn_dim: !ref <attention_rnn_dim>
   attention_dim: !ref <attention_dim>
